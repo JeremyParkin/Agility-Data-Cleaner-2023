@@ -116,8 +116,13 @@ if not st.session_state.upload_step:
 
                 # DEALING WITH VARIABLE AVE NAMES
                 # assume the original DataFrame is stored in a variable called `df`
-                # find the column with the "AVE" and currency type in parentheses
-                st.session_state.ave_col = [col for col in st.session_state.df_untouched.columns if re.match(r'^AVE\([A-Z]{2,3}\)$', col)]
+                # find the column with the "AVE" and currency type in parentheses, or just "AVE"
+                # st.session_state.ave_col = [col for col in st.session_state.df_untouched.columns if re.match(r'^AVE\([A-Z]{2,3}\)$', col)]
+                st.session_state.ave_col = [col for col in st.session_state.df_untouched.columns if
+                                            re.match(r'^AVE\([A-Z]{2,3}\)$', col)] or [col for col in
+                                                                                       st.session_state.df_untouched.columns
+                                                                                       if col == "AVE"]
+
 
                 # rename the column to "AVE" for data cleaning
                 st.session_state.df_untouched = st.session_state.df_untouched.rename(columns={st.session_state.ave_col[0]: 'AVE'})

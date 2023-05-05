@@ -73,9 +73,9 @@ else:
                     worksheet5.set_tab_color('green')
                     worksheet5.set_default_row(22)
                     worksheet5.set_column('A:A', 30, None)  # author
-                    worksheet5.set_column('B:B', 12, None)  # mentions
-                    worksheet5.set_column('C:C', 15, number_format)  # impressions
-                    worksheet5.set_column('D:D', 35, None)  # outlet
+                    worksheet5.set_column('C:C', 12, None)  # mentions
+                    worksheet5.set_column('D:D', 15, number_format)  # impressions
+                    worksheet5.set_column('B:B', 35, None)  # outlet
                     worksheet5.freeze_panes(1, 0)
 
                     cleaned_dfs.append((authors, worksheet5))
@@ -93,7 +93,6 @@ else:
                     'AVE': st.session_state.ave_col[0]})
                 st.session_state.df_untouched.drop(["Mentions"], axis=1, inplace=True, errors='ignore')
                 st.session_state.df_untouched.to_excel(writer, sheet_name='RAW', header=True, index=False)
-                # TODO: RAW tab - for top row: freeze, align left, no borders
                 worksheet4 = writer.sheets['RAW']
                 worksheet4.set_tab_color('#c26f4f')
                 cleaned_dfs.append((st.session_state.df_untouched, worksheet4))
@@ -109,10 +108,10 @@ else:
                     sheet.set_column('A:A', 12, None)  # datetime
                     sheet.set_column('B:B', 22, None)  # outlet
                     sheet.set_column('C:C', 10, None)  # type
-                    sheet.set_column('D:D', 12, None)  # author
+                    sheet.set_column('G:G', 12, None)  # author
                     sheet.set_column('E:E', 0, None)  # mentions
                     sheet.set_column('F:F', 12, number_format)  # impressions
-                    sheet.set_column('G:G', 40, None)  # headline
+                    sheet.set_column('H:H', 40, None)  # headline
                     sheet.set_column('R:R', 12, currency_format)  # AVE
                     sheet.freeze_panes(1, 0)
 

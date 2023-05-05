@@ -70,7 +70,9 @@ else:
                 by=['Author']).sum().sort_values(
                 ['Impressions', 'Mentions'], ascending=False).reset_index()
 
-        auth_outlet_table['Outlet'] = ''
+        # auth_outlet_table['Outlet'] = ''
+        auth_outlet_table.insert(loc=1, column='Outlet', value='')
+
         auth_outlet_todo = auth_outlet_table
 
     else:
@@ -111,6 +113,7 @@ else:
                     auth_outlet_skipped = 0
                     st.session_state.auth_outlet_skipped = auth_outlet_skipped
                     st.experimental_rerun()
+
 
         search_results = fetch_outlet(unidecode(author_name))
         db_outlets = []
@@ -164,90 +167,95 @@ else:
         st.markdown(hide_table_row_index, unsafe_allow_html=True)
         st.markdown(hide_dataframe_row_index, unsafe_allow_html=True)
 
-        col1, col2, col3 = st.columns([8, 1, 16])
-        with col1:
-            st.subheader("Outlets in CSV")
-            outlets_in_coverage = st.session_state.df_traditional.loc[
-                st.session_state.df_traditional.Author == author_name].Outlet.value_counts()
-            outlets_in_coverage_list = outlets_in_coverage.index
-            outlets_in_coverage_list = outlets_in_coverage_list.insert(0, "Freelance")
-            outlets_in_coverage = outlets_in_coverage.rename_axis('Outlet').reset_index(name='Hits')
+        form_block = st.container()
+        info_block = st.container()
 
-            if len(outlets_in_coverage) > 7:
-                st.dataframe(outlets_in_coverage.style.apply(lambda x: [
-                    'color: goldenrod' if v in db_outlets else "" for v in x],
-                    axis=1, subset="Outlet"))
-            else:
-                st.table(outlets_in_coverage.style.apply(lambda x: [
-                    'color: goldenrod' if v in db_outlets else "" for v in x],
-                    axis=1, subset="Outlet"))
-
-        with col2:
-            st.write(" ")
-
-        with col3:
-            st.subheader("Media Database Results")
-            if 'results' not in search_results:
-                st.warning("NO MATCH FOUND")
-                matched_authors = []
-            elif not search_results['results']:
-                st.warning("NO MATCH FOUND")
-                matched_authors = []
-            elif search_results is None:
-                st.warning("NO MATCH FOUND")
-                matched_authors = []
-
-            else:
-                response_results = search_results['results']
-                outlet_results = []
-
-                for result in response_results:
-                    auth_name = result['firstName'] + " " + result['lastName']
-                    job_title = result['primaryEmployment']['jobTitle']
-                    outlet = result['primaryEmployment']['outletName']
-                    if result['country'] is None:
-                        country = 'None'
-
-                    else:
-                        country = result['country']['name']
-                    auth_tuple = (auth_name, job_title, outlet, country)
-                    outlet_results.append(auth_tuple)
-
-                matched_authors = pd.DataFrame.from_records(outlet_results,
-                                                            columns=['Name', 'Title', 'Outlet', 'Country'])
-                matched_authors.loc[matched_authors.Outlet == "[Freelancer]", "Outlet"] = "Freelance"
-
-                if len(matched_authors) > 7:
-                    st.dataframe(matched_authors.style.apply(lambda x: [
-                        'background: goldenrod; color: black' if v in outlets_in_coverage.Outlet.tolist() else ""
-                        for v in x], axis=1).apply(name_match, axis=0, subset='Name'))
-
-                else:
-                    st.table(matched_authors.style.apply(lambda x: [
-                        'background: goldenrod; color: black' if v in outlets_in_coverage.Outlet.tolist() else ""
-                        for v in x], axis=1).apply(name_match, axis=0, subset='Name'))
-
-                possibles = matched_authors.Outlet
-
-        # FORM TO UPDATE AUTHOR OUTLET ######################
-        with st.form('auth updater', clear_on_submit=True):
-            col1, col2, col3 = st.columns([8, 1, 8])
+        with info_block:
+            col1, col2, col3 = st.columns([8, 1, 16])
             with col1:
-                if len(matched_authors) > 0:
-                    box_outlet = st.selectbox('Pick outlet from DATABASE MATCHES', possibles,
-                                              help='Pick from one of the outlets associated with this author name.')
+                st.subheader("Outlets in CSV")
+                outlets_in_coverage = st.session_state.df_traditional.loc[
+                    st.session_state.df_traditional.Author == author_name].Outlet.value_counts()
+                outlets_in_coverage_list = outlets_in_coverage.index
+                outlets_in_coverage_list = outlets_in_coverage_list.insert(0, "Freelance")
+                outlets_in_coverage = outlets_in_coverage.rename_axis('Outlet').reset_index(name='Hits')
 
+                if len(outlets_in_coverage) > 7:
+                    st.dataframe(outlets_in_coverage.style.apply(lambda x: [
+                        'color: goldenrod' if v in db_outlets else "" for v in x],
+                        axis=1, subset="Outlet"))
                 else:
-                    box_outlet = st.selectbox('Pick outlet from COVERAGE or "Freelance"', outlets_in_coverage_list)
+                    st.table(outlets_in_coverage.style.apply(lambda x: [
+                        'color: goldenrod' if v in db_outlets else "" for v in x],
+                        axis=1, subset="Outlet"))
 
             with col2:
                 st.write(" ")
-                st.subheader("OR")
-            with col3:
-                string_outlet = st.text_input("Write in an outlet name",
-                                              help='Override above selection by writing in a custom name.')
 
-            submitted = st.form_submit_button("Assign Outlet")
+            with col3:
+                st.subheader("Media Database Results")
+                if 'results' not in search_results:
+                    st.warning("NO MATCH FOUND")
+                    matched_authors = []
+                elif not search_results['results']:
+                    st.warning("NO MATCH FOUND")
+                    matched_authors = []
+                elif search_results is None:
+                    st.warning("NO MATCH FOUND")
+                    matched_authors = []
+
+                else:
+                    response_results = search_results['results']
+                    outlet_results = []
+
+                    for result in response_results:
+                        auth_name = result['firstName'] + " " + result['lastName']
+                        job_title = result['primaryEmployment']['jobTitle']
+                        outlet = result['primaryEmployment']['outletName']
+                        if result['country'] is None:
+                            country = 'None'
+
+                        else:
+                            country = result['country']['name']
+                        auth_tuple = (auth_name, job_title, outlet, country)
+                        outlet_results.append(auth_tuple)
+
+                    matched_authors = pd.DataFrame.from_records(outlet_results,
+                                                                columns=['Name', 'Title', 'Outlet', 'Country'])
+                    matched_authors.loc[matched_authors.Outlet == "[Freelancer]", "Outlet"] = "Freelance"
+
+                    if len(matched_authors) > 7:
+                        st.dataframe(matched_authors.style.apply(lambda x: [
+                            'background: goldenrod; color: black' if v in outlets_in_coverage.Outlet.tolist() else ""
+                            for v in x], axis=1).apply(name_match, axis=0, subset='Name'))
+
+                    else:
+                        st.table(matched_authors.style.apply(lambda x: [
+                            'background: goldenrod; color: black' if v in outlets_in_coverage.Outlet.tolist() else ""
+                            for v in x], axis=1).apply(name_match, axis=0, subset='Name'))
+
+                    possibles = matched_authors.Outlet
+
+        with form_block:
+            # FORM TO UPDATE AUTHOR OUTLET ######################
+            with st.form('auth updater', clear_on_submit=True):
+                col1, col2, col3 = st.columns([8, 1, 8])
+                with col1:
+                    if len(matched_authors) > 0:
+                        box_outlet = st.selectbox('Pick outlet from DATABASE MATCHES', possibles,
+                                                  help='Pick from one of the outlets associated with this author name.')
+
+                    else:
+                        box_outlet = st.selectbox('Pick outlet from COVERAGE or "Freelance"', outlets_in_coverage_list)
+
+                with col2:
+                    st.write(" ")
+                    st.subheader("OR")
+                with col3:
+                    string_outlet = st.text_input("Write in an outlet name",
+                                                  help='Override above selection by writing in a custom name.')
+
+                submitted = st.form_submit_button("Assign Outlet")
 
         if submitted:
             if len(string_outlet) > 0:
