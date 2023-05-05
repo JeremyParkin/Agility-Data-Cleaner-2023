@@ -80,13 +80,13 @@ if st.session_state.upload_step:
     summary_stats.index.name = "Published Date"
     summary_stats.reset_index(inplace=True)
 
-    st.markdown('##')
-    st.subheader('Mention Trend')
-    st.area_chart(data=summary_stats, x="Published Date", y="Mentions", width=0, height=0, use_container_width=True)
-
-    # st.markdown('##')
-    st.subheader('Impressions Trend')
-    st.area_chart(data=summary_stats, x="Published Date", y="Impressions", width=0, height=0, use_container_width=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader('Mention Trend')
+        st.area_chart(data=summary_stats, x="Published Date", y="Mentions", width=0, height=0, use_container_width=True)
+    with col2:
+        st.subheader('Impressions Trend')
+        st.area_chart(data=summary_stats, x="Published Date", y="Impressions", width=0, height=0, use_container_width=True)
 
 if not st.session_state.upload_step:
     with st.form('my_form'):

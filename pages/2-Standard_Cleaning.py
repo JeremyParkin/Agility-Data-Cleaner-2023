@@ -7,6 +7,7 @@ warnings.filterwarnings('ignore')
 st.set_page_config(layout="wide", page_title="MIG Data Cleaning App",
                    page_icon="https://www.agilitypr.com/wp-content/uploads/2018/02/favicon-192.png")
 
+
 mig.standard_sidebar()
 
 format_dict = {'AVE': '${0:,.0f}', 'Audience Reach': '{:,d}', 'Impressions': '{:,d}'}
@@ -138,8 +139,8 @@ else:
                     st.session_state.df_raw['URL_Helper'] = st.session_state.df_raw['URL_Helper'].str.replace('http:', 'https:')
 
                     # Sort duplicate URLS
-                    st.session_state.df_raw = st.session_state.df_raw.sort_values(["URL_Helper", "Author", "Impressions", "AVE"], axis=0,
-                                            ascending=[True, True, False, False])
+                    st.session_state.df_raw = st.session_state.df_raw.sort_values(["URL_Helper", "Author", "Impressions", "AVE", "Date"], axis=0,
+                                            ascending=[True, True, False, False, True])
                     # Save duplicate URLS
                     dupe_urls = st.session_state.df_raw[st.session_state.df_raw['URL_Helper'].duplicated(keep='first') == True]
 
@@ -157,17 +158,15 @@ else:
 
                     # Split off records with blank headline/outlet/type
                     blank_set = st.session_state.df_raw[st.session_state.df_raw.Headline.isna() | st.session_state.df_raw.Outlet.isna() | st.session_state.df_raw.Type.isna() | len(st.session_state.df_raw.Headline) == 0]
-                    # st.session_state.df_raw = st.session_state.df_raw[~st.session_state.df_raw.Headline.isna() | ~st.session_state.df_raw.Outlet.isna() | ~st.session_state.df_raw.Type.isna() | ~len(st.session_state.df_raw.Headline) == 0]
                     st.session_state.df_raw = st.session_state.df_raw[~st.session_state.df_raw.Headline.isna()]
                     st.session_state.df_raw = st.session_state.df_raw[~st.session_state.df_raw.Outlet.isna()]
                     st.session_state.df_raw = st.session_state.df_raw[~st.session_state.df_raw.Type.isna()]
-                    # st.session_state.df_raw = st.session_state.df_raw[~(len(st.session_state.df_raw.Headline) < 1)]
 
                     # Add helper column
                     st.session_state.df_raw["dupe_helper"] = st.session_state.df_raw['Type'].astype('string') + st.session_state.df_raw['Outlet'].astype('string') + st.session_state.df_raw[
                         'Headline']
-                    st.session_state.df_raw = st.session_state.df_raw.sort_values(["dupe_helper", "Author", "Impressions", "AVE"], axis=0,
-                                            ascending=[True, True, False, False])
+                    st.session_state.df_raw = st.session_state.df_raw.sort_values(["dupe_helper", "Author", "Impressions", "AVE", "Date"], axis=0,
+                                            ascending=[True, True, False, False, True])
                     dupe_cols = st.session_state.df_raw[st.session_state.df_raw['dupe_helper'].duplicated(keep='first') == True]
                     st.session_state.df_raw = st.session_state.df_raw[~st.session_state.df_raw['dupe_helper'].duplicated(keep='first') == True]
 
