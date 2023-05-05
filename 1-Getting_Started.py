@@ -123,7 +123,6 @@ if not st.session_state.upload_step:
                                                                                        st.session_state.df_untouched.columns
                                                                                        if col == "AVE"]
 
-
                 # rename the column to "AVE" for data cleaning
                 st.session_state.df_untouched = st.session_state.df_untouched.rename(columns={st.session_state.ave_col[0]: 'AVE'})
 

@@ -100,12 +100,19 @@ else:
                     st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('   ', ' ')
                     st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('  ', ' ')
 
+                # # Remove (Online)
+                # st.session_state.df_raw['Outlet'] = st.session_state.df_raw['Outlet'].str.replace(' \(Online\)', '')
+                #
+                # # Replace wonky apostrophes
+                # st.session_state.df_raw['Headline'] = st.session_state.df_raw['Headline'].str.replace('\‘', '\'')
+                # st.session_state.df_raw['Headline'] = st.session_state.df_raw['Headline'].str.replace('\’', '\'')
+
                 # Remove (Online)
-                st.session_state.df_raw['Outlet'] = st.session_state.df_raw['Outlet'].str.replace(' \(Online\)', '')
+                st.session_state.df_raw['Outlet'] = st.session_state.df_raw['Outlet'].str.replace(' \\(Online\\)', '')
 
                 # Replace wonky apostrophes
-                st.session_state.df_raw['Headline'] = st.session_state.df_raw['Headline'].str.replace('\‘', '\'')
-                st.session_state.df_raw['Headline'] = st.session_state.df_raw['Headline'].str.replace('\’', '\'')
+                st.session_state.df_raw['Headline'] = st.session_state.df_raw['Headline'].str.replace('\u2018', '\'')
+                st.session_state.df_raw['Headline'] = st.session_state.df_raw['Headline'].str.replace('\u2019', '\'')
 
                 # SOCIALS To sep df
                 soc_array = ['FACEBOOK', 'TWITTER', 'INSTAGRAM', 'REDDIT', 'YOUTUBE']
@@ -142,10 +149,10 @@ else:
                     st.session_state.df_raw = st.session_state.df_raw.sort_values(["URL_Helper", "Author", "Impressions", "AVE", "Date"], axis=0,
                                             ascending=[True, True, False, False, True])
                     # Save duplicate URLS
-                    dupe_urls = st.session_state.df_raw[st.session_state.df_raw['URL_Helper'].duplicated(keep='first') == True]
+                    dupe_urls = st.session_state.df_raw[st.session_state.df_raw['URL_Helper'].duplicated(keep='first')]
 
                     # Remove duplicate URLS
-                    st.session_state.df_raw = st.session_state.df_raw[~st.session_state.df_raw['URL_Helper'].duplicated(keep='first') == True]
+                    st.session_state.df_raw = st.session_state.df_raw[~st.session_state.df_raw['URL_Helper'].duplicated(keep='first')]
 
                     # Drop URL Helper column from both dfs
                     st.session_state.df_raw.drop(["URL_Helper"], axis=1, inplace=True, errors='ignore')
@@ -167,8 +174,8 @@ else:
                         'Headline']
                     st.session_state.df_raw = st.session_state.df_raw.sort_values(["dupe_helper", "Author", "Impressions", "AVE", "Date"], axis=0,
                                             ascending=[True, True, False, False, True])
-                    dupe_cols = st.session_state.df_raw[st.session_state.df_raw['dupe_helper'].duplicated(keep='first') == True]
-                    st.session_state.df_raw = st.session_state.df_raw[~st.session_state.df_raw['dupe_helper'].duplicated(keep='first') == True]
+                    dupe_cols = st.session_state.df_raw[st.session_state.df_raw['dupe_helper'].duplicated(keep='first')]
+                    st.session_state.df_raw = st.session_state.df_raw[~st.session_state.df_raw['dupe_helper'].duplicated(keep='first')]
 
                     # Drop helper column and rejoin broadcast
                     st.session_state.df_raw.drop(["dupe_helper"], axis=1, inplace=True, errors='ignore')
