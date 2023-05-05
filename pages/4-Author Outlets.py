@@ -9,7 +9,6 @@ warnings.filterwarnings('ignore')
 st.set_page_config(layout="wide", page_title="MIG Data Cleaning App",
                    page_icon="https://www.agilitypr.com/wp-content/uploads/2018/02/favicon-192.png")
 
-
 mig.standard_sidebar()
 
 format_dict = {'AVE': '${0:,.0f}', 'Audience Reach': '{:,d}', 'Impressions': '{:,d}'}
@@ -113,7 +112,6 @@ else:
                     auth_outlet_skipped = 0
                     st.session_state.auth_outlet_skipped = auth_outlet_skipped
                     st.experimental_rerun()
-
 
         search_results = fetch_outlet(unidecode(author_name))
         db_outlets = []
@@ -224,6 +222,8 @@ else:
                                                                 columns=['Name', 'Title', 'Outlet', 'Country'])
                     matched_authors.loc[matched_authors.Outlet == "[Freelancer]", "Outlet"] = "Freelance"
 
+                    # st.dataframe(matched_authors)
+
                     if len(matched_authors) > 7:
                         st.dataframe(matched_authors.style.apply(lambda x: [
                             'background: goldenrod; color: black' if v in outlets_in_coverage.Outlet.tolist() else ""
@@ -235,6 +235,16 @@ else:
                             for v in x], axis=1).apply(name_match, axis=0, subset='Name'))
 
                     possibles = matched_authors.Outlet
+
+                    # st.write(possibles)
+                    # Check if there is a match between outlets_in_coverage_list and possibles
+                    matching_outlet = [outlet for outlet in outlets_in_coverage_list if outlet in possibles]
+
+                    if len(matching_outlet) == 1:
+                        # Get the index of the matching element in possibles
+                        index = possibles.index(matching_outlet[0])
+                        # Move the matching element to the first place
+                        possibles = [matching_outlet[0]] + possibles[:index] + possibles[index + 1:]
 
         with form_block:
             # FORM TO UPDATE AUTHOR OUTLET ######################
