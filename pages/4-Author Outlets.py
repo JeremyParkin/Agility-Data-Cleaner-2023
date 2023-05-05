@@ -222,7 +222,16 @@ else:
                                                                 columns=['Name', 'Title', 'Outlet', 'Country'])
                     matched_authors.loc[matched_authors.Outlet == "[Freelancer]", "Outlet"] = "Freelance"
 
-                    # st.dataframe(matched_authors)
+                    # Check if any outlets in `matched_authors` match `outlets_in_coverage_list`
+                    matching_outlets = set(outlets_in_coverage_list).intersection(set(matched_authors.Outlet.tolist()))
+
+                    possibles = matched_authors.Outlet.tolist()
+
+                    # If a matching outlet is found and there are multiple entries in `possibles`, move the matched outlet to the top
+                    if len(matching_outlets) > 0 and len(possibles) > 1:
+                        matched_authors_top = matched_authors[matched_authors.Outlet.isin(matching_outlets)]
+                        matched_authors_bottom = matched_authors[~matched_authors.Outlet.isin(matching_outlets)]
+                        matched_authors = pd.concat([matched_authors_top, matched_authors_bottom])
 
                     if len(matched_authors) > 7:
                         st.dataframe(matched_authors.style.apply(lambda x: [
@@ -234,9 +243,6 @@ else:
                             'background: goldenrod; color: black' if v in outlets_in_coverage.Outlet.tolist() else ""
                             for v in x], axis=1).apply(name_match, axis=0, subset='Name'))
 
-                    possibles = matched_authors.Outlet
-
-                    # st.write(possibles)
                     # Check if there is a match between outlets_in_coverage_list and possibles
                     matching_outlet = [outlet for outlet in outlets_in_coverage_list if outlet in possibles]
 
