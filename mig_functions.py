@@ -10,7 +10,7 @@ def standard_sidebar():
                             .css-1oe5cao {
                                 min-height: 50vh;
                                 }
-                            .css-1cypcdb .e1fqkh3o11 {
+                            .css-1cypcdb {
                                 max-width: 255px;
                                 }
                             </style>
