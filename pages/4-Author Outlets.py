@@ -186,14 +186,8 @@ else:
                 # Display styled DataFrame
                 if len(outlets_in_coverage) > 7:
                     st.dataframe(outlets_in_coverage_styled)
-                    # st.dataframe(outlets_in_coverage.style.apply(lambda x: [
-                    #     'color: goldenrod' if v in db_outlets else "" for v in x],
-                    #     axis=1, subset="Outlet"))
                 else:
                     st.table(outlets_in_coverage_styled)
-                    # st.table(outlets_in_coverage.style.apply(lambda x: [
-                    #     'color: goldenrod' if v in db_outlets else "" for v in x],
-                    #     axis=1, subset="Outlet"))
 
             with col2:
                 st.write(" ")
