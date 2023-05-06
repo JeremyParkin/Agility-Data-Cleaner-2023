@@ -178,14 +178,22 @@ else:
                 outlets_in_coverage_list = outlets_in_coverage_list.insert(0, "Freelance")
                 outlets_in_coverage = outlets_in_coverage.rename_axis('Outlet').reset_index(name='Hits')
 
+                # Apply style to DataFrame
+                outlets_in_coverage_styled = outlets_in_coverage.style.apply(
+                    lambda x: ['background-color: goldenrod; color: black' if v in db_outlets else '' for v in x], axis=1,
+                    subset="Outlet")
+
+                # Display styled DataFrame
                 if len(outlets_in_coverage) > 7:
-                    st.dataframe(outlets_in_coverage.style.apply(lambda x: [
-                        'color: goldenrod' if v in db_outlets else "" for v in x],
-                        axis=1, subset="Outlet"))
+                    st.dataframe(outlets_in_coverage_styled)
+                    # st.dataframe(outlets_in_coverage.style.apply(lambda x: [
+                    #     'color: goldenrod' if v in db_outlets else "" for v in x],
+                    #     axis=1, subset="Outlet"))
                 else:
-                    st.table(outlets_in_coverage.style.apply(lambda x: [
-                        'color: goldenrod' if v in db_outlets else "" for v in x],
-                        axis=1, subset="Outlet"))
+                    st.table(outlets_in_coverage_styled)
+                    # st.table(outlets_in_coverage.style.apply(lambda x: [
+                    #     'color: goldenrod' if v in db_outlets else "" for v in x],
+                    #     axis=1, subset="Outlet"))
 
             with col2:
                 st.write(" ")
