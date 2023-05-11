@@ -96,16 +96,13 @@ else:
                 st.session_state.df_raw['Headline'] = st.session_state.df_raw['Headline'].astype(str)
                 strip_columns = ['Headline', 'Outlet', 'Author']
                 for column in strip_columns:
-                    st.session_state.df_raw[column].str.strip()
-                    st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('   ', ' ')
-                    st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('  ', ' ')
-
-                # # Remove (Online)
-                # st.session_state.df_raw['Outlet'] = st.session_state.df_raw['Outlet'].str.replace(' \(Online\)', '')
-                #
-                # # Replace wonky apostrophes
-                # st.session_state.df_raw['Headline'] = st.session_state.df_raw['Headline'].str.replace('\‘', '\'')
-                # st.session_state.df_raw['Headline'] = st.session_state.df_raw['Headline'].str.replace('\’', '\'')
+                    if st.session_state.df_raw[column].notna().all():
+                        st.session_state.df_raw[column] = st.session_state.df_raw[column].str.strip()
+                # strip_columns = ['Headline', 'Outlet', 'Author']
+                # for column in strip_columns:
+                #     st.session_state.df_raw[column].str.strip()
+                        st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('   ', ' ')
+                        st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('  ', ' ')
 
                 # Remove (Online)
                 st.session_state.df_raw['Outlet'] = st.session_state.df_raw['Outlet'].str.replace(' \\(Online\\)', '')

@@ -21,7 +21,9 @@ def standard_sidebar():
 
 def top_x_by_mentions(df, column_name):
     """Returns top 10 items by mention count"""
-
+    if not df[column_name].notna().any():
+        # If all values in the column are null, return an empty dataframe
+        return
     top10 = df[[column_name, 'Mentions']].groupby(
         by=[column_name]).sum().sort_values(
         ['Mentions'], ascending=False)

@@ -36,9 +36,6 @@ for _ in text_vars:
     if _ not in st.session_state:
         st.session_state[_] = 'AVE'
 
-
-# TODO: Fully blank author column creates an error with top X function
-
 if st.session_state.upload_step:
     st.success('File uploaded.')
     if st.button('Start Over?'):
