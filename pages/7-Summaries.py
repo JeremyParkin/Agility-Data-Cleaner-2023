@@ -50,7 +50,7 @@ else:
     # Form for user input
     with st.form('User Inputs'):
         # User input for analysis mode and named entity
-        mode = st.radio("Analysis Mode", ('Summary', 'Sentiment'))
+        mode = st.radio("Analysis Mode", ('Summary', 'Sentiment'), help='Produce a short summary or sentiment opinion relative to the client brand for the selected top stories.')
         named_entity = st.text_input("Enter the named entity:", max_chars=100, key="named_entity",
                                      help="The brand, organization, or person this analysis should focus on",
                                      value=st.session_state.client_name)

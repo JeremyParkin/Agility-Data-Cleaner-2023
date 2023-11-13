@@ -184,7 +184,7 @@ else:
                 selected_column = st.selectbox('Select a column:', tag_columns)
             with col2:
                 # Create an input box to enter the keyword
-                column_keyword = st.text_input('Contains')
+                column_keyword = st.text_input('Contains', help='Input a single keyword for exact match.')
 
             submit_button = st.form_submit_button(label='Apply Filter')
 
@@ -219,7 +219,7 @@ else:
 
     df_grouped_custom["Top Story"] = False
 
-    st.subheader("Possible Top Stories")
+    st.subheader("Possible Top Stories", help='Check the "Top Story" box for those stories you want to select, then click "Save Selected" below.')
     updated_data_custom = st.data_editor(df_grouped_custom,
                                          key="df_by_custom",
                                          use_container_width=True,
