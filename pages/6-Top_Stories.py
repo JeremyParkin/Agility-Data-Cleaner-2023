@@ -198,7 +198,14 @@ else:
             if column_keyword:
                 filtered_df = st.session_state.filtered_df[
                     st.session_state.filtered_df[selected_column].fillna('').str.contains(column_keyword, case=False)]
-                st.session_state.custom_filter = group_and_process_data(filtered_df)
+
+                # Check if the filtered DataFrame is empty
+                if filtered_df.empty:
+                    st.warning("No matches found for your filter. Please clear the filter and try again.")
+                    st.session_state.custom_filter = None  # Clear the filter to prevent KeyError
+                else:
+                    st.session_state.custom_filter = group_and_process_data(filtered_df)
+                # st.session_state.custom_filter = group_and_process_data(filtered_df)
 
     # Use the custom filter if it exists, else use the grouped dataframe
     df_to_display = st.session_state.custom_filter if st.session_state.custom_filter is not None else st.session_state.df_grouped
