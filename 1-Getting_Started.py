@@ -11,12 +11,12 @@ mig.standard_sidebar()
 
 st.title('Getting Started')
 # Initialize Session State Variables
-string_vars = {'page': '1: Getting Started', 'top_auths_by': 'Mentions', 'export_name': ''}
+string_vars = {'page': '1: Getting Started', 'top_auths_by': 'Mentions', 'export_name': '', 'client_name': ''}
 for key, value in string_vars.items():
     if key not in st.session_state:
         st.session_state[key] = value
 
-df_vars = ['df_traditional', 'df_social', 'df_dupes', 'original_trad_auths', 'auth_outlet_table', 'original_auths', 'df_raw', 'df_untouched', 'author_outlets', 'broadcast_set', 'blank_set']
+df_vars = ['df_traditional', 'df_social', 'df_dupes', 'original_trad_auths', 'auth_outlet_table', 'original_auths', 'df_raw', 'df_untouched', 'author_outlets', 'broadcast_set', 'blank_set', 'added_df', 'markdown_content']
 for _ in df_vars:
     if _ not in st.session_state:
         st.session_state[_] = pd.DataFrame()
@@ -77,13 +77,13 @@ if st.session_state.upload_step:
     summary_stats.index.name = "Published Date"
     summary_stats.reset_index(inplace=True)
 
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2, gap="large")
     with col1:
         st.subheader('Mention Trend')
-        st.area_chart(data=summary_stats, x="Published Date", y="Mentions", width=0, height=0, use_container_width=True)
+        st.area_chart(data=summary_stats, x="Published Date", y="Mentions", width=0, height=250, use_container_width=True)
     with col2:
         st.subheader('Impressions Trend')
-        st.area_chart(data=summary_stats, x="Published Date", y="Impressions", width=0, height=0, use_container_width=True)
+        st.area_chart(data=summary_stats, x="Published Date", y="Impressions", width=0, height=250, use_container_width=True)
 
 if not st.session_state.upload_step:
     with st.form('my_form'):
@@ -95,7 +95,7 @@ if not st.session_state.upload_step:
                                          accept_multiple_files=False,
                                          help='Only use CSV files exported from the Agility Platform.')
 
-        submitted = st.form_submit_button("Submit")
+        submitted = st.form_submit_button("Submit", type="primary")
         if submitted and (client == "" or period == "" or uploaded_file is None):
             st.error('Missing required form inputs above.')
 
@@ -124,7 +124,9 @@ if not st.session_state.upload_step:
                 st.session_state.df_untouched = st.session_state.df_untouched.rename(columns={st.session_state.ave_col[0]: 'AVE'})
 
                 st.session_state.df_untouched['AVE'] = st.session_state.df_untouched['AVE'].fillna(0)
-                st.session_state.export_name = f"{client} - {period} - clean_data.xlsx"
+                st.session_state.export_name = f"{client} - {period}"
+                st.session_state.client_name = client
+
                 st.session_state.df_raw = st.session_state.df_untouched
                 st.session_state.df_raw.drop(["Timezone",
                                               "Word Count",

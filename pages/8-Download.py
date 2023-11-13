@@ -16,11 +16,12 @@ if not st.session_state.upload_step:
 elif not st.session_state.standard_step:
     st.error('Please run the Standard Cleaning before trying this step.')
 else:
-    export_name = st.session_state.export_name
+    # export_name = st.session_state.export_name
 
     traditional = st.session_state.df_traditional
     social = st.session_state.df_social
     auth_outlet_table = st.session_state.auth_outlet_table
+    top_stories = st.session_state.added_df
 
     # Tag exploder
     if "Tags" in st.session_state.df_traditional:
@@ -33,7 +34,7 @@ else:
 
     with st.form("my_form_download"):
         st.subheader("Generate your cleaned data workbook")
-        submitted = st.form_submit_button("Go!")
+        submitted = st.form_submit_button("Go!", type="primary")
         if submitted:
             with st.spinner('Building workbook now...'):
 
@@ -77,8 +78,27 @@ else:
                     worksheet5.set_column('D:D', 15, number_format)  # impressions
                     worksheet5.set_column('B:B', 35, None)  # outlet
                     worksheet5.freeze_panes(1, 0)
-
                     cleaned_dfs.append((authors, worksheet5))
+
+                if len(top_stories) > 0:
+                    top_stories = top_stories.sort_values(by=['Mentions', 'Impressions'], ascending=False)
+                    top_stories.to_excel(writer, sheet_name='Top Stories', header=True, index=False)
+                    worksheet6 = writer.sheets['Top Stories']
+                    worksheet6.set_tab_color('green')
+                    worksheet6.set_column('A:A', 35, None)  # headline
+                    worksheet6.set_column('B:B', 12, None)  # mentions
+                    worksheet6.set_column('C:C', 12, number_format)  # impressions
+                    worksheet6.set_column('D:D', 20, None)  # outlet
+                    worksheet6.set_column('E:E', 25, None)  # snippet
+                    worksheet6.set_column('F:F', 15, None)  # url
+                    worksheet6.set_column('G:G', 15, None)  # date
+                    worksheet6.set_column('H:H', 15, None)  # type
+                    worksheet6.set_column('I:I', 35, None)  # summary
+                    worksheet6.set_column('J:J', 35, None)  # sentiment
+                    worksheet6.freeze_panes(1, 0)
+                    cleaned_dfs.append((top_stories, worksheet6))
+
+
 
                 if len(st.session_state.df_dupes) > 0:
                     st.session_state.df_dupes = st.session_state.df_dupes.rename(columns={
@@ -118,4 +138,5 @@ else:
                 workbook.close()
 
     if submitted:
-        st.download_button('Download', output, file_name=export_name)
+        export_name = f"{st.session_state.export_name} - clean_data.xlsx"
+        st.download_button('Download', output, file_name=export_name, type="primary")

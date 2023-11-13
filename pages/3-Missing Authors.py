@@ -107,7 +107,7 @@ else:
                 else:
                     new_author = box_author
 
-                submitted = st.form_submit_button("Update Author")
+                submitted = st.form_submit_button("Update Author", type="primary")
                 if submitted:
                     mig.fix_author(st.session_state.df_traditional, headline_text, new_author)
                     st.experimental_rerun()
@@ -132,6 +132,8 @@ else:
         fixable_headline_count = headline_table.Missing.count()
         remaining = fixable_headline_count - counter
         return remaining
+
+    st.divider()
 
     col1, col2, col3 = st.columns(3)
     with col1:

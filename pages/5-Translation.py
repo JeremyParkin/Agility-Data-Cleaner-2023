@@ -31,12 +31,12 @@ elif st.session_state.translated_headline and st.session_state.translated_snippe
     if trad_non_eng > 0:
         with st.expander("Traditional - Non-English"):
             st.dataframe(traditional[traditional['Language'] != 'English'][
-                             ['Outlet', 'Headline', 'Snippet', 'Summary', 'Language', 'Country']])
+                             ['Outlet', 'Headline', 'Snippet', 'Contextual Snippet', 'Language', 'Country']])
 
     if soc_non_eng > 0:
         with st.expander("Social - Non-English"):
             st.dataframe(st.session_state.df_social[st.session_state.df_social['Language'] != 'English'][
-                             ['Outlet', 'Snippet', 'Summary', 'Language', 'Country']])
+                             ['Outlet', 'Snippet', 'Contextual Snippet', 'Language', 'Country']])
 elif len(traditional[traditional['Language'] != 'English']) == 0 and len(
         st.session_state.df_social[st.session_state.df_social['Language'] != 'English']) == 0:
     st.subheader("No translation required")
@@ -69,12 +69,12 @@ else:
     if len(traditional) > 0:
         with st.expander("Traditional - Non-English"):
             st.dataframe(traditional[traditional['Language'] != 'English'][
-                             ['Outlet', 'Headline', 'Snippet', 'Summary', 'Language', 'Country']])
+                             ['Outlet', 'Headline', 'Snippet', 'Contextual Snippet', 'Language', 'Country']])
 
     if len(st.session_state.df_social) > 0:
         with st.expander("Social - Non-English"):
             st.dataframe(st.session_state.df_social[st.session_state.df_social['Language'] != 'English'][
-                             ['Outlet', 'Snippet', 'Summary', 'Language', 'Country']])
+                             ['Outlet', 'Snippet', 'Contextual Snippet', 'Language', 'Country']])
 
     with st.form('translation_form'):
         st.subheader("Pick columns for translations")
@@ -96,12 +96,12 @@ else:
             snippet_to_english = False
 
         if not st.session_state.translated_summary:
-            summary_to_english = st.checkbox('Summary', value=True)
+            summary_to_english = st.checkbox('Contextual Snippet', value=True)
         else:
             st.success('✓ Summaries translated.')
             summary_to_english = False
 
-        submitted = st.form_submit_button("Go!")
+        submitted = st.form_submit_button("Go!", type="primary")
         if submitted:
             st.warning("Stay on this page until translation is complete")
 
@@ -124,8 +124,8 @@ else:
                 st.session_state.translated_headline = True
                 st.success(f'Done translating headlines!')
             if summary_to_english:
-                translate_col(traditional, 'Summary')
-                translate_col(st.session_state.df_social, 'Summary')
+                translate_col(traditional, 'Contextual Snippet')
+                translate_col(st.session_state.df_social, 'Contextual Snippet')
                 st.session_state.translated_summary = True
                 st.success(f'Done translating summaries!')
             if snippet_to_english:

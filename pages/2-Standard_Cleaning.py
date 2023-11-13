@@ -64,7 +64,7 @@ else:
         merge_online = st.checkbox("Merge 'blogs' and 'press releases' into 'Online'", value=True)
         drop_dupes = st.checkbox("Drop duplicates", value=True)
 
-        submitted = st.form_submit_button("Go!")
+        submitted = st.form_submit_button("Go!", type="primary")
         if submitted:
             with st.spinner("Running standard cleaning."):
 
@@ -93,16 +93,37 @@ else:
                 st.session_state.df_raw.insert(4, 'Mentions', temp)
 
                 # Strip extra white space
-                st.session_state.df_raw['Headline'] = st.session_state.df_raw['Headline'].astype(str)
-                strip_columns = ['Headline', 'Outlet', 'Author']
+                # st.session_state.df_raw['Headline'] = st.session_state.df_raw['Headline'].astype(str)
+                strip_columns = ['Headline', 'Outlet', 'Author', 'Snippet']
                 for column in strip_columns:
-                    if st.session_state.df_raw[column].notna().all():
-                        st.session_state.df_raw[column] = st.session_state.df_raw[column].str.strip()
-                # strip_columns = ['Headline', 'Outlet', 'Author']
+                #     if st.session_state.df_raw[column].notna().all():
+                #         st.session_state.df_raw[column] = st.session_state.df_raw[column].str.strip()
+                # # strip_columns = ['Headline', 'Outlet', 'Author']
                 # for column in strip_columns:
                 #     st.session_state.df_raw[column].str.strip()
-                        st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('   ', ' ')
-                        st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('  ', ' ')
+                    st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('    ', ' ')
+                    st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('   ', ' ')
+                    st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('  ', ' ')
+                #         st.session_state.df_raw[column] = " ".join(st.session_state.df_raw[column].split())
+
+                strip_columns = ['Headline', 'Outlet', 'Author', 'Snippet']
+                for column in strip_columns:
+                    if st.session_state.df_raw[column].notna().all():
+                        # Strip leading and trailing spaces
+                        st.session_state.df_raw[column] = st.session_state.df_raw[column].str.strip()
+
+                        # Replace multiple spaces with a single space
+                        st.session_state.df_raw[column] = st.session_state.df_raw[column].apply(
+                            lambda x: " ".join(x.split()))
+
+                        # Strip leading and trailing spaces
+                        st.session_state.df_raw[column] = st.session_state.df_raw[column].str.strip()
+
+                        st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('& amp;', '&')
+
+
+
+
 
                 # Remove (Online)
                 st.session_state.df_raw['Outlet'] = st.session_state.df_raw['Outlet'].str.replace(' \\(Online\\)', '')

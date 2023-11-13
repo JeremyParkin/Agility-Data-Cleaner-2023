@@ -273,7 +273,7 @@ else:
                     string_outlet = st.text_input("Write in an outlet name",
                                                   help='Override above selection by writing in a custom name.')
 
-                submitted = st.form_submit_button("Assign Outlet")
+                submitted = st.form_submit_button("Assign Outlet", type="primary")
 
         if submitted:
             if len(string_outlet) > 0:
