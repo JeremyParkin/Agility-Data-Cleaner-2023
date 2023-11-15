@@ -34,6 +34,22 @@ elif not st.session_state.standard_step:
 else:
     st.session_state['filtered_df'] = st.session_state.df_traditional.copy()
 
+    ######### DROP UNNECCESSARY COLUMNS
+    # Get all column names from the DataFrame
+    all_columns = list(st.session_state.df_traditional.columns)
+
+    # Define the columns to keep
+    columns_to_keep = ['Headline', 'Date', 'Mentions', 'Impressions', 'Type', 'Outlet', 'URL', 'Snippet', 'Tags']
+
+    # Add any 'Tag Group' columns to the list of columns to keep
+    tag_group_columns = [col for col in all_columns if 'Tag Group' in col]
+    columns_to_keep.extend(tag_group_columns)
+
+    # Filter the DataFrame to only keep these columns
+    st.session_state['filtered_df'] = st.session_state.df_traditional[columns_to_keep].copy()
+
+    ###################################
+
     # Example of filling NaN values
     st.session_state.filtered_df["Impressions"].fillna(0, inplace=True)
     st.session_state.filtered_df["Snippet"].fillna("", inplace=True)
@@ -65,61 +81,22 @@ else:
         {'Mentions': 'count', 'Impressions': 'sum'}).reset_index()
 
 
-
-    # Define functions to pick the best snippet and URL
-    def pick_best_snippet(group):
-        if not group.empty:
-            best_snippet = group.loc[group['Snippet'].str.len().idxmax()]['Snippet']
-            if pd.isna(best_snippet) or best_snippet.strip() == '':
-                best_snippet = group.loc[group['Impressions'].idxmax()]['Snippet']
-            return best_snippet
-        return None  # Return None or some default value if the group is empty
-
-
-    # def pick_best_story_details(group):
-    #     if not group.empty and 'Impressions' in group and not group['Impressions'].isnull().all():
-    #         # Define the middle and bottom tiers
-    #         middle_tier_keywords = ['MarketWatch', 'Seeking Alpha', "News Break"]
-    #         bottom_tier_keywords = ['Yahoo', 'MSN']
-    #
-    #         # Exclude or deprioritize middle and bottom tier outlets
-    #         top_tier_group = group[
-    #             ~group['Outlet'].str.contains('|'.join(middle_tier_keywords + bottom_tier_keywords), case=False,
-    #                                           na=False)]
-    #         middle_tier_group = group[
-    #             group['Outlet'].str.contains('|'.join(middle_tier_keywords), case=False, na=False) &
-    #             ~group['Outlet'].str.contains('|'.join(bottom_tier_keywords), case=False, na=False)]
-    #
-    #         # Select from top tier if available
-    #         if not top_tier_group.empty:
-    #             best_row = top_tier_group.loc[top_tier_group['Impressions'].idxmax()]
-    #             return best_row['Outlet'], best_row['Date'], best_row.get('URL',
-    #                                                                       None)  # Handle missing 'Example URL'
-    #
-    #         # If top tier is empty, select from middle tier
-    #         if not middle_tier_group.empty:
-    #             best_row = middle_tier_group.loc[middle_tier_group['Impressions'].idxmax()]
-    #             return best_row['Outlet'], best_row['Date'], best_row.get('URL', None)
-    #
-    #         # Otherwise, fall back to the original group (bottom tier)
-    #         best_row = group.loc[group['Impressions'].idxmax()]
-    #         return best_row['Outlet'], best_row['Date'], best_row.get('URL', None)
-    #
-    #     return None, None, None  # Return None for each if the group is empty or if 'Impressions' is all NaN
-
     def pick_best_story_details(group):
         if not group.empty and 'Impressions' in group and not group['Impressions'].isnull().all():
             # Check if the group contains a broadcast type
             is_broadcast = group['Type'].isin(['TV', 'RADIO', 'PODCAST']).any()
 
             # Define the middle and bottom tiers
-            middle_tier_keywords = ['MarketWatch', 'Seeking Alpha', "News Break"]
-            bottom_tier_keywords = ['Yahoo', 'MSN']
+            middle_tier_keywords = ['MarketWatch', 'Seeking Alpha', "News Break", 'Dispatchist', 'MarketScreener',
+                                    'StreetInsider', 'Head Topics']
+            bottom_tier_keywords = ['Yahoo', 'MSN', 'Newswire', 'Saltwire', 'Market Wire', 'Business Wire',
+                                    'TD Ameritrade', 'PR Wire', 'Chinese Wire', 'News Wire', 'Newswire', 'Presswire']
 
             # For broadcasts, skip tier filtering and directly pick the best based on 'Impressions'
             if is_broadcast:
                 best_row = group.loc[group['Impressions'].idxmax()]
-                return best_row['Outlet'], best_row['Date'], best_row.get('URL', None)
+                return best_row['Outlet'], best_row.get('URL', None), best_row['Type'], best_row.get(
+                    'Snippet', None)
 
             # Exclude or deprioritize middle and bottom tier outlets for non-broadcast types
             top_tier_group = group[
@@ -132,32 +109,40 @@ else:
             # Select from top tier if available
             if not top_tier_group.empty:
                 best_row = top_tier_group.loc[top_tier_group['Impressions'].idxmax()]
-                return best_row['Outlet'], best_row['Date'], best_row.get('URL', None)
+                return best_row['Outlet'], best_row.get('URL', None), best_row['Type'], best_row.get(
+                    'Snippet', None)
 
             # If top tier is empty, select from middle tier
             if not middle_tier_group.empty:
                 best_row = middle_tier_group.loc[middle_tier_group['Impressions'].idxmax()]
-                return best_row['Outlet'], best_row['Date'], best_row.get('URL', None)
+                return best_row['Outlet'], best_row.get('URL', None), best_row['Type'], best_row.get(
+                    'Snippet', None)
 
             # Otherwise, fall back to the original group (bottom tier)
             best_row = group.loc[group['Impressions'].idxmax()]
-            return best_row['Outlet'], best_row['Date'], best_row.get('URL', None)
+            return best_row['Outlet'], best_row.get('URL', None), best_row['Type'], best_row.get(
+                'Snippet', None)
 
-        return None, None, None  # Return None for each if the group is empty or if 'Impressions' is all NaN
+        return None, None, None, None  # Return None for each field if the group is empty or if 'Impressions' is all NaN
 
 
+    @st.cache_data
+    def group_and_process_data(df):
+        # Group by 'Headline' and 'Date'
+        grouped_df = df.groupby(['Headline', 'Date']).agg(
+            {'Mentions': 'count', 'Impressions': 'sum'}).reset_index()
 
+        # Process each group
+        for i, row in grouped_df.iterrows():
+            headline_group = df[(df['Headline'] == row['Headline']) & (df['Date'] == row['Date'])]
 
-    def pick_best_type(group):
-        if not group.empty and 'Impressions' in group and not group['Impressions'].isnull().all():
-            # Exclude or deprioritize rows where the 'Outlet' contains 'Yahoo' or 'MSN'
-            non_aggregator_group = group[~group['Outlet'].str.contains('Yahoo|MSN', case=False, na=False)]
-            # If non-aggregator group is not empty, pick the best URL from it
-            if not non_aggregator_group.empty:
-                return non_aggregator_group.loc[non_aggregator_group['Impressions'].idxmax()]['Type']
-            # Otherwise, fall back to the original group
-            return group.loc[group['Impressions'].idxmax()]['Type']
-        return None  # Return None or some default value if the group is empty or if 'Impressions' is all NaN
+            best_outlet, best_url, best_type, best_snippet = pick_best_story_details(headline_group)
+            grouped_df.at[i, 'Example Outlet'] = best_outlet
+            grouped_df.at[i, 'Example URL'] = best_url
+            grouped_df.at[i, 'Example Type'] = best_type
+            grouped_df.at[i, 'Example Snippet'] = best_snippet
+
+        return grouped_df
 
 
 
@@ -173,57 +158,6 @@ else:
             st.session_state.added_df.drop_duplicates(subset=["Headline"], keep='last', inplace=True)
 
 
-
-    # @st.cache_data
-    # def group_and_process_data(df):
-    #     # Perform grouping and processing
-    #     grouped_df = df.groupby('Headline').agg({'Mentions': 'count', 'Impressions': 'sum'}).reset_index()
-    #
-    #     # Update this section to use the new function
-    #     for i, row in grouped_df.iterrows():
-    #         headline_group = df[df['Headline'] == row['Headline']]
-    #         best_outlet, best_date, best_url = pick_best_story_details(headline_group)
-    #         grouped_df.at[i, 'Example Outlet'] = best_outlet
-    #         grouped_df.at[i, 'Example URL'] = best_url
-    #         grouped_df.at[i, 'Example Date'] = best_date
-    #
-    #     # Continue with the rest of the processing
-    #     grouped_df['Example Snippet'] = grouped_df['Headline'].apply(
-    #         lambda x: pick_best_snippet(df[df['Headline'] == x]))
-    #     grouped_df['Example Type'] = grouped_df['Headline'].apply(lambda x: pick_best_type(df[df['Headline'] == x]))
-    #
-    #     # Convert datetime to date-only format
-    #     if 'Example Date' in grouped_df.columns and pd.notnull(grouped_df['Example Date']).any():
-    #         grouped_df['Example Date'] = pd.to_datetime(grouped_df['Example Date']).dt.date
-    #
-    #     return grouped_df
-
-    @st.cache_data
-    def group_and_process_data(df):
-        # Group by 'Headline' and 'Date'
-        grouped_df = df.groupby(['Headline', 'Date']).agg(
-            {'Mentions': 'count', 'Impressions': 'sum'}).reset_index()
-
-        # Process each group
-        for i, row in grouped_df.iterrows():
-            headline_group = df[(df['Headline'] == row['Headline']) & (df['Date'] == row['Date'])]
-
-            best_outlet, best_date, best_url = pick_best_story_details(headline_group)
-            grouped_df.at[i, 'Example Outlet'] = best_outlet
-            grouped_df.at[i, 'Example URL'] = best_url
-            grouped_df.at[i, 'Example Date'] = best_date
-
-        # Apply the 'pick_best_snippet' and 'pick_best_type' functions
-        grouped_df['Example Snippet'] = grouped_df['Headline'].apply(
-            lambda x: pick_best_snippet(df[df['Headline'] == x]))
-        grouped_df['Example Type'] = grouped_df['Headline'].apply(
-            lambda x: pick_best_type(df[df['Headline'] == x]))
-
-        # Convert datetime to date-only format for 'Example Date'
-        if 'Example Date' in grouped_df.columns and pd.notnull(grouped_df['Example Date']).any():
-            grouped_df['Example Date'] = pd.to_datetime(grouped_df['Example Date']).dt.date
-
-        return grouped_df
 
 
     # Then use this function to get the processed data

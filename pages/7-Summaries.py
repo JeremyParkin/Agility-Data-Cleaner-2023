@@ -9,10 +9,6 @@ import re
 
 
 
-
-
-
-
 type_dict = {
     "RADIO": "broadcast transcript",
     "TV": "broadcast transcript",
@@ -64,10 +60,6 @@ else:
 
         # Define function to generate summary prompt
         def generate_summary_prompt(row, named_entity):
-            # return f"Please provide a 1-sentence summary of the news story that conveys its overall focus and its significance to {named_entity}.\n\nThis is the news story:\n{row['Headline']}. {row['Example Snippet']}"
-            # return f"Provide a roughly 20-word executive-style summary of the following news story that conveys its overall focus and its significance to {named_entity}. \n\nHEADLINE:\n{row['Headline']}\n BODY: \n{row['Example Snippet']}"
-            # return f"Write an extremely concise summary of the news story below, highlighting its significance to {named_entity}. \n\nHEADLINE:\n{row['Headline']}\n BODY: \n{row['Example Snippet']}"
-            # return f"Provide an executive summary of the following {type_dict[row['Example Type']]} that expresses its overall gist and clearly conveys its significance to {named_entity}. The summary should be concise, approximately 20 words, and should not include any labels or introductory text (not even the word 'Summary'). \n\nHEADLINE:\n{row['Headline']}\n BODY: \n{row['Example Snippet']}"
 
             if row['Example Type'] == "RADIO" or "TV":
                 summary_prompt = f"""
@@ -87,13 +79,6 @@ else:
                    \n\nHEADLINE:\n{row['Headline']}\n BODY: \n{row['Example Snippet']}"
                    """
 
-                    # """
-                    # Provide an executive summary of the following {type_dict[row['Example Type']]}
-                    # that clearly expresses its significance to {named_entity}.
-                    # The summary should be concise, approximately 20-25 words, and should not include any
-                    # labels or introductory text (not even the word 'Summary').
-                    # \n\nHEADLINE:\n{row['Headline']}\n BODY: \n{row['Example Snippet']}"
-                    # """
 
             return summary_prompt
 
@@ -203,7 +188,7 @@ else:
         head = escape_markdown(df.Headline[story])
         outlet = escape_markdown(df["Example Outlet"][story])
         link = escape_markdown(df["Example URL"][story])
-        date = df["Example Date"][story].strftime("%B %d, %Y")
+        date = df["Date"][story].strftime("%B %d, %Y")
 
         # Build the markdown string
         markdown_content += f"__[{head}]({link})__  \n"
@@ -222,6 +207,3 @@ else:
 
     # Display the entire content as Markdown
     st.markdown(markdown_content, unsafe_allow_html=True)
-
-
-    # st.session_state.markdown_content = markdown_content

@@ -86,15 +86,15 @@ else:
                     worksheet6 = writer.sheets['Top Stories']
                     worksheet6.set_tab_color('green')
                     worksheet6.set_column('A:A', 35, None)  # headline
-                    worksheet6.set_column('B:B', 12, None)  # mentions
-                    worksheet6.set_column('C:C', 12, number_format)  # impressions
-                    worksheet6.set_column('D:D', 20, None)  # outlet
-                    worksheet6.set_column('E:E', 25, None)  # snippet
+                    worksheet6.set_column('B:B', 12, None)  # date
+                    worksheet6.set_column('C:C', 12, number_format)  # mentions
+                    worksheet6.set_column('D:D', 12, number_format)  # impressions
+                    worksheet6.set_column('E:E', 20, None)  # outlet
                     worksheet6.set_column('F:F', 15, None)  # url
-                    worksheet6.set_column('G:G', 15, None)  # date
-                    worksheet6.set_column('H:H', 15, None)  # type
-                    worksheet6.set_column('I:I', 35, None)  # summary
-                    worksheet6.set_column('J:J', 35, None)  # sentiment
+                    worksheet6.set_column('G:G', 15, None)  # type
+                    worksheet6.set_column('H:H', 15, None)  # snippet
+                    worksheet6.set_column('I:I', 40, None)  # summary
+                    worksheet6.set_column('J:J', 40, None)  # sentiment
                     worksheet6.freeze_panes(1, 0)
                     cleaned_dfs.append((top_stories, worksheet6))
 
