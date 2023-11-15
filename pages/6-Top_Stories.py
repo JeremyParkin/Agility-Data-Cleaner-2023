@@ -226,8 +226,11 @@ else:
                                          use_container_width=True,
                                          column_config={
                                              "Headline": st.column_config.Column("Headline", width="large"),
+                                             "Date": st.column_config.Column("Date", width="small"),
+                                             "Mentions": st.column_config.Column("Mentions", width="small"),
+                                             "Impressions": st.column_config.Column("Impressions", width="small"),
                                              "Example URL": st.column_config.LinkColumn("Example URL", width="medium"),
-                                             "Example Snippet": st.column_config.Column("Example Snippet", width="medium"),
+                                             "Example Snippet": st.column_config.Column("Example Snippet", width="small"),
                                              "Example Outlet": None,
                                              "Example Type": None,
                                          },
@@ -242,6 +245,7 @@ else:
     if len(st.session_state['added_df']) > 0:
         st.subheader("Saved Top Stories")
         st.dataframe(st.session_state['added_df'],
+                                            use_container_width=True,
                                             column_config={
                                              "Headline": st.column_config.Column("Headline", width="large"),
                                              "Example URL": st.column_config.LinkColumn("Example URL", width="medium"),

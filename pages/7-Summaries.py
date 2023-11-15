@@ -155,25 +155,6 @@ else:
             st.error('Named entity is required to proceed.')
 
 
-    # st.dataframe(df, use_container_width=True,
-    #              column_config={
-    #     "Headline": st.column_config.Column("Headline", width="small"),
-    #     # "Example URL": st.column_config.LinkColumn("Example URL", width="medium"),
-    #     "Example Snippet": None,
-    #     "Example URL": None,
-    #     "Mentions": None,
-    #     "Impressions": None,
-    #     "Example Date": None,
-    #     "Example Outlet": None,
-    #     "Example Type": None,
-    # },
-    #              hide_index=True,
-    #              )
-
-    # st.divider()
-    # st.header("Copy/Paste Top Stories")
-    # st.divider()
-
     markdown_content = ""
 
 

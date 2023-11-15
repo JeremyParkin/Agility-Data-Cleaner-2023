@@ -1,7 +1,7 @@
 def standard_sidebar():
     import streamlit as st
     st.sidebar.image('https://agilitypr.news/images/Agility-centered.svg', width=200)
-    st.sidebar.header('MIG: Data Cleaning App')
+    st.sidebar.header('MIG: Data Prep App')
     st.sidebar.caption("v.2.1 - Nov 2023")
 
     # CSS to adjust sidebar
@@ -10,11 +10,14 @@ def standard_sidebar():
                             .eczjsme9 {
                                 min-height: 50vh !important;
                                 overflow: visible !important;
-                                max-width: 255px;
+                                max-width: 244px !important;
                                 }
                             .st-emotion-cache-a8w3f8 {
                                 min-height: 50vh !important;
                                 overflow: visible !important;
+                                }
+                            .st-emotion-cache-1cypcdb {
+                                max-width: 244px !important;
                                 }
                             </style>
                             """
@@ -44,21 +47,3 @@ def headline_authors(df, headline_text):
     """Returns the various authors for a given headline"""
     headline_authors = (df[df.Headline == headline_text].Author.value_counts().reset_index())
     return headline_authors
-
-
-
-
-
-
-
-# def pick_best_url(group):
-#     if not group.empty and 'Impressions' in group and not group['Impressions'].isnull().all():
-#         return group.loc[group['Impressions'].idxmax()]['URL']
-#     return None  # Return None or some default value if the group is empty or if 'Impressions' is all NaN
-
-
-# Define a function to pick the best date
-# def pick_best_date(group):
-#     if not group.empty and 'Impressions' in group and not group['Impressions'].isnull().all():
-#         return group.loc[group['Impressions'].idxmax()]['Date']
-#     return None  # Return None or some default value if the group is empty or if 'Impressions' is all NaN
