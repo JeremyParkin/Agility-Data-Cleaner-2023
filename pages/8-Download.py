@@ -132,7 +132,7 @@ else:
                     sheet.set_column('E:E', 0, None)  # mentions
                     sheet.set_column('F:F', 12, number_format)  # impressions
                     sheet.set_column('H:H', 40, None)  # headline
-                    sheet.set_column('R:R', 12, currency_format)  # AVE
+                    sheet.set_column('U:U', 12, currency_format)  # AVE
                     sheet.freeze_panes(1, 0)
 
                 workbook.close()

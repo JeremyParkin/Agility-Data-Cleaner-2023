@@ -11,25 +11,27 @@ mig.standard_sidebar()
 
 st.title('Getting Started')
 # Initialize Session State Variables
-string_vars = {'page': '1: Getting Started', 'top_auths_by': 'Mentions', 'export_name': '', 'client_name': ''}
+string_vars = {'page': '1: Getting Started', 'top_auths_by': 'Mentions', 'export_name': '', 'client_name': '','counter':0, 'auth_outlet_skipped':0}
 for key, value in string_vars.items():
     if key not in st.session_state:
         st.session_state[key] = value
 
-df_vars = ['df_traditional', 'df_social', 'df_dupes', 'original_trad_auths', 'auth_outlet_table', 'original_auths', 'df_raw', 'df_untouched', 'author_outlets', 'broadcast_set', 'blank_set', 'added_df', 'markdown_content']
+df_vars = ['df_traditional', 'df_social', 'df_dupes', 'original_trad_auths', 'auth_outlet_table', 'original_auths',
+           'df_raw', 'df_untouched', 'author_outlets', 'broadcast_set', 'blank_set', 'added_df', 'markdown_content',
+           'filtered_df', 'df_grouped', 'selected_df', 'selected_rows', 'top_stories', 'auth_outlet_todo']
 for _ in df_vars:
     if _ not in st.session_state:
         st.session_state[_] = pd.DataFrame()
 
-step_vars = ['upload_step', 'standard_step', 'translated_headline', 'translated_summary', 'translated_snippet', 'filled']
+step_vars = ['upload_step', 'standard_step', 'translated_headline', 'translated_summary', 'translated_snippet', 'filled', 'pickle_load']
 for _ in step_vars:
     if _ not in st.session_state:
         st.session_state[_] = False
 
-counter_vars = ['counter', 'auth_outlet_skipped']
-for _ in counter_vars:
-    if _ not in st.session_state:
-        st.session_state[_] = 0
+# counter_vars = ['counter', 'auth_outlet_skipped']
+# for _ in counter_vars:
+#     if _ not in st.session_state:
+#         st.session_state[_] = 0
 
 text_vars = ['ave_col']
 for _ in text_vars:
@@ -114,7 +116,6 @@ if not st.session_state.upload_step:
                 # DEALING WITH VARIABLE AVE NAMES
                 # assume the original DataFrame is stored in a variable called `df`
                 # find the column with the "AVE" and currency type in parentheses, or just "AVE"
-                # st.session_state.ave_col = [col for col in st.session_state.df_untouched.columns if re.match(r'^AVE\([A-Z]{2,3}\)$', col)]
                 st.session_state.ave_col = [col for col in st.session_state.df_untouched.columns if
                                             re.match(r'^AVE\([A-Z]{2,3}\)$', col)] or [col for col in
                                                                                        st.session_state.df_untouched.columns

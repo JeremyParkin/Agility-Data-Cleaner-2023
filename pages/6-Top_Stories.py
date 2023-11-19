@@ -11,16 +11,20 @@ st.set_page_config(layout="wide", page_title="MIG Data Cleaning App",
 
 
 # Define global variables for the DataFrame names
-df_vars = ['filtered_df', 'df_grouped', 'selected_df', 'selected_rows', 'top_stories']
+df_vars = ['filtered_df', 'df_grouped', 'selected_df', 'selected_rows', 'top_stories', 'added_df']
+
+
 
 # Initialize session state variables
 for var in df_vars:
     if var not in st.session_state:
         st.session_state[var] = pd.DataFrame()
 
-if 'added_df' not in st.session_state:
-    st.session_state['added_df'] = pd.DataFrame(columns=['Headline', 'Mentions', 'Impressions','Example Snippet', 'Example URL', 'Example Date'])
+# if 'added_df' not in st.session_state:
+#     st.session_state['added_df'] = pd.DataFrame(columns=['Headline', 'Mentions', 'Impressions','Example Snippet', 'Example URL', 'Example Date'])
 
+
+# st.write(type(st.session_state.markdown_content))
 # Sidebar configuration
 mig.standard_sidebar()
 
@@ -152,7 +156,7 @@ else:
         selected_rows.drop(columns=['Top Story'], inplace=True)  # Drop the checkbox column
         st.session_state.selected_rows = selected_rows
 
-        if st.button("Save Selected to Top Stories Table", key=key, type="primary"):
+        if st.button("Save Selected", key=key, type="primary"):
             # Concatenate while keeping all columns except 'Top Story'
             st.session_state.added_df = pd.concat([st.session_state.added_df, selected_rows])
             st.session_state.added_df.drop_duplicates(subset=["Headline"], keep='last', inplace=True)

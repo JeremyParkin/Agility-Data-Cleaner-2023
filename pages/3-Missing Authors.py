@@ -51,7 +51,7 @@ else:
             if next_auth:
                 counter += 1
                 st.session_state.counter = counter
-                st.experimental_rerun()
+                st.rerun()
 
         if counter > 0:
             with col3:
@@ -61,7 +61,7 @@ else:
                 if reset_counter:
                     counter = 0
                     st.session_state.counter = counter
-                    st.experimental_rerun()
+                    st.rerun()
 
         possibles = mig.headline_authors(st.session_state.df_traditional, headline_text)
 

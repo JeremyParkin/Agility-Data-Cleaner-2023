@@ -96,18 +96,12 @@ else:
                 # st.session_state.df_raw['Headline'] = st.session_state.df_raw['Headline'].astype(str)
                 strip_columns = ['Headline', 'Outlet', 'Author', 'Snippet']
                 for column in strip_columns:
-                #     if st.session_state.df_raw[column].notna().all():
-                #         st.session_state.df_raw[column] = st.session_state.df_raw[column].str.strip()
-                # # strip_columns = ['Headline', 'Outlet', 'Author']
-                # for column in strip_columns:
-                #     st.session_state.df_raw[column].str.strip()
+
                     st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('    ', ' ')
                     st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('   ', ' ')
                     st.session_state.df_raw[column] = st.session_state.df_raw[column].str.replace('  ', ' ')
-                #         st.session_state.df_raw[column] = " ".join(st.session_state.df_raw[column].split())
 
-                strip_columns = ['Headline', 'Outlet', 'Author', 'Snippet']
-                for column in strip_columns:
+
                     if st.session_state.df_raw[column].notna().all():
                         # Strip leading and trailing spaces
                         st.session_state.df_raw[column] = st.session_state.df_raw[column].str.strip()
