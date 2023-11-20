@@ -13,18 +13,17 @@ st.set_page_config(layout="wide", page_title="MIG Data Cleaning App",
 # Define global variables for the DataFrame names
 df_vars = ['filtered_df', 'df_grouped', 'selected_df', 'selected_rows', 'top_stories', 'added_df']
 
-
-
 # Initialize session state variables
 for var in df_vars:
     if var not in st.session_state:
         st.session_state[var] = pd.DataFrame()
 
-# if 'added_df' not in st.session_state:
-#     st.session_state['added_df'] = pd.DataFrame(columns=['Headline', 'Mentions', 'Impressions','Example Snippet', 'Example URL', 'Example Date'])
+if 'Date' in st.session_state.filtered_df.columns:
+    st.session_state.filtered_df['Date'] = pd.to_datetime(st.session_state.filtered_df['Date']).dt.date
 
+if 'Date' in st.session_state.added_df.columns:
+    st.session_state.added_df['Date'] = pd.to_datetime(st.session_state.added_df['Date']).dt.date
 
-# st.write(type(st.session_state.markdown_content))
 # Sidebar configuration
 mig.standard_sidebar()
 
@@ -149,7 +148,6 @@ else:
         return grouped_df
 
 
-
     # Define a function to save selected rows without the 'Top Story' column
     def save_selected_rows(updated_data, key):
         selected_rows = updated_data.loc[updated_data['Top Story'] == True].copy()
@@ -162,10 +160,9 @@ else:
             st.session_state.added_df.drop_duplicates(subset=["Headline"], keep='last', inplace=True)
 
 
-
-
     # Then use this function to get the processed data
     st.session_state['df_grouped'] = group_and_process_data(st.session_state.filtered_df)
+
 
     # Sort the DataFrame first by 'Mentions' in descending order, then by 'Impressions' also in descending order
     st.session_state['df_grouped'] = st.session_state['df_grouped'].sort_values(by=['Mentions', 'Impressions'],
@@ -215,6 +212,9 @@ else:
     # Use the custom filter if it exists, else use the grouped dataframe
     df_to_display = st.session_state.custom_filter if st.session_state.custom_filter is not None else st.session_state.df_grouped
 
+
+    df_to_display['Date'] = pd.to_datetime(df_to_display['Date']).dt.date
+
     df_grouped_custom = df_to_display.copy()
     df_grouped_custom['Example URL'] = df_grouped_custom['Example URL'].astype(str)
 
@@ -248,7 +248,7 @@ else:
     # Display the saved top stories with the best snippet and URL
     if len(st.session_state['added_df']) > 0:
         st.subheader("Saved Top Stories")
-        st.dataframe(st.session_state['added_df'],
+        st.dataframe(st.session_state.added_df,
                                             use_container_width=True,
                                             column_config={
                                              "Headline": st.column_config.Column("Headline", width="large"),
@@ -262,5 +262,5 @@ else:
 
         # Clear saved top stories
         if st.button("Clear Saved"):
-            st.session_state['added_df'] = pd.DataFrame(columns=['Headline', 'Mentions', 'Impressions','Example Snippet', 'Example URL', 'Example Date'])
+            st.session_state.added_df = pd.DataFrame(columns=['Headline', 'Mentions', 'Impressions','Example Snippet', 'Example URL', 'Example Date'])
             st.experimental_rerun()
