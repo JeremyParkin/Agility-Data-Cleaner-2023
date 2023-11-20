@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 # Set Streamlit configuration
-st.set_page_config(page_title="MIG Sentiment App",
+st.set_page_config(page_title="MIG Data Processing App",
                    page_icon="https://www.agilitypr.com/wp-content/uploads/2018/02/favicon-192.png",
                    layout="wide")
 

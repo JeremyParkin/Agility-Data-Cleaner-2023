@@ -20,7 +20,7 @@ type_dict = {
 warnings.filterwarnings('ignore')
 
 # Set page configuration
-st.set_page_config(layout="wide", page_title="MIG Data Cleaning App",
+st.set_page_config(layout="wide", page_title="MIG Data Processing App",
                    page_icon="https://www.agilitypr.com/wp-content/uploads/2018/02/favicon-192.png")
 
 # Standard sidebar
