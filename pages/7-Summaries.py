@@ -6,7 +6,8 @@ import openai
 import time
 from datetime import datetime
 import re
-
+from openai import OpenAI
+client = OpenAI(api_key=st.secrets["key"])
 
 
 type_dict = {
@@ -110,7 +111,8 @@ else:
                     df.at[i, 'Entity Sentiment'] = ""
 
                 # Call the OpenAI API using the chat interface
-                response = openai.ChatCompletion.create(
+                # response = openai.ChatCompletion.create(
+                response = client.chat.completions.create(
                     model="gpt-3.5-turbo-1106",
                     messages=[
                         {"role": "system", "content": "You are a highly knowledgeable media analysis AI."},
@@ -123,33 +125,39 @@ else:
                 progress = int((processed_items / total_items) * 100)
                 progress_bar.progress(progress)
 
+
                 # Update the DataFrame with the response
                 if mode == "Summary":
-                    df.at[i, 'Entity Summary'] = response['choices'][0]['message']['content']
+                    summary = response.choices[0].message.content.strip()
+                    df.at[i, 'Entity Summary'] = summary
                 else:
-                    df.at[i, 'Entity Sentiment'] = response['choices'][0]['message']['content']
+                    sentiment = response.choices[0].message.content.strip()
+                    df.at[i, 'Entity Sentiment'] = sentiment
+
 
                 # Calculate the cost
-                tokens = response['usage']['total_tokens']
-                cost = (tokens / 1000) * 0.02
-                total_cost += cost
+                # tokens = response['usage']['total_tokens']
+                # cost = (tokens / 1000) * 0.02
+                # total_cost += cost
                 # st.info(f"Message {i + 1} uses {tokens} tokens for a total cost of ${round(cost, 3)}.")
 
-            except openai.error.RateLimitError:
+
+
+            except openai.RateLimitError:
                 st.warning("Rate limit exceeded. Waiting for 20 seconds before retrying.")
                 time.sleep(20)
-            except openai.error.APIError as e:
-                st.error(f"Error while processing the request: {e}")
-                st.error("Please check the request ID and contact OpenAI support if the error persists.")
-                break  # Break the loop if there's an API error
+
+            except Exception as e:
+                st.error(f"An unexpected error occurred: {e}")
+
 
         # Complete the progress bar when done
         progress_bar.progress(100)
 
         # Display the total cost of all API calls
         # st.info(f"Total cost for all messages: ${round(total_cost, 2)}")
-        # Save the analysis in session state
-        # st.session_state.entity_analysis = df
+
+
     else:
         if submitted and not named_entity:
             st.error('Named entity is required to proceed.')
