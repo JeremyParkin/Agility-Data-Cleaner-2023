@@ -193,7 +193,7 @@ else:
         # Button to clear the custom filter
         if st.button('Clear Filter'):
             st.session_state.custom_filter = None
-            st.experimental_rerun()
+            st.rerun()
 
         if submit_button:
             # Filter the dataframe based on user inputs
@@ -263,4 +263,4 @@ else:
         # Clear saved top stories
         if st.button("Clear Saved"):
             st.session_state.added_df = pd.DataFrame(columns=['Headline', 'Mentions', 'Impressions','Example Snippet', 'Example URL', 'Example Date'])
-            st.experimental_rerun()
+            st.rerun()

@@ -34,12 +34,6 @@ def count_non_english_records(df):
     return 0
 
 
-# def display_non_english_records(df, title):
-#     non_eng_count = count_non_english_records(df)
-#     if non_eng_count > 0:
-#         with st.expander(f"{title} - Non-English"):
-#             st.dataframe(df[df['Language'] != 'English'][
-#                 ['Outlet', 'Headline', 'Snippet', 'Contextual Snippet', 'Language', 'Country']])
 
 def translate_col(df, name_of_column):
     """Replaces non-English string in column with English"""
@@ -55,18 +49,6 @@ def translate_col(df, name_of_column):
         df[name_of_column].replace(dictionary, inplace=True)
 
 
-# columns_to_add = ['Headline', 'Snippet', 'Contextual Snippet', 'Language']
-#
-# # For the traditional dataframe
-# if len(st.session_state.df_traditional) == 0:
-#     st.session_state.df_traditional = pd.DataFrame(columns=columns_to_add)
-#
-# # For the social dataframe
-# if len(st.session_state.df_social) == 0:
-#     st.session_state.df_social = pd.DataFrame(columns=columns_to_add)
-
-
-# traditional = st.session_state.df_traditional
 
 trad_non_eng = count_non_english_records(st.session_state.df_traditional)
 soc_non_eng = count_non_english_records(st.session_state.df_social)
@@ -86,32 +68,14 @@ elif st.session_state.translated_headline and st.session_state.translated_snippe
 
 elif trad_non_eng + soc_non_eng == 0:
     st.subheader("No translation required")
+
 else:
-
-
-
-
-    # def translate_col(df, name_of_column):
-    #     """Replaces non-English string in column with English"""
-    #     global dictionary
-    #     dictionary = {}
-    #     unique_non_eng = list(set(df[name_of_column][df['Language'] != 'English'].dropna()))
-    #     if '' in unique_non_eng:
-    #         unique_non_eng.remove('')
-    #     with st.spinner('Running translation now...'):
-    #         with ThreadPoolExecutor(max_workers=30) as ex:
-    #             results = ex.map(translate, [text for text in unique_non_eng])
-    #     df[name_of_column].replace(dictionary, inplace=True)
-
-
     def translate(text):
-        dictionary[text] = (GoogleTranslator(source='auto', target='en').translate(text[:1500]))
+        dictionary[text] = (GoogleTranslator(source='auto', target='en').translate(text[:2000]))
 
 
     def translation_stats_combo():
-
         non_english_records = soc_non_eng + trad_non_eng
-
         st.write(f"There are {non_english_records} non-English records in your data.")
 
 
@@ -129,28 +93,7 @@ else:
         snippet_to_english = st.checkbox('Snippet', value=True, disabled=st.session_state.translated_snippet)
         summary_to_english = st.checkbox('Contextual Snippet', value=True, disabled=st.session_state.translated_summary)
 
-        # if len(st.session_state.df_traditional) > 0:
-        #     if not st.session_state.translated_headline:
-        #         headline_to_english = st.checkbox('Headline', value=True)
-        #     else:
-        #         st.success('✓ Headlines translated.')
-        #         headline_to_english = False
-        # else:
-        #     headline_to_english = False
-        #
-        # if not st.session_state.translated_snippet:
-        #     snippet_to_english = st.checkbox('Snippet', value=True)
-        # else:
-        #     st.success('✓ Snippets translated.')
-        #     snippet_to_english = False
-        #
-        # if not st.session_state.translated_summary:
-        #     summary_to_english = st.checkbox('Contextual Snippet', value=True)
-        # else:
-        #     st.success('✓ Summaries translated.')
-        #     summary_to_english = False
 
-        # submitted = st.form_submit_button("Go!", type="primary")
         if st.form_submit_button("Go!", type="primary"):
             st.warning("Stay on this page until translation is complete")
 
@@ -182,5 +125,4 @@ else:
                 translate_col(st.session_state.df_social, 'Snippet')
                 st.session_state.translated_snippet = True
                 st.success(f'Done translating snippets!')
-            # st.session_state.df_traditional = traditional
             st.rerun()

@@ -2,6 +2,11 @@ import streamlit as st
 import pandas as pd
 import mig_functions as mig
 import warnings
+
+
+
+
+
 warnings.filterwarnings('ignore')
 st.set_page_config(layout="wide", page_title="MIG Data Processing App",
                    page_icon="https://www.agilitypr.com/wp-content/uploads/2018/02/favicon-192.png")
@@ -11,16 +16,32 @@ mig.standard_sidebar()
 st.title('Authors - Missing')
 # original_trad_auths = st.session_state.original_trad_auths
 
+# page_name = 'Missing Authors'
+# prereqs = { 'Missing Authors': [st.session_state.upload_step, st.session_state.standard_step] }
+#
+# def check_prereqs(page_name):
+#     if page_name in prereqs:
+#         prereq_list = prereqs[page_name] # will this work with the prereqs defined above? It needs to check the session state for each one. Maybe a list of tuples? Yes, ho
+#         for prereq in prereq_list:
+#             if not st.session_state[prereq]:
+#                 st.error(f'Please run {prereq} before trying this step.')
+#                 return False
+#     return True
+#
+# check_prereqs('Missing Authors')
+#
+# st.write(st.session_state)
+
 if not st.session_state.upload_step:
     st.error('Please upload a CSV before trying this step.')
-
 elif not st.session_state.standard_step:
     st.error('Please run the Standard Cleaning before trying this step.')
+
 elif len(st.session_state.df_traditional) == 0:
     st.subheader("No traditional media in data. Skip to next step.")
 
 else:
-    counter = st.session_state.counter
+    counter = st.session_state.auth_skip_counter
     original_top_authors = st.session_state.original_auths
 
     # CSS to inject contained in a string
@@ -50,7 +71,7 @@ else:
             next_auth = st.button('Skip to Next Headline')
             if next_auth:
                 counter += 1
-                st.session_state.counter = counter
+                st.session_state.auth_skip_counter = counter
                 st.rerun()
 
         if counter > 0:
@@ -60,7 +81,7 @@ else:
                 reset_counter = st.button('Reset Skip Counter')
                 if reset_counter:
                     counter = 0
-                    st.session_state.counter = counter
+                    st.session_state.auth_skip_counter = counter
                     st.rerun()
 
         possibles = mig.headline_authors(st.session_state.df_traditional, headline_text)
@@ -110,15 +131,15 @@ else:
                 submitted = st.form_submit_button("Update Author", type="primary")
                 if submitted:
                     mig.fix_author(st.session_state.df_traditional, headline_text, new_author)
-                    st.experimental_rerun()
+                    st.rerun()
     else:
         st.info("You've reached the end of the list!")
         if counter > 0:
             reset_counter = st.button('Reset Counter')
             if reset_counter:
                 counter = 0
-                st.session_state.counter = counter
-                st.experimental_rerun()
+                st.session_state.auth_skip_counter = counter
+                st.rerun()
         else:
             st.success("✓ Nothing left to update here.")
 
@@ -146,5 +167,4 @@ else:
     with col3:
         st.subheader("Fixable Author Stats")
         remaining = (fixable_headline_stats(st.session_state.df_traditional, primary="Headline", secondary="Author"))
-        # st.text(stats)
         st.metric(label="Remaining to Review", value=remaining)

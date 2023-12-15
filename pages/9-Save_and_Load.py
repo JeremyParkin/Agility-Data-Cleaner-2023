@@ -25,7 +25,7 @@ def save_session_state():
     session_data = {key: value for key, value in st.session_state.items()}
 
     for df_name in ['df_traditional', 'df_social', 'df_dupes', 'original_trad_auths', 'auth_outlet_table', 'auth_outlet_todo',
-                    'original_auths', 'df_raw', 'df_untouched', 'author_outlets', 'broadcast_set', 'blank_set',
+                    'original_auths', 'df_untouched', 'author_outlets', 'broadcast_set', 'blank_set',
                     'added_df', 'markdown_content', 'filtered_df', 'df_grouped', 'selected_df', 'selected_rows', 'top_stories']:
         if df_name in session_data:
             if not session_data[df_name].empty:  # Check if DataFrame is not empty
@@ -62,7 +62,7 @@ def load_session_state(uploaded_file):
 
         # Convert CSV strings back to DataFrames
         for df_name in ['df_traditional', 'df_social', 'df_dupes', 'original_trad_auths', 'auth_outlet_table', 'auth_outlet_todo',
-                        'original_auths', 'df_raw', 'df_untouched', 'author_outlets', 'broadcast_set', 'blank_set',
+                        'original_auths', 'df_untouched', 'author_outlets', 'broadcast_set', 'blank_set',
                         'added_df', 'markdown_content', 'filtered_df', 'df_grouped', 'selected_df', 'selected_rows', 'top_stories']:
             if df_name in deserialized_data:
                 csv_data = deserialized_data[df_name]
@@ -97,7 +97,7 @@ st.info("""**SAVE** your current data-processing session to a downloadable .pkl 
 
 
 with st.container():
-    st.header("Save")
+    st.header("SAVE")
     # st.download_button("Save & Download Session", save_session_state(), type="primary")
 
     # When this button is clicked, the save_session_state function will be executed
@@ -110,7 +110,7 @@ with st.container():
     st.write("")
     st.write("")
     st.write("")
-    st.header("Load")
+    st.header("LOAD")
     uploaded_file = st.file_uploader("Restore a Previous Session", type="pkl", label_visibility="hidden")
     if uploaded_file is not None:
         load_session_state(uploaded_file)

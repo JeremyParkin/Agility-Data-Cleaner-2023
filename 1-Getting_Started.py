@@ -11,13 +11,14 @@ mig.standard_sidebar()
 
 st.title('Getting Started')
 # Initialize Session State Variables
-string_vars = {'page': '1: Getting Started', 'top_auths_by': 'Mentions', 'export_name': '', 'client_name': '','counter':0, 'auth_outlet_skipped':0}
+string_vars = {'top_auths_by': 'Mentions', 'export_name': '', 'client_name': '','auth_skip_counter':0, 'auth_outlet_skipped':0}
 for key, value in string_vars.items():
     if key not in st.session_state:
         st.session_state[key] = value
+# 'page': '1: Getting Started',
 
 df_vars = ['df_traditional', 'df_social', 'df_dupes', 'original_trad_auths', 'auth_outlet_table', 'original_auths',
-           'df_raw', 'df_untouched', 'author_outlets', 'broadcast_set', 'blank_set', 'added_df', 'markdown_content',
+           'df_untouched', 'author_outlets', 'blank_set', 'added_df', 'markdown_content',
            'filtered_df', 'df_grouped', 'selected_df', 'selected_rows', 'top_stories', 'auth_outlet_todo']
 for _ in df_vars:
     if _ not in st.session_state:
@@ -43,13 +44,13 @@ if st.session_state.upload_step:
     if st.button('Start Over?'):
         for key in st.session_state.keys():
             del st.session_state[key]
-        st.experimental_rerun()
+        st.rerun()
 
     # st.write(st.session_state.ave_col)
     st.session_state.df_untouched["Mentions"] = 1
 
     if "Impressions" in st.session_state.df_untouched:
-        st.session_state.df_untouched = st.session_state.df_raw.rename(columns={
+        st.session_state.df_untouched = st.session_state.df_traditional.rename(columns={
             'Impressions': 'Audience Reach'})
 
     st.session_state.df_untouched['Audience Reach'] = st.session_state.df_untouched['Audience Reach'].astype('Int64')
@@ -128,17 +129,17 @@ if not st.session_state.upload_step:
                 st.session_state.export_name = f"{client} - {period}"
                 st.session_state.client_name = client
 
-                st.session_state.df_raw = st.session_state.df_untouched
-                st.session_state.df_raw.drop(["Timezone",
+                st.session_state.df_traditional = st.session_state.df_untouched
+                st.session_state.df_traditional.drop(["Timezone",
                                               "Word Count",
                                               "Duration",
                                               "Image URLs",
                                               "Folders",
                                               "Notes",
                                               "County"],
-                                             axis=1, inplace=True, errors='ignore')
+                                                     axis=1, inplace=True, errors='ignore')
 
-                st.session_state.df_raw = st.session_state.df_raw.astype(
+                st.session_state.df_traditional = st.session_state.df_traditional.astype(
                     {
                      "Sentiment": 'category',
                      "Continent": 'category',
@@ -148,18 +149,18 @@ if not st.session_state.upload_step:
                      "Language": 'category'
                      })
 
-                if "Published Date" in st.session_state.df_raw:
-                    st.session_state.df_raw['Date'] = pd.to_datetime(st.session_state.df_raw['Published Date'] + ' ' + st.session_state.df_raw['Published Time'])
-                    st.session_state.df_raw.drop(["Published Date", "Published Time"], axis=1, inplace=True, errors='ignore')
+                if "Published Date" in st.session_state.df_traditional:
+                    st.session_state.df_traditional['Date'] = pd.to_datetime(st.session_state.df_traditional['Published Date'] + ' ' + st.session_state.df_traditional['Published Time'])
+                    st.session_state.df_traditional.drop(["Published Date", "Published Time"], axis=1, inplace=True, errors='ignore')
 
-                    first_column = st.session_state.df_raw.pop('Date')
-                    st.session_state.df_raw.insert(0, 'Date', first_column)
+                    first_column = st.session_state.df_traditional.pop('Date')
+                    st.session_state.df_traditional.insert(0, 'Date', first_column)
 
-                st.session_state.df_raw = st.session_state.df_raw.rename(columns={
+                st.session_state.df_traditional = st.session_state.df_traditional.rename(columns={
                     'Media Type': 'Type',
                     'Coverage Snippet': 'Snippet',
                     'Province/State': 'Prov/State',
                     'Audience Reach': 'Impressions'})
 
                 st.session_state.upload_step = True
-                st.experimental_rerun()
+                st.rerun()
