@@ -20,7 +20,7 @@ st.title('Translation')
 def display_non_english_records(df, title):
     if any(df['Language'] != 'English'):
         with st.expander(f"{title} - Non-English"):
-            st.dataframe(df[df['Language'] != 'English'][['Outlet', 'Headline', 'Snippet', 'Contextual Snippet', 'Language', 'Country']])
+            st.dataframe(df[df['Language'] != 'English'][['Outlet', 'Headline', 'Snippet', 'Language', 'Country']])
 
 # Initialize dataframes if empty
 columns_to_add = ['Headline', 'Snippet', 'Contextual Snippet', 'Language']
