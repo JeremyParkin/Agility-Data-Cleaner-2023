@@ -45,7 +45,7 @@ else:
     columns_to_keep = ['Headline', 'Date', 'Mentions', 'Impressions', 'Type', 'Outlet', 'URL', 'Snippet', 'Tags']
 
     # Add any 'Tag Group' columns to the list of columns to keep
-    tag_group_columns = [col for col in all_columns if 'Tag Group' in col]
+    tag_group_columns = [col for col in all_columns if 'Tag Group' in col or 'Prominence' in col]
     columns_to_keep.extend(tag_group_columns)
 
     # Filter the DataFrame to only keep these columns
@@ -254,6 +254,9 @@ else:
                                             use_container_width=True,
                                             column_config={
                                              "Headline": st.column_config.Column("Headline", width="large"),
+                                             "Date": st.column_config.Column("Date", width="small"),
+                                             "Mentions": st.column_config.Column("Mentions", width="small"),
+                                             "Impressions": st.column_config.Column("Impressions", width="small"),
                                              "Example URL": st.column_config.LinkColumn("Example URL", width="medium"),
                                              "Example Snippet": st.column_config.Column("Example Snippet", width="medium"),
                                              "Example Outlet": None,
