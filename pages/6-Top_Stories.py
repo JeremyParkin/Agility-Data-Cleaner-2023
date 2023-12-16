@@ -45,7 +45,7 @@ else:
     columns_to_keep = ['Headline', 'Date', 'Mentions', 'Impressions', 'Type', 'Outlet', 'URL', 'Snippet', 'Tags']
 
     # Add any 'Tag Group' columns to the list of columns to keep
-    tag_group_columns = [col for col in all_columns if 'Tag Group' in col or 'Prominence' in col]
+    tag_group_columns = [col for col in all_columns if 'tag group' in col.lower() or 'prominence' in col.lower()]
     columns_to_keep.extend(tag_group_columns)
 
     # Filter the DataFrame to only keep these columns
@@ -178,9 +178,8 @@ else:
         # Define the streamlit form for user input
         with st.form(key='my_form'):
             # Create a dropdown list to select a column
-            # tag_columns = [col for col in st.session_state.df_traditional.columns if col.startswith('Tag')] # or if column contains "Prominence
             tag_columns = [col for col in st.session_state.df_traditional.columns if
-                           col.startswith('Tag') or 'Prominence' in col]
+                           col.lower().startswith('tag') or 'prominence' in col.lower()]
             tag_columns.insert(0, 'Headline')
 
             col1, col2  = st.columns(2, gap="medium")
