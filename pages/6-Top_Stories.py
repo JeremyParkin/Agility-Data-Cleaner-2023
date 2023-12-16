@@ -178,7 +178,9 @@ else:
         # Define the streamlit form for user input
         with st.form(key='my_form'):
             # Create a dropdown list to select a column
-            tag_columns = [col for col in st.session_state.df_traditional.columns if col.startswith('Tag')]
+            # tag_columns = [col for col in st.session_state.df_traditional.columns if col.startswith('Tag')] # or if column contains "Prominence
+            tag_columns = [col for col in st.session_state.df_traditional.columns if
+                           col.startswith('Tag') or 'Prominence' in col]
             tag_columns.insert(0, 'Headline')
 
             col1, col2  = st.columns(2, gap="medium")
