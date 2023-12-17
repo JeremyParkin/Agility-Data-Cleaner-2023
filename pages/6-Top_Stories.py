@@ -238,6 +238,7 @@ else:
                                              "Example Snippet": st.column_config.Column("Example Snippet", width="small"),
                                              "Example Outlet": None,
                                              "Example Type": None,
+                                             "Top Story": st.column_config.Column("Top Story", width="small"),
                                          },
                                          hide_index=True,
                                          )
