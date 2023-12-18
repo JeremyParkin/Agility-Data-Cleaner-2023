@@ -44,7 +44,7 @@ def translate_col(df, name_of_column):
         if '' in unique_non_eng:
             unique_non_eng.remove('')
         with st.spinner('Running translation now...'):
-            with ThreadPoolExecutor(max_workers=30) as ex:
+            with ThreadPoolExecutor(max_workers=50) as ex:
                 results = ex.map(translate, [text for text in unique_non_eng])
         df[name_of_column].replace(dictionary, inplace=True)
 
@@ -59,7 +59,7 @@ elif not st.session_state.standard_step:
     st.error('Please run the Standard Cleaning before trying this step.')
 # elif st.session_state.translated_headline == True and st.session_state.translated_snippet == True and
 #   st.session_state.translated_summary == True:
-elif st.session_state.translated_headline and st.session_state.translated_snippet and st.session_state.translated_summary:
+elif st.session_state.translated_headline and st.session_state.translated_snippet: # and st.session_state.translated_summary:
     st.subheader("✓ Translation complete.")
 
     display_non_english_records(st.session_state.df_traditional, "Traditional")
@@ -71,7 +71,7 @@ elif trad_non_eng + soc_non_eng == 0:
 
 else:
     def translate(text):
-        dictionary[text] = (GoogleTranslator(source='auto', target='en').translate(text[:2000]))
+        dictionary[text] = (GoogleTranslator(source='auto', target='en').translate(text[:3900]))
 
 
     def translation_stats_combo():
@@ -90,9 +90,7 @@ else:
         st.warning("WARNING: Translation will over-write the original text.")
 
         headline_to_english = st.checkbox('Headline', value=True, disabled=st.session_state.translated_headline)
-        snippet_to_english = st.checkbox('Snippet', value=True, disabled=st.session_state.translated_snippet)
-        summary_to_english = st.checkbox('Contextual Snippet', value=True, disabled=st.session_state.translated_summary)
-
+        snippet_to_english = st.checkbox('Snippet (full text)', value=True, disabled=st.session_state.translated_snippet)
 
         if st.form_submit_button("Go!", type="primary"):
             st.warning("Stay on this page until translation is complete")
@@ -115,11 +113,7 @@ else:
                 translate_col(st.session_state.df_social, 'Headline')
                 st.session_state.translated_headline = True
                 st.success(f'Done translating headlines!')
-            if summary_to_english:
-                translate_col(st.session_state.df_traditional, 'Contextual Snippet')
-                translate_col(st.session_state.df_social, 'Contextual Snippet')
-                st.session_state.translated_summary = True
-                st.success(f'Done translating summaries!')
+
             if snippet_to_english:
                 translate_col(st.session_state.df_traditional, 'Snippet')
                 translate_col(st.session_state.df_social, 'Snippet')
