@@ -21,6 +21,11 @@ st.title('Standard Cleaning')
 # st.write(st.session_state)
 
 
+# impressions = st.session_state.df_untouched['Audience Reach'].sum()
+# st.metric(label="Impressions", value=mig.format_number(impressions))
+
+
+
 if not st.session_state.upload_step:
     st.error('Please upload a CSV before trying this step.')
 elif st.session_state.standard_step:
@@ -32,7 +37,9 @@ elif st.session_state.standard_step:
             with col1:
                 st.subheader("Basic Metrics")
                 st.metric(label="Mentions", value="{:,}".format(len(st.session_state.df_traditional)))
-                st.metric(label="Impressions", value="{:,}".format(st.session_state.df_traditional['Impressions'].sum()))
+                trad_impressions = st.session_state.df_traditional['Impressions'].sum()
+                st.metric(label="Impressions", value=mig.format_number(trad_impressions))
+                # st.metric(label="Impressions", value="{:,}".format(st.session_state.df_traditional['Impressions'].sum()))
             with col2:
                 st.subheader("Media Type")
                 st.write(st.session_state.df_traditional['Type'].value_counts())
@@ -46,7 +53,9 @@ elif st.session_state.standard_step:
             with col1:
                 st.subheader("Basic Metrics")
                 st.metric(label="Mentions", value="{:,}".format(len(st.session_state.df_social)))
-                st.metric(label="Impressions", value="{:,}".format(st.session_state.df_social['Impressions'].sum()))
+                soc_impressions = st.session_state.df_social['Impressions'].sum()
+                st.metric(label="Impressions", value=mig.format_number(soc_impressions))
+                # st.metric(label="Impressions", value="{:,}".format(st.session_state.df_social['Impressions'].sum()))
             with col2:
                 st.subheader("Media Type")
             st.subheader("Data")
@@ -58,7 +67,9 @@ elif st.session_state.standard_step:
             with col1:
                 st.subheader("Basic Metrics")
                 st.metric(label="Mentions", value="{:,}".format(len(st.session_state.df_dupes)))
-                st.metric(label="Impressions", value="{:,}".format(st.session_state.df_dupes['Impressions'].sum()))
+                dup_impressions = st.session_state.df_dupes['Impressions'].sum()
+                st.metric(label="Impressions", value=mig.format_number(dup_impressions))
+                # st.metric(label="Impressions", value="{:,}".format(st.session_state.df_dupes['Impressions'].sum()))
             with col2:
                 st.subheader("Media Type")
                 st.write(st.session_state.df_dupes['Type'].value_counts())

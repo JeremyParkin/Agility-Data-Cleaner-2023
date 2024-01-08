@@ -20,7 +20,7 @@ st.title('Translation')
 def display_non_english_records(df, title):
     if any(df['Language'] != 'English'):
         with st.expander(f"{title} - Non-English"):
-            st.dataframe(df[df['Language'] != 'English'][['Outlet', 'Headline', 'Snippet', 'Language', 'Country']])
+            st.dataframe(df[df['Language'] != 'English'][['Outlet', 'Headline', 'Snippet', 'Language', 'Country']], hide_index=True)
 
 # Initialize dataframes if empty
 columns_to_add = ['Headline', 'Snippet', 'Contextual Snippet', 'Language']
@@ -89,7 +89,12 @@ else:
         st.subheader("Pick columns for translations")
         st.warning("WARNING: Translation will over-write the original text.")
 
-        headline_to_english = st.checkbox('Headline', value=True, disabled=st.session_state.translated_headline)
+        if st.session_state.translated_headline or 'Original Headline' in st.session_state.df_traditional.columns or 'Original Headline' in st.session_state.df_social.columns:
+            headline_done = True
+        else:
+            headline_done = False
+
+        headline_to_english = st.checkbox('Headline', value=True, disabled=headline_done)
         snippet_to_english = st.checkbox('Snippet (full text)', value=True, disabled=st.session_state.translated_snippet)
 
         if st.form_submit_button("Go!", type="primary"):

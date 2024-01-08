@@ -47,3 +47,14 @@ def headline_authors(df, headline_text):
     """Returns the various authors for a given headline"""
     headline_authors = (df[df.Headline == headline_text].Author.value_counts().reset_index())
     return headline_authors
+
+
+def format_number(num):
+    if num >= 1_000_000_000:
+        return f"{num / 1_000_000_000:.1f} B"
+    elif num >= 1_000_000:
+        return f"{num / 1_000_000:.1f} M"
+    elif num >= 1_000:
+        return f"{num / 1_000:.1f} K"
+    else:
+        return str(num)

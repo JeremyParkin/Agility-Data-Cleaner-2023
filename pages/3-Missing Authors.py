@@ -14,23 +14,6 @@ st.set_page_config(layout="wide", page_title="MIG Data Processing App",
 mig.standard_sidebar()
 
 st.title('Authors - Missing')
-# original_trad_auths = st.session_state.original_trad_auths
-
-# page_name = 'Missing Authors'
-# prereqs = { 'Missing Authors': [st.session_state.upload_step, st.session_state.standard_step] }
-#
-# def check_prereqs(page_name):
-#     if page_name in prereqs:
-#         prereq_list = prereqs[page_name] # will this work with the prereqs defined above? It needs to check the session state for each one. Maybe a list of tuples? Yes, ho
-#         for prereq in prereq_list:
-#             if not st.session_state[prereq]:
-#                 st.error(f'Please run {prereq} before trying this step.')
-#                 return False
-#     return True
-#
-# check_prereqs('Missing Authors')
-#
-# st.write(st.session_state)
 
 if not st.session_state.upload_step:
     st.error('Please upload a CSV before trying this step.')
@@ -42,7 +25,6 @@ elif len(st.session_state.df_traditional) == 0:
 
 else:
     counter = st.session_state.auth_skip_counter
-    original_top_authors = st.session_state.original_auths
 
     # CSS to inject contained in a string
     hide_table_row_index = """
@@ -144,27 +126,78 @@ else:
             st.success("✓ Nothing left to update here.")
 
 
+    # def fixable_headline_stats(df, primary="Headline", secondary="Author"):
+    #     """tells you how many author fields can be fixed and other stats"""
+    #     headline_table = pd.pivot_table(df, index=primary, values=["Mentions", secondary], aggfunc="count")
+    #     headline_table["Missing"] = headline_table["Mentions"] - headline_table[secondary]
+    #     headline_table = headline_table[headline_table[secondary] > 0]
+    #     headline_table = headline_table[headline_table['Missing'] > 0]
+    #     fixable_headline_count = headline_table.Missing.count()
+    #     remaining = fixable_headline_count - counter
+    #     return remaining
+
     def fixable_headline_stats(df, primary="Headline", secondary="Author"):
         """tells you how many author fields can be fixed and other stats"""
+        total = df["Mentions"].count()
         headline_table = pd.pivot_table(df, index=primary, values=["Mentions", secondary], aggfunc="count")
         headline_table["Missing"] = headline_table["Mentions"] - headline_table[secondary]
+        missing = headline_table.Missing.sum()
         headline_table = headline_table[headline_table[secondary] > 0]
         headline_table = headline_table[headline_table['Missing'] > 0]
+        fixable = headline_table.Missing.sum()
         fixable_headline_count = headline_table.Missing.count()
         remaining = fixable_headline_count - counter
-        return remaining
+        total_known = total - missing
+        percent_known = "{:.0%}".format((total_known) / total)
+        percent_knowable = "{:.0%}".format((total - (missing - fixable)) / total)
+        stats = {
+            "total": total,
+            "total_known": total_known,
+            "percent_known": percent_known,
+            "fixable": fixable,
+            "fixable_headline_count": fixable_headline_count,
+            "remaining": remaining,
+            "percent_knowable": percent_knowable
+        }
+            # (
+            # f"Total rows: \t\t{total} \nTotal Known: \t\t{total_known}\nPercent Known: \t\t{percent_known} \nFixable Fields: \t{fixable}\nUnique Fixable: \t{fixable_headline_count}\nPercent knowable: \t{percent_knowable}")
+        return stats
 
     st.divider()
 
     col1, col2, col3 = st.columns(3)
     with col1:
         st.subheader("Original Top Authors")
-        st.dataframe(st.session_state.original_trad_auths)
+        media_type_column = "Type" if "Type" in st.session_state.df_untouched.columns else "Media Type"
+
+        filtered_df = st.session_state.df_untouched[
+            st.session_state.df_untouched[media_type_column].isin(['PRINT', 'ONLINE_NEWS', 'ONLINE', 'BLOGS', 'PRESS_RELEASE'])]
+
+        original_top_authors = (mig.top_x_by_mentions(filtered_df, "Author"))
+        st.write(original_top_authors)
+
 
     with col2:
         st.subheader("New Top Authors")
         st.dataframe((mig.top_x_by_mentions(st.session_state.df_traditional, "Author")))
+
     with col3:
         st.subheader("Fixable Author Stats")
         remaining = (fixable_headline_stats(st.session_state.df_traditional, primary="Headline", secondary="Author"))
-        st.metric(label="Remaining to Review", value=remaining)
+
+        statscol1, statscol2 = st.columns(2)
+
+        with statscol1:
+            st.metric(label="Reviewed", value=counter)
+            # st.metric(label="Total Rows", value=remaining['total'])
+            st.metric(label="Percent Known", value=remaining['percent_known'])
+
+        with statscol2:
+            st.metric(label="Unreviewed", value=remaining['remaining'])
+            # st.metric(label="Total Known", value=remaining['total_known'])
+            st.metric(label="Percent Knowable", value=remaining['percent_knowable'])
+
+        # st.write(remaining)
+
+
+

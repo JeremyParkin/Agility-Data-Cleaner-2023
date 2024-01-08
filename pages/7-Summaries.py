@@ -7,7 +7,6 @@ import time
 from datetime import datetime
 import re
 from openai import OpenAI
-client = OpenAI(api_key=st.secrets["key"])
 
 
 type_dict = {
@@ -38,11 +37,11 @@ elif len(st.session_state['added_df']) == 0:
     st.error('Please select your TOP STORIES before trying this step.')
 
 else:
+    client = OpenAI(api_key=st.secrets["key"])
 
     # Load the DataFrame with top stories
     df = st.session_state.added_df
 
-    total_cost = 0.0  # Initialize total cost
 
     # Form for user input
     with st.form('User Inputs'):
@@ -100,6 +99,11 @@ else:
                 # Check if the snippet is long enough to generate a response
                 if len(row['Example Snippet']) < 150:
                     st.warning(f"Snippet is too short for message {i + 1}.")
+                    if mode == "Summary":
+                        df.at[i, 'Entity Summary'] = "Snippet too short to generate summary"
+                    else:  # Sentiment mode
+                        df.at[i, 'Entity Sentiment'] = "Snippet too short to generate sentiment opinion"
+
                     continue
 
                 # Generate prompt based on mode
@@ -135,12 +139,6 @@ else:
                     df.at[i, 'Entity Sentiment'] = sentiment
 
 
-                # Calculate the cost
-                # tokens = response['usage']['total_tokens']
-                # cost = (tokens / 1000) * 0.02
-                # total_cost += cost
-                # st.info(f"Message {i + 1} uses {tokens} tokens for a total cost of ${round(cost, 3)}.")
-
 
 
             except openai.RateLimitError:
@@ -154,8 +152,6 @@ else:
         # Complete the progress bar when done
         progress_bar.progress(100)
 
-        # Display the total cost of all API calls
-        # st.info(f"Total cost for all messages: ${round(total_cost, 2)}")
 
 
     else:
@@ -168,11 +164,18 @@ else:
 
     def escape_markdown(text):
         # List of Markdown special characters to escape
+        # markdown_special_chars = r"\`*_{}[]()#+-.!$"
+        # escaped_text = re.sub(r"([{}])".format(re.escape(markdown_special_chars)), r"\\\1", text)
+        # return escaped_text
+        # List of Markdown special characters to escape
         markdown_special_chars = r"\`*_{}[]()#+-.!$"
-        escaped_text = re.sub(r"([{}])".format(re.escape(markdown_special_chars)), r"\\\1", text)
+        # Correctly form the regular expression pattern
+        pattern = r"([" + re.escape(markdown_special_chars) + r"])"
+        escaped_text = re.sub(pattern, r"\\\1", text)
         return escaped_text
 
     st.write(" ")
+
     for story in df.index:
         head = escape_markdown(df.Headline[story])
         outlet = escape_markdown(df["Example Outlet"][story])
