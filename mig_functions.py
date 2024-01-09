@@ -2,7 +2,7 @@ def standard_sidebar():
     import streamlit as st
     st.sidebar.image('https://agilitypr.news/images/Agility-centered.svg', width=200)
     st.sidebar.subheader('MIG Data Processing App')
-    st.sidebar.caption("v.2.1.1 - Nov 2023")
+    st.sidebar.caption("v.2.1.2 - Jan 2024")
 
     # CSS to adjust sidebar
     adjust_nav = """
