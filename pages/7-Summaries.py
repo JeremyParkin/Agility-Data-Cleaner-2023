@@ -162,17 +162,31 @@ else:
     markdown_content = ""
 
 
+    # def escape_markdown(text):
+    #     # List of Markdown special characters to escape
+    #     # markdown_special_chars = r"\`*_{}[]()#+-.!$"
+    #     # escaped_text = re.sub(r"([{}])".format(re.escape(markdown_special_chars)), r"\\\1", text)
+    #     # return escaped_text
+    #     # List of Markdown special characters to escape
+    #     markdown_special_chars = r"\`*_{}[]()#+-.!$"
+    #     # Correctly form the regular expression pattern
+    #     pattern = r"([" + re.escape(markdown_special_chars) + r"])"
+    #     escaped_text = re.sub(pattern, r"\\\1", text)
+    #     return escaped_text
+
+
     def escape_markdown(text):
-        # List of Markdown special characters to escape
-        # markdown_special_chars = r"\`*_{}[]()#+-.!$"
-        # escaped_text = re.sub(r"([{}])".format(re.escape(markdown_special_chars)), r"\\\1", text)
-        # return escaped_text
-        # List of Markdown special characters to escape
-        markdown_special_chars = r"\`*_{}[]()#+-.!$"
-        # Correctly form the regular expression pattern
-        pattern = r"([" + re.escape(markdown_special_chars) + r"])"
-        escaped_text = re.sub(pattern, r"\\\1", text)
-        return escaped_text
+        # Check if text is a string
+        if isinstance(text, str):
+            # List of Markdown special characters to escape
+            markdown_special_chars = r"\`*_{}[]()#+-.!$"
+            # Correctly form the regular expression pattern
+            pattern = r"([" + re.escape(markdown_special_chars) + r"])"
+            escaped_text = re.sub(pattern, r"\\\1", text)
+            return escaped_text
+        else:
+            # If text is not a string, return it as is or convert it to a string
+            return str(text)  # or just `return text`
 
     st.write(" ")
 
