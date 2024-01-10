@@ -42,7 +42,7 @@ else:
     # Load the DataFrame with top stories
     df = st.session_state.added_df
     df["Date"] = pd.to_datetime(df["Date"])
-    date = df.loc[story, "Date"].strftime("%B %d, %Y")
+    # date = df.loc[story, "Date"].strftime("%B %d, %Y")
 
 
     # Form for user input
