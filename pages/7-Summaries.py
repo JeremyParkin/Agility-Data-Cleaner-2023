@@ -196,7 +196,7 @@ else:
         link = escape_markdown(df["Example URL"][story])
         # date = df["Date"][story].strftime("%B %d, %Y")
         df["Date"] = pd.to_datetime(df["Date"])
-        date = df.loc[story, "Date"].strftime("%B %d, %Y")
+        date = df.at[story, "Date"].strftime("%B %d, %Y")
 
         # Build the markdown string
         markdown_content += f"__[{head}]({link})__  \n"
