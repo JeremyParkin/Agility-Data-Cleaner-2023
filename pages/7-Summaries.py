@@ -191,7 +191,7 @@ else:
     st.write(" ")
 
     for story in df.index:
-        head = escape_markdown(df.Headline[story])
+        head = df.Headline[story] #escape_markdown(df.Headline[story])
         outlet = escape_markdown(df["Example Outlet"][story])
         link = escape_markdown(df["Example URL"][story])
         date = df["Date"][story].strftime("%B %d, %Y")
