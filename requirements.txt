@@ -8,3 +8,4 @@ replicate~=0.16.0
 XlsxWriter~=3.1.9
 deep-translator~=1.11.4
 dill~=0.3.7
+openpyxl~=3.1.2
