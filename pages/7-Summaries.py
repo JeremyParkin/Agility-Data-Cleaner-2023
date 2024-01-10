@@ -196,7 +196,7 @@ else:
             outlet = df["Example Outlet"][story] #escape_markdown(df["Example Outlet"][story])
             link = df["Example URL"][story] #escape_markdown(df["Example URL"][story])
             # date = df["Date"][story].strftime("%B %d, %Y")
-            df["Date"] = pd.to_datetime(df["Date"]), errors='coerce'
+            df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
             date = df.at[story, "Date"].strftime("%B %d, %Y")
 
         except Exception as e:
