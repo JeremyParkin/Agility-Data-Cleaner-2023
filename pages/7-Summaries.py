@@ -41,8 +41,6 @@ else:
 
     # Load the DataFrame with top stories
     df = st.session_state.added_df
-    df["Date"] = pd.to_datetime(df["Date"])
-    # date = df.loc[story, "Date"].strftime("%B %d, %Y")
 
 
     # Form for user input
@@ -196,7 +194,9 @@ else:
         head = escape_markdown(df.Headline[story])
         outlet = escape_markdown(df["Example Outlet"][story])
         link = escape_markdown(df["Example URL"][story])
-        date = df["Date"][story].strftime("%B %d, %Y")
+        # date = df["Date"][story].strftime("%B %d, %Y")
+        df["Date"] = pd.to_datetime(df["Date"])
+        date = df.loc[story, "Date"].strftime("%B %d, %Y")
 
         # Build the markdown string
         markdown_content += f"__[{head}]({link})__  \n"
