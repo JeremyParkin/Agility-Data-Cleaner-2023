@@ -4,6 +4,7 @@ import warnings
 import mig_functions as mig
 import openai
 import time
+import numpy as np
 from datetime import datetime
 import re
 from openai import OpenAI
@@ -191,13 +192,19 @@ else:
     st.write(" ")
 
     for story in df.index:
+        # Check if date exists before calling strftime
+        if pd.notnull(df.loc[story, "Date"]):
+            date = df.loc[story, "Date"].strftime("%B %d, %Y")
+        else:
+            date = "Unknown date"
+
         try:
             head = df.Headline[story] #escape_markdown(df.Headline[story])
             outlet = df["Example Outlet"][story] #escape_markdown(df["Example Outlet"][story])
             link = df["Example URL"][story] #escape_markdown(df["Example URL"][story])
             # date = df["Date"][story].strftime("%B %d, %Y")
-            df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
-            date = df.at[story, "Date"].strftime("%B %d, %Y")
+            # df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
+            # date = df.at[story, "Date"].strftime("%B %d, %Y")
 
         except Exception as e:
             st.error(f"An error occurred while processing story {story}: {e}")
