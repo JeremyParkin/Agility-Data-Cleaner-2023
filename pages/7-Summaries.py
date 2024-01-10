@@ -194,9 +194,9 @@ else:
         head = df.Headline[story] #escape_markdown(df.Headline[story])
         outlet = df["Example Outlet"][story] #escape_markdown(df["Example Outlet"][story])
         link = df["Example URL"][story] #escape_markdown(df["Example URL"][story])
-        date = df["Date"][story].strftime("%B %d, %Y")
+        # date = df["Date"][story].strftime("%B %d, %Y")
         # df["Date"] = pd.to_datetime(df["Date"])
-        # date = df.at[story, "Date"].strftime("%B %d, %Y")
+        date = df.at[story, "Date"].strftime("%B %d, %Y")
 
         # Build the markdown string
         markdown_content += f"__[{head}]({link})__  \n"
