@@ -191,12 +191,17 @@ else:
     st.write(" ")
 
     for story in df.index:
-        head = df.Headline[story] #escape_markdown(df.Headline[story])
-        outlet = df["Example Outlet"][story] #escape_markdown(df["Example Outlet"][story])
-        link = df["Example URL"][story] #escape_markdown(df["Example URL"][story])
-        # date = df["Date"][story].strftime("%B %d, %Y")
-        df["Date"] = pd.to_datetime(df["Date"])
-        date = df.at[story, "Date"].strftime("%B %d, %Y")
+        try:
+            head = df.Headline[story] #escape_markdown(df.Headline[story])
+            outlet = df["Example Outlet"][story] #escape_markdown(df["Example Outlet"][story])
+            link = df["Example URL"][story] #escape_markdown(df["Example URL"][story])
+            # date = df["Date"][story].strftime("%B %d, %Y")
+            df["Date"] = pd.to_datetime(df["Date"])
+            date = df.at[story, "Date"].strftime("%B %d, %Y")
+
+        except Exception as e:
+            st.error(f"An error occurred while processing story {story}: {e}")
+
 
         # Build the markdown string
         markdown_content += f"__[{head}]({link})__  \n"
