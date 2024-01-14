@@ -158,7 +158,7 @@ else:
             # Concatenate while keeping all columns except 'Top Story'
             st.session_state.added_df = pd.concat([st.session_state.added_df, selected_rows])
             st.session_state.added_df.drop_duplicates(subset=["Headline"], keep='last', inplace=True)
-
+            st.session_state.added_df.reset_index(drop=True, inplace=True)
 
     # Then use this function to get the processed data
     st.session_state['df_grouped'] = group_and_process_data(st.session_state.filtered_df)
