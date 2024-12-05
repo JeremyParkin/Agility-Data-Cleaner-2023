@@ -43,43 +43,54 @@ else:
     # Load the DataFrame with top stories
     df = st.session_state.added_df
 
-
     # Form for user input
-    with st.form('User Inputs'):
-        # User input for analysis mode and named entity
-        mode = st.radio("Analysis Mode", ('Summary', 'Sentiment'), help='Produce a short summary or sentiment opinion relative to the client brand for the selected top stories.')
-        named_entity = st.text_input("Enter the named entity:", max_chars=100, key="named_entity",
-                                     help="The brand, organization, or person this analysis should focus on",
-                                     value=st.session_state.client_name)
+    # User input for analysis mode and named entity
+    col1, col2 = st.columns(2, gap="medium")
+    with col1:
+        mode = st.radio("Analysis Mode", ('Summary', 'Sentiment'),
+                        help='Produce a short summary or sentiment opinion relative to the client brand for the selected top stories.',
+                        key='analysis_mode')
+    with col2:
+        if mode == 'Summary':
+            summary_length = st.radio("Summary Length", ('Short (20-25 words)', 'Long (50-60 words)'),
+                                      help='Select the length of the summary for the selected top stories.',
+                                      key='summary_length')
+        else:
+            summary_length = 'Short (20-25 words)'
 
-        submitted = st.form_submit_button("Submit")
+    named_entity = st.text_input("Enter the named entity:", max_chars=100, key="named_entity",
+                                 help="The brand, organization, or person this analysis should focus on",
+                                 value=st.session_state.client_name)
+
+    submitted = st.button("Submit")
+
 
     # Check if the form is submitted and named entity is not empty
     if submitted and named_entity:
         # Set OpenAI API key
         openai.api_key = st.secrets["key"]
 
+
         # Define function to generate summary prompt
-        def generate_summary_prompt(row, named_entity):
+        def generate_summary_prompt(row, named_entity, length):
+            length_text = "20-25 words" if length == 'Short (20-25 words)' else "50-60 words"
 
-            if row['Example Type'] == "RADIO" or "TV":
+            if row['Example Type'] == "RADIO" or row['Example Type'] == "TV":
                 summary_prompt = f"""
-                Provide an executive content analysis of {named_entity} in the following broadcast transcript. Note that
-                broadcast transcripts often contain clips of unrelated advertisements and other segments that should be ignored.
-                The summary should be concise, approximately 20-25 words, and should not include any 
-                labels or introductory text (not even the word 'Summary'). 
-                \n\nHEADLINE:\n{row['Headline']}\n BODY: \n{row['Example Snippet']}"
-                """
-
+                    Provide an executive content analysis of {named_entity} in the following broadcast transcript. Note that
+                    broadcast transcripts often contain clips of unrelated advertisements and other segments that should be ignored.
+                    The summary should be concise, approximately {length_text}, and should not include any 
+                    labels or introductory text (not even the word 'Summary'). 
+                    \n\nHEADLINE:\n{row['Headline']}\n BODY: \n{row['Example Snippet']}"
+                    """
 
             else:
                 summary_prompt = f"""
-                   Provide an executive content analysis of {named_entity} in the following {type_dict[row['Example Type']]}. 
-                   The summary should be concise, approximately 20-25 words, and should not include any 
-                   labels or introductory text (not even the word 'Summary'). 
-                   \n\nHEADLINE:\n{row['Headline']}\n BODY: \n{row['Example Snippet']}"
-                   """
-
+                       Provide an executive content analysis of {named_entity} in the following {type_dict[row['Example Type']]}. 
+                       The summary should be concise, approximately {length_text}, and should not include any 
+                       labels or introductory text (not even the word 'Summary'). 
+                       \n\nHEADLINE:\n{row['Headline']}\n BODY: \n{row['Example Snippet']}"
+                       """
 
             return summary_prompt
 
@@ -109,14 +120,13 @@ else:
 
                 # Generate prompt based on mode
                 if mode == "Summary":
-                    prompt = generate_summary_prompt(row, named_entity)
+                    prompt = generate_summary_prompt(row, named_entity, summary_length)
                     df.at[i, 'Entity Summary'] = ""
                 else:  # Sentiment mode
                     prompt = generate_sentiment_prompt(row, named_entity)
                     df.at[i, 'Entity Sentiment'] = ""
 
                 # Call the OpenAI API using the chat interface
-                # response = openai.ChatCompletion.create(
                 response = client.chat.completions.create(
                     model="gpt-4o",
                     messages=[
@@ -129,7 +139,6 @@ else:
                 processed_items += 1
                 progress = int((processed_items / total_items) * 100)
                 progress_bar.progress(progress)
-
 
                 # Update the DataFrame with the response
                 if mode == "Summary":
@@ -148,7 +157,6 @@ else:
 
             except Exception as e:
                 st.error(f"An unexpected error occurred: {e}")
-
 
         # Complete the progress bar when done
         progress_bar.progress(100)
@@ -176,18 +184,10 @@ else:
         return escaped_text
 
 
-    # def escape_markdown(text):
-    #     # Check if text is a string
-    #     if isinstance(text, str):
-    #         # List of Markdown special characters to escape
-    #         markdown_special_chars = r"\`*_{}[]()#+-.!$"
-    #         # Correctly form the regular expression pattern
-    #         pattern = r"([" + re.escape(markdown_special_chars) + r"])"
-    #         escaped_text = re.sub(pattern, r"\\\1", text)
-    #         return escaped_text
-    #     else:
-    #         # If text is not a string, return it as is or convert it to a string
-    #         return str(text)  # or just `return text`
+    # # Checkboxes for displaying additional information
+    show_mentions = st.checkbox("Show mentions", value=False)
+    show_impressions = st.checkbox("Show impressions", value=False)
+
 
     st.write(" ")
 
@@ -215,6 +215,17 @@ else:
             entity_sentiment = df["Entity Sentiment"][story]
             markdown_content += "<br>"
             markdown_content += f"_{entity_sentiment}_  \n\n"
+
+        if show_mentions:
+            mentions = df['Mentions'][story]
+            markdown_content += f"**Mentions**: {mentions} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+
+        if show_impressions:
+            impressions = df['Impressions'][story]
+            markdown_content += f"**Impressions**: {impressions:,}"
+
+        if show_mentions or show_impressions:
+            markdown_content += "<br>"
 
         markdown_content += "<br>"
 
