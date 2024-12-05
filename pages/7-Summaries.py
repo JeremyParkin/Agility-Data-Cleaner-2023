@@ -43,6 +43,9 @@ else:
     # Load the DataFrame with top stories
     df = st.session_state.added_df
 
+    # Sort the DataFrame by Date from oldest to newest
+    df = df.sort_values(by='Date', ascending=True).reset_index(drop=True)
+
     # Form for user input
     # User input for analysis mode and named entity
     col1, col2 = st.columns(2, gap="medium")
