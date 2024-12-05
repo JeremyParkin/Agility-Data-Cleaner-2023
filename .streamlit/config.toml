@@ -4,3 +4,6 @@ primaryColor="#FF5026"
 
 [runner]
 enforceSerializableSessionState = true
+
+[server]
+maxUploadSize = 270

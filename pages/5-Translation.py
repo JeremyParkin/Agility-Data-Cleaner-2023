@@ -87,7 +87,7 @@ else:
 
     with st.form('translation_form'):
         st.subheader("Pick columns for translations")
-        st.warning("WARNING: Translation will over-write the original text.")
+        st.warning("WARNING: Snippet translation will over-write the original text and will cut off the ends of articles longer than ~ 700 words.")
 
         if st.session_state.translated_headline or 'Original Headline' in st.session_state.df_traditional.columns or 'Original Headline' in st.session_state.df_social.columns:
             headline_done = True
@@ -95,7 +95,7 @@ else:
             headline_done = False
 
         headline_to_english = st.checkbox('Headline', value=True, disabled=headline_done)
-        snippet_to_english = st.checkbox('Snippet (full text)', value=True, disabled=st.session_state.translated_snippet)
+        snippet_to_english = st.checkbox('Snippet (full text)', value=False, disabled=st.session_state.translated_snippet)
 
         if st.form_submit_button("Go!", type="primary"):
             st.warning("Stay on this page until translation is complete")
