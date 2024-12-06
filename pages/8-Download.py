@@ -36,16 +36,23 @@ else:
     for col in traditional.columns:
         # Check if the column name starts with "Tag Group: "
         if col.startswith("Tag Group: "):
-            # Convert column to string to handle NaN or non-string types
+            # Replace NaN with empty string before converting to string
+            traditional[col] = traditional[col].fillna('')
+
+            # Convert column to string to handle non-string types
             traditional[col] = traditional[col].astype(str)
 
             # Replace non-empty cells with 1 and empty cells with 0
             traditional[col] = traditional[col].apply(lambda x: 1 if len(x.strip()) > 0 else 0)
 
+    # Repeat for social DataFrame
     for col in social.columns:
         # Check if the column name starts with "Tag Group: "
         if col.startswith("Tag Group: "):
-            # Convert column to string to handle NaN or non-string types
+            # Replace NaN with empty string before converting to string
+            social[col] = social[col].fillna('')
+
+            # Convert column to string to handle non-string types
             social[col] = social[col].astype(str)
 
             # Replace non-empty cells with 1 and empty cells with 0
