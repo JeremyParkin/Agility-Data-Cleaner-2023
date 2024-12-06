@@ -164,6 +164,9 @@ else:
         # Complete the progress bar when done
         progress_bar.progress(100)
 
+        # **SAVE UPDATED DATAFRAME BACK TO SESSION STATE**
+        st.session_state.added_df = df
+
 
 
     else:

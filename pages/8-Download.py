@@ -32,6 +32,25 @@ else:
         social['Tags'] = social['Tags'].astype(str)  # needed if column there but all blank
         social = social.join(social["Tags"].str.get_dummies(sep=",").astype('category'), how='left', rsuffix=' (tag)')
 
+    # Tag Groups to binary
+    for col in traditional.columns:
+        # Check if the column name starts with "Tag Group: "
+        if col.startswith("Tag Group: "):
+            # Convert column to string to handle NaN or non-string types
+            traditional[col] = traditional[col].astype(str)
+
+            # Replace non-empty cells with 1 and empty cells with 0
+            traditional[col] = traditional[col].apply(lambda x: 1 if len(x.strip()) > 0 else 0)
+
+    for col in social.columns:
+        # Check if the column name starts with "Tag Group: "
+        if col.startswith("Tag Group: "):
+            # Convert column to string to handle NaN or non-string types
+            social[col] = social[col].astype(str)
+
+            # Replace non-empty cells with 1 and empty cells with 0
+            social[col] = social[col].apply(lambda x: 1 if len(x.strip()) > 0 else 0)
+
     with st.form("my_form_download"):
         st.subheader("Generate your cleaned data workbook")
         submitted = st.form_submit_button("Go!", type="primary")
