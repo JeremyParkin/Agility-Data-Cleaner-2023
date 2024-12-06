@@ -266,22 +266,22 @@ else:
 
                     # Add buttons for Google searches after Media Database Results
 
-                    import urllib.parse
+                import urllib.parse
 
-                    # Encode the author name to handle spaces and special characters
-                    encoded_author_name = urllib.parse.quote(author_name)
+                # Encode the author name to handle spaces and special characters
+                encoded_author_name = urllib.parse.quote(author_name)
 
-                    # Update the URLs
-                    muckrack_url = f"https://www.google.com/search?q=site%3Amuckrack.com+{encoded_author_name}"
-                    linkedin_url = f"https://www.google.com/search?q=site%3Alinkedin.com+{encoded_author_name}"
+                # Update the URLs
+                muckrack_url = f"https://www.google.com/search?q=site%3Amuckrack.com+{encoded_author_name}"
+                linkedin_url = f"https://www.google.com/search?q=site%3Alinkedin.com+{encoded_author_name}"
 
-                    # Render the links
-                    st.markdown(
-                        f'<a href="{muckrack_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search Muckrack for {author_name}</a>',
-                        unsafe_allow_html=True)
-                    st.markdown(
-                        f'<a href="{linkedin_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search LinkedIn for {author_name}</a>',
-                        unsafe_allow_html=True)
+                # Render the links
+                st.markdown(
+                    f'<a href="{muckrack_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search Muckrack for {author_name}</a>',
+                    unsafe_allow_html=True)
+                st.markdown(
+                    f'<a href="{linkedin_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search LinkedIn for {author_name}</a>',
+                    unsafe_allow_html=True)
 
 
 
