@@ -87,7 +87,11 @@ else:
 
                 st.session_state.df_traditional["Type"].replace({"ONLINE_NEWS": "ONLINE NEWS", "PRESS_RELEASE": "PRESS RELEASE"}, inplace=True)
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("www.facebook.com", na=False), 'Type'] = "FACEBOOK"
-                st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("/twitter.com", na=False), 'Type'] = "TWITTER"
+                st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("twitter.com", na=False), 'Type'] = "X"
+                st.session_state.df_traditional.loc[
+                    st.session_state.df_traditional['URL'].str.contains("x.com", na=False), 'Type'] = "X"
+                st.session_state.df_traditional.loc[
+                    st.session_state.df_traditional['URL'].str.contains("tiktok.com", na=False), 'Type'] = "TIKTOK"
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("www.instagram.com", na=False), 'Type'] = "INSTAGRAM"
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("reddit.com", na=False), 'Type'] = "REDDIT"
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("youtube.com", na=False), 'Type'] = "YOUTUBE"
@@ -144,7 +148,7 @@ else:
                 st.session_state.df_traditional['Headline'] = st.session_state.df_traditional['Headline'].str.replace('\u2019', '\'')
 
                 # SOCIALS To sep df
-                soc_array = ['FACEBOOK', 'TWITTER', 'INSTAGRAM', 'REDDIT', 'YOUTUBE']
+                soc_array = ['FACEBOOK', 'TWITTER', 'X', 'INSTAGRAM', 'REDDIT', 'YOUTUBE', 'TIKTOK']
                 st.session_state.df_social = st.session_state.df_traditional.loc[st.session_state.df_traditional['Type'].isin(soc_array)]
                 st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['Type'].isin(soc_array)]
 
