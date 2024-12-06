@@ -89,7 +89,8 @@ else:
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("www.facebook.com", na=False), 'Type'] = "FACEBOOK"
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("twitter.com", na=False), 'Type'] = "X"
                 st.session_state.df_traditional.loc[
-                    st.session_state.df_traditional['URL'].str.contains("x.com", na=False), 'Type'] = "X"
+                    st.session_state.df_traditional['URL'].str.match(r'^https?://(www\.)?x\.com(/|$)',
+                                                                     na=False), 'Type'] = "X"
                 st.session_state.df_traditional.loc[
                     st.session_state.df_traditional['URL'].str.contains("tiktok.com", na=False), 'Type'] = "TIKTOK"
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("www.instagram.com", na=False), 'Type'] = "INSTAGRAM"
@@ -202,17 +203,25 @@ else:
                     st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Outlet.isna()]
                     st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Type.isna()]
 
-                    # Add helper column
+                    # Add helper columns
+
+                    st.session_state.df_traditional['Date_Helper'] = pd.to_datetime(
+                        st.session_state.df_traditional['Date']).dt.strftime('%Y-%m-%d')
+
+
                     st.session_state.df_traditional["dupe_helper"] = st.session_state.df_traditional['Type'].astype('string') + st.session_state.df_traditional['Outlet'].astype('string') + st.session_state.df_traditional[
-                        'Headline']
+                        'Headline'] + st.session_state.df_traditional['Date_Helper'].astype('string')
                     st.session_state.df_traditional = st.session_state.df_traditional.sort_values(["dupe_helper", "Author", "Impressions", "AVE", "Date"], axis=0,
                                                                                                   ascending=[True, True, False, False, True])
                     dupe_cols = st.session_state.df_traditional[st.session_state.df_traditional['dupe_helper'].duplicated(keep='first')]
                     st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['dupe_helper'].duplicated(keep='first')]
 
                     # Drop helper column and rejoin broadcast
-                    st.session_state.df_traditional.drop(["dupe_helper"], axis=1, inplace=True, errors='ignore')
-                    dupe_cols.drop(["dupe_helper"], axis=1, inplace=True, errors='ignore')
+                    # st.session_state.df_traditional.drop(["dupe_helper"], axis=1, inplace=True, errors='ignore')
+                    # dupe_cols.drop(["dupe_helper"], axis=1, inplace=True, errors='ignore')
+                    st.session_state.df_traditional.drop(["dupe_helper", "Date_Helper"], axis=1, inplace=True,
+                                                         errors='ignore')
+                    dupe_cols.drop(["dupe_helper", "Date_Helper"], axis=1, inplace=True, errors='ignore')
                     frames = [st.session_state.df_traditional, broadcast_set, st.session_state.blank_set]
                     st.session_state.df_traditional = pd.concat(frames)
                     st.session_state.df_dupes = pd.concat([dupe_urls, dupe_cols])
