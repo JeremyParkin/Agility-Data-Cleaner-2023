@@ -283,15 +283,7 @@ else:
                         f'<a href="{linkedin_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search LinkedIn for {author_name}</a>',
                         unsafe_allow_html=True)
 
-        if st.button(f"Search Muckrack for {author_name}"):
-            st.markdown(
-                f'<a href="{muckrack_url}" target="_blank" style="text-decoration:none; color:inherit;">Click here to open in a new tab</a>',
-                unsafe_allow_html=True)
 
-        if st.button(f"Search LinkedIn for {author_name}"):
-            st.markdown(
-                f'<a href="{linkedin_url}" target="_blank" style="text-decoration:none; color:inherit;">Click here to open in a new tab</a>',
-                unsafe_allow_html=True)
 
         with form_block:
             # FORM TO UPDATE AUTHOR OUTLET ######################
