@@ -209,9 +209,11 @@ else:
     # Show warning if show_mentions or show_impressions is checked
     if show_mentions or show_impressions:
         st.warning(
-            "WARNING: Mentions and Impressions totals reflect exact match headlines on the same date only. Totals may not include coverage with variations in headline wording or publication dates.")
+            "WARNING: Mentions and Impressions totals reflect exact match headlines on the same date only. Totals do not include coverage with headline or date variations.")
 
     st.write(" ")
+
+    st.subheader("Copy-Paste Top Stories")
 
     for story in df.index:
 

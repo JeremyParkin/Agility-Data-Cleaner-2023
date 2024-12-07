@@ -247,23 +247,51 @@ else:
     save_selected_rows(updated_data_custom, key="by_custom")
 
 
-    # Display the saved top stories with the best snippet and URL
+    # Display the saved top stories with a delete option
     if len(st.session_state['added_df']) > 0:
         st.subheader("Saved Top Stories")
-        st.dataframe(st.session_state.added_df,
-                                            use_container_width=True,
-                                            column_config={
-                                             "Headline": st.column_config.Column("Headline", width="large"),
-                                             "Date": st.column_config.Column("Date", width="small"),
-                                             "Mentions": st.column_config.Column("Mentions", width="small"),
-                                             "Impressions": st.column_config.Column("Impressions", width="small"),
-                                             "Example URL": st.column_config.LinkColumn("Example URL", width="medium"),
-                                             "Example Snippet": st.column_config.Column("Example Snippet", width="medium"),
-                                             "Example Outlet": None,
-                                             "Example Type": None,
-                                            },
-                                         hide_index=True,
-                     )
+
+
+        # Add a 'Delete' checkbox column for user actions
+        st.session_state.added_df['Delete'] = False  # Add a default 'Delete' column
+
+        # Pop the 'Date' column to move it to the second position
+        date_column = st.session_state.added_df.pop("Date")
+        st.session_state.added_df.insert(1, "Date", date_column)
+
+        # Use the Data Editor to display stories with a delete option
+        updated_data = st.data_editor(
+            st.session_state.added_df,
+            use_container_width=True,
+            column_config={
+                "Delete": st.column_config.CheckboxColumn("Delete", width="small"),
+                "Headline": st.column_config.Column("Headline", width="large"),
+                "Date": st.column_config.Column("Date", width="small"),
+                "Mentions": st.column_config.Column("Mentions", width="small"),
+                "Impressions": st.column_config.Column("Impressions", width="small"),
+                "Example URL": st.column_config.LinkColumn("Example URL", width="medium"),
+                "Short Entity Summary": None,
+                "Long Entity Summary": None,
+                "Entity Sentiment": None,
+                "Example Snippet": None,
+                "Example Outlet": None,
+                "Example Type": None,
+            },
+            hide_index=True,
+            key="saved_stories_editor"
+        )
+
+        # Check for rows marked for deletion
+        rows_to_delete = updated_data[updated_data['Delete']].index.tolist()
+
+        # If any rows are marked for deletion, remove them
+        if rows_to_delete:
+            st.session_state.added_df.drop(rows_to_delete, inplace=True)
+            st.session_state.added_df.reset_index(drop=True, inplace=True)
+            st.rerun()
+
+        # Remove the 'Delete' column after processing (to avoid confusion)
+        st.session_state.added_df.drop(columns=['Delete'], inplace=True, errors='ignore')
 
         # Clear saved top stories
         if st.button("Clear Saved"):
