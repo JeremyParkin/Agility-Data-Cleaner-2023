@@ -65,6 +65,9 @@ else:
                                  help="The brand, organization, or person this analysis should focus on",
                                  value=st.session_state.client_name)
 
+    # Dynamically determine the column name
+    summary_column_name = f"Short Entity Summary" if summary_length == "Short (20-25 words)" else f"Long Entity Summary"
+
     submitted = st.button("Submit")
 
 
@@ -115,7 +118,7 @@ else:
                 if len(row['Example Snippet']) < 150:
                     st.warning(f"Snippet is too short for message {i + 1}.")
                     if mode == "Summary":
-                        df.at[i, 'Entity Summary'] = "Snippet too short to generate summary"
+                        df.at[i, summary_column_name] = "Snippet too short to generate summary"
                     else:  # Sentiment mode
                         df.at[i, 'Entity Sentiment'] = "Snippet too short to generate sentiment opinion"
 
@@ -124,7 +127,7 @@ else:
                 # Generate prompt based on mode
                 if mode == "Summary":
                     prompt = generate_summary_prompt(row, named_entity, summary_length)
-                    df.at[i, 'Entity Summary'] = ""
+                    df.at[i, summary_column_name] = ""
                 else:  # Sentiment mode
                     prompt = generate_sentiment_prompt(row, named_entity)
                     df.at[i, 'Entity Sentiment'] = ""
@@ -146,7 +149,7 @@ else:
                 # Update the DataFrame with the response
                 if mode == "Summary":
                     summary = response.choices[0].message.content.strip()
-                    df.at[i, 'Entity Summary'] = summary
+                    df.at[i, summary_column_name] = summary
                 else:
                     sentiment = response.choices[0].message.content.strip()
                     df.at[i, 'Entity Sentiment'] = sentiment
@@ -191,9 +194,22 @@ else:
 
 
     # # Checkboxes for displaying additional information
-    show_mentions = st.checkbox("Show mentions", value=False)
-    show_impressions = st.checkbox("Show impressions", value=False)
+    col3, col4 = st.columns(2, gap="medium")
+    with col3:
+        show_mentions = st.checkbox("Show mentions", value=False)
+        show_impressions = st.checkbox("Show impressions", value=False)
+        if "Entity Sentiment" in df.columns:
+            show_sentiment = st.checkbox("Show sentiment", value=True)
+    with col4:
+        if "Short Entity Summary" in df.columns:
+            show_short_summary = st.checkbox("Show short summary", value=True)
+        if "Long Entity Summary" in df.columns:
+            show_long_summary = st.checkbox("Show long summary", value=False)
 
+    # Show warning if show_mentions or show_impressions is checked
+    if show_mentions or show_impressions:
+        st.warning(
+            "WARNING: Mentions and Impressions totals reflect exact match headlines on the same date only. Totals may not include coverage with variations in headline wording or publication dates.")
 
     st.write(" ")
 
@@ -213,14 +229,21 @@ else:
         markdown_content += f"__[{head}]({link})__  \n"
         markdown_content += f"_{outlet}_ – {date}  \n"
 
-        if "Entity Summary" in df.columns:
-            entity_summary = df["Entity Summary"][story]
-            markdown_content += f"{entity_summary}  \n\n"
+        if "Short Entity Summary" in df.columns:
+            if show_short_summary:
+                entity_summary = df["Short Entity Summary"][story]
+                markdown_content += f"{entity_summary}  \n\n"
+
+        if "Long Entity Summary" in df.columns:
+            if show_long_summary:
+                entity_summary = df["Long Entity Summary"][story]
+                markdown_content += f"{entity_summary}  \n\n"
 
         if "Entity Sentiment" in df.columns:
-            entity_sentiment = df["Entity Sentiment"][story]
-            # markdown_content += "<br>"
-            markdown_content += f"_{entity_sentiment}_  \n\n"
+            if show_sentiment:
+                entity_sentiment = df["Entity Sentiment"][story]
+                # markdown_content += "<br>"
+                markdown_content += f"_{entity_sentiment}_  \n\n"
 
         if show_mentions:
             mentions = df['Mentions'][story]
