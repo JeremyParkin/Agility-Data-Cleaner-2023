@@ -16,16 +16,6 @@ format_dict = {'AVE': '${0:,.0f}', 'Audience Reach': '{:,d}', 'Impressions': '{:
 
 st.title('Standard Cleaning')
 
-# st.write(sys.getsizeof(st.session_state))
-#
-# st.write(st.session_state)
-
-# st.dataframe(st.session_state.df_traditional.head(50))
-
-# impressions = st.session_state.df_untouched['Audience Reach'].sum()
-# st.metric(label="Impressions", value=mig.format_number(impressions))
-
-
 
 if not st.session_state.upload_step:
     st.error('Please upload a CSV before trying this step.')
@@ -40,7 +30,6 @@ elif st.session_state.standard_step:
                 st.metric(label="Mentions", value="{:,}".format(len(st.session_state.df_traditional)))
                 trad_impressions = st.session_state.df_traditional['Impressions'].sum()
                 st.metric(label="Impressions", value=mig.format_number(trad_impressions))
-                # st.metric(label="Impressions", value="{:,}".format(st.session_state.df_traditional['Impressions'].sum()))
             with col2:
                 st.subheader("Media Type")
                 st.write(st.session_state.df_traditional['Type'].value_counts())
@@ -56,7 +45,6 @@ elif st.session_state.standard_step:
                 st.metric(label="Mentions", value="{:,}".format(len(st.session_state.df_social)))
                 soc_impressions = st.session_state.df_social['Impressions'].sum()
                 st.metric(label="Impressions", value=mig.format_number(soc_impressions))
-                # st.metric(label="Impressions", value="{:,}".format(st.session_state.df_social['Impressions'].sum()))
             with col2:
                 st.subheader("Media Type")
             st.subheader("Data")
@@ -70,7 +58,6 @@ elif st.session_state.standard_step:
                 st.metric(label="Mentions", value="{:,}".format(len(st.session_state.df_dupes)))
                 dup_impressions = st.session_state.df_dupes['Impressions'].sum()
                 st.metric(label="Impressions", value=mig.format_number(dup_impressions))
-                # st.metric(label="Impressions", value="{:,}".format(st.session_state.df_dupes['Impressions'].sum()))
             with col2:
                 st.subheader("Media Type")
                 st.write(st.session_state.df_dupes['Type'].value_counts())
@@ -116,7 +103,6 @@ else:
                 st.session_state.df_traditional.insert(4, 'Mentions', temp)
 
                 # Strip extra white space
-                # st.session_state.df_raw['Headline'] = st.session_state.df_raw['Headline'].astype(str)
                 strip_columns = ['Headline', 'Outlet', 'Author', 'Snippet']
                 for column in strip_columns:
 
@@ -137,8 +123,6 @@ else:
                         st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.strip()
 
                         st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.replace('& amp;', '&')
-
-
 
 
 
@@ -205,10 +189,8 @@ else:
                     st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Type.isna()]
 
                     # Add helper columns
-
                     st.session_state.df_traditional['Date_Helper'] = pd.to_datetime(
                         st.session_state.df_traditional['Date']).dt.strftime('%Y-%m-%d')
-
 
                     st.session_state.df_traditional["dupe_helper"] = st.session_state.df_traditional['Type'].astype('string') + st.session_state.df_traditional['Outlet'].astype('string') + st.session_state.df_traditional[
                         'Headline'] + st.session_state.df_traditional['Date_Helper'].astype('string')
@@ -218,8 +200,6 @@ else:
                     st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['dupe_helper'].duplicated(keep='first')]
 
                     # Drop helper column and rejoin broadcast
-                    # st.session_state.df_traditional.drop(["dupe_helper"], axis=1, inplace=True, errors='ignore')
-                    # dupe_cols.drop(["dupe_helper"], axis=1, inplace=True, errors='ignore')
                     st.session_state.df_traditional.drop(["dupe_helper", "Date_Helper"], axis=1, inplace=True,
                                                          errors='ignore')
                     dupe_cols.drop(["dupe_helper", "Date_Helper"], axis=1, inplace=True, errors='ignore')
@@ -231,7 +211,6 @@ else:
                     frames = [st.session_state.df_traditional, broadcast_set]
                     st.session_state.df_traditional = pd.concat(frames)
 
-                # del st.session_state.df_traditional
 
                 st.session_state.standard_step = True
                 st.rerun()

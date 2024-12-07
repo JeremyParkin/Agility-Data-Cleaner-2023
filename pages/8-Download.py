@@ -152,13 +152,13 @@ else:
                 for sheet in cleaned_sheets:
                     sheet.set_default_row(22)
                     sheet.set_column('A:A', 12, None)  # datetime
-                    sheet.set_column('B:B', 22, None)  # outlet
-                    sheet.set_column('C:C', 10, None)  # type
-                    sheet.set_column('G:G', 12, None)  # author
+                    sheet.set_column('B:B', 12, None)  # author
+                    sheet.set_column('C:C', 22, None)  # outlet
+                    sheet.set_column('D:D', 40, None)  # headline
                     sheet.set_column('E:E', 0, None)  # mentions
                     sheet.set_column('F:F', 12, number_format)  # impressions
-                    sheet.set_column('H:H', 40, None)  # headline
-                    sheet.set_column('U:U', 12, currency_format)  # AVE
+                    sheet.set_column('L:L', 10, None)  # type
+                    sheet.set_column('Q:Q', 12, currency_format)  # AVE
                     sheet.freeze_panes(1, 0)
 
                 workbook.close()
