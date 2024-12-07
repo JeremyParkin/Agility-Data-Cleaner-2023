@@ -77,10 +77,6 @@ if not st.session_state.upload_step:
             st.session_state.df_traditional = st.session_state.df_untouched
 
 
-            # if "Impressions" in st.session_state.df_untouched:
-            #     st.session_state.df_untouched = st.session_state.df_untouched.rename(columns={
-            #         'Impressions': 'Audience Reach'})
-
             st.session_state.df_traditional = st.session_state.df_traditional.dropna(thresh=3)
             st.session_state.df_traditional["Mentions"] = 1
 
@@ -134,7 +130,6 @@ if not st.session_state.upload_step:
                 'Media Type': 'Type',
                 'Coverage Snippet': 'Snippet',
                 'Province/State': 'Prov/State',
-                # 'Audience Reach': 'Impressions'
             })
 
             st.session_state.upload_step = True
@@ -148,14 +143,7 @@ if st.session_state.upload_step:
             del st.session_state[key]
         st.rerun()
 
-    # st.write(st.session_state.ave_col)
     st.session_state.df_untouched["Mentions"] = 1
-
-    # if "Impressions" in st.session_state.df_untouched:
-    #     st.session_state.df_untouched = st.session_state.df_traditional.rename(columns={
-    #         'Impressions': 'Audience Reach'})
-    #
-    # st.session_state.df_untouched['Audience Reach'] = st.session_state.df_untouched['Audience Reach'].astype('Int64')
 
     st.header('Initial Stats')
 
@@ -175,7 +163,7 @@ if st.session_state.upload_step:
         original_top_outlets = (mig.top_x_by_mentions(st.session_state.df_traditional, "Outlet"))
         st.write(original_top_outlets)
 
-    df = st.session_state.df_traditional
+    df = st.session_state.df_traditional.copy()
     df['Date'] = pd.to_datetime(df['Date']).dt.date
     summary_stats = df.groupby("Date").agg({"Date": "count", "Impressions": "sum"})
     summary_stats.rename(columns={"Date": "Mentions"}, inplace=True)

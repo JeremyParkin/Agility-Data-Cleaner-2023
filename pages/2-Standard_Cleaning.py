@@ -20,6 +20,7 @@ st.title('Standard Cleaning')
 #
 # st.write(st.session_state)
 
+# st.dataframe(st.session_state.df_traditional.head(50))
 
 # impressions = st.session_state.df_untouched['Audience Reach'].sum()
 # st.metric(label="Impressions", value=mig.format_number(impressions))
