@@ -219,7 +219,7 @@ else:
 
         if "Entity Sentiment" in df.columns:
             entity_sentiment = df["Entity Sentiment"][story]
-            markdown_content += "<br>"
+            # markdown_content += "<br>"
             markdown_content += f"_{entity_sentiment}_  \n\n"
 
         if show_mentions:
