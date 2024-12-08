@@ -2,7 +2,7 @@ def standard_sidebar():
     import streamlit as st
     st.sidebar.image('https://agilitypr.news/images/Agility-centered.svg', width=200)
     st.sidebar.subheader('MIG Data Processing App')
-    st.sidebar.caption("v.2.1.4 - Dec 2024")
+    st.sidebar.caption("Version: Dec 2024")
 
     # CSS to adjust sidebar
     adjust_nav = """
@@ -56,3 +56,7 @@ def format_number(num):
         return f"{num / 1_000:.1f} K"
     else:
         return str(num)
+
+
+#TODO: submit bug reports and feature requests - could just be a link to MS forms.
+
