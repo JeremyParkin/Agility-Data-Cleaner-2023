@@ -75,7 +75,7 @@ else:
         if submitted:
             with st.spinner("Running standard data cleaning steps..."):
                 # Ensure Headline and Snippet columns are strings, even if they are blank or NaN
-                for column in ["Headline", "Snippet", "Outlet", "Author"]:
+                for column in ["Headline", "Snippet", "Outlet"]:
                     if column in st.session_state.df_traditional.columns:
                         st.session_state.df_traditional[column] = st.session_state.df_traditional[column].fillna(
                             "").astype(str)
@@ -509,7 +509,7 @@ else:
 
                     # Optional: Drop or keep the "Snippet_Limited" column based on your needs
                     st.session_state.df_traditional.drop(columns=["Snippet_Limited"], inplace=True)
-                    st.write(f"Wire mask created in {time.time() - start_time:.2f} seconds.")
+                    st.write(f"Newswires flagged in {time.time() - start_time:.2f} seconds.")
 
 
                     # STOCK MOVES MASK - based on outlet names
@@ -520,7 +520,7 @@ else:
                         na=False,
                         regex=True
                     )
-                    st.write(f"Stock mask created in {time.time() - start_time:.2f} seconds.")
+                    st.write(f"Stock & Financials flagged in {time.time() - start_time:.2f} seconds.")
 
 
                     # MARKET SPAM MASK - Create a mask for rows where both "global" and "market" are present in the Headline column
@@ -531,7 +531,7 @@ else:
                             st.session_state.df_traditional["Headline"]
                             .str.contains(r"\bmarket\b", case=False, na=False, regex=True)
                     )
-                    st.write(f"Market mask created in {time.time() - start_time:.2f} seconds.")
+                    st.write(f"Market Report Spam flagged in {time.time() - start_time:.2f} seconds.")
 
 
                     # GOOD OUTLETS MASK - based on outlet name
@@ -540,7 +540,7 @@ else:
                     reputable_outlet_mask = st.session_state.df_traditional["Outlet"].str.contains(
                         "|".join(map(re.escape, outlet_names)), case=False, na=False
                     )
-                    st.write(f"Reputable outlet mask created in {time.time() - start_time:.2f} seconds.")
+                    st.write(f"Good outlets flagged in {time.time() - start_time:.2f} seconds.")
 
 
 
@@ -553,33 +553,33 @@ else:
                         na=False,
                         regex=True
                     )
-                    st.write(f"Aggregator mask created in {time.time() - start_time:.2f} seconds.")
+                    st.write(f"Aggregators flagged in {time.time() - start_time:.2f} seconds.")
 
 
                     # Assign flags based on priority
-                    start_time = time.time()
+                    # start_time = time.time()
                     st.session_state.df_traditional.loc[newswire_mask, "Newswire Flag"] = "Newswire?"
-                    st.write(f"Newswire flagging completed in {time.time() - start_time:.2f} seconds.")
+                    # st.write(f"Newswire flagging completed in {time.time() - start_time:.2f} seconds.")
 
-                    start_time = time.time()
+                    # start_time = time.time()
                     st.session_state.df_traditional.loc[
                         ~newswire_mask & market_report_mask, "Market Report Flag"] = "Market Report Spam?"
-                    st.write(f"Market report flagging completed in {time.time() - start_time:.2f} seconds.")
+                    # st.write(f"Market report flagging completed in {time.time() - start_time:.2f} seconds.")
 
-                    start_time = time.time()
+                    # start_time = time.time()
                     st.session_state.df_traditional.loc[
                         ~newswire_mask & ~market_report_mask & stock_moves_mask, "Stock Moves Flag"] = "Stocks / Financials?"
-                    st.write(f"Stock Moves flagging completed in {time.time() - start_time:.2f} seconds.")
+                    # st.write(f"Stock Moves flagging completed in {time.time() - start_time:.2f} seconds.")
 
-                    start_time = time.time()
+                    # start_time = time.time()
                     # Apply the flag for reputable outlets
                     st.session_state.df_traditional.loc[
                         ~newswire_mask & ~market_report_mask & ~stock_moves_mask & reputable_outlet_mask, "Good Outlet Flag"] = "Good Outlet"
-                    st.write(f"Reputable Outlet flagging completed in {time.time() - start_time:.2f} seconds.")
+                    # st.write(f"Reputable Outlet flagging completed in {time.time() - start_time:.2f} seconds.")
 
-                    start_time = time.time()
+                    # start_time = time.time()
                     st.session_state.df_traditional.loc[aggregator_mask, "Aggregator Flag"] = "Aggregator"
-                    st.write(f"News aggregator flagging completed in {time.time() - start_time:.2f} seconds.")
+                    # st.write(f"News aggregator flagging completed in {time.time() - start_time:.2f} seconds.")
 
 
                     def combine_flags(row):

@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import mig_functions as mig
 import warnings
-
+import urllib.parse
 
 
 
@@ -25,6 +25,11 @@ elif len(st.session_state.df_traditional) == 0:
 
 else:
     counter = st.session_state.auth_skip_counter
+    reviewed = st.session_state.get('auth_reviewed_count', 0)  # Initialize reviewed count if not present
+
+    # MOVE ON NOTIFICATION
+    # if reviewed > 30:
+    #     st.info("You've reviewed the most significant headlines with missing authors. It's probably safe to move on.")
 
     # CSS to inject contained in a string
     hide_table_row_index = """
@@ -47,6 +52,12 @@ else:
     temp_headline_list = headline_table
     if counter < len(temp_headline_list):
         headline_text = temp_headline_list.iloc[counter]['Headline']
+        # Encode the headline to handle spaces and special characters
+        encoded_headline = urllib.parse.quote(f'"{headline_text}"')  # Quotes added for exact match search
+
+        # Create the Google search URL
+        google_search_url = f"https://www.google.com/search?q={encoded_headline}"
+
 
         but1, col3, but2 = st.columns(3)
         with but1:
@@ -76,6 +87,10 @@ else:
             with col1:
                 st.subheader("Headline")
                 st.table(headline_table.iloc[[counter]])
+                st.markdown(
+                    f'<a href="{google_search_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search Google for this headline</a>',
+                    unsafe_allow_html=True
+                )
             with col2:
                 st.write(" ")
             with col3:
@@ -113,6 +128,15 @@ else:
                 submitted = st.form_submit_button("Update Author", type="primary")
                 if submitted:
                     mig.fix_author(st.session_state.df_traditional, headline_text, new_author)
+
+                    # Increment the counter to reflect the headline being reviewed
+                    # Increment reviewed count and counter
+                    reviewed += 1
+                    st.session_state['auth_reviewed_count'] = reviewed
+
+                    # counter += 1
+                    # st.session_state.auth_skip_counter = counter
+
                     st.rerun()
     else:
         st.info("You've reached the end of the list!")
@@ -126,15 +150,6 @@ else:
             st.success("✓ Nothing left to update here.")
 
 
-    # def fixable_headline_stats(df, primary="Headline", secondary="Author"):
-    #     """tells you how many author fields can be fixed and other stats"""
-    #     headline_table = pd.pivot_table(df, index=primary, values=["Mentions", secondary], aggfunc="count")
-    #     headline_table["Missing"] = headline_table["Mentions"] - headline_table[secondary]
-    #     headline_table = headline_table[headline_table[secondary] > 0]
-    #     headline_table = headline_table[headline_table['Missing'] > 0]
-    #     fixable_headline_count = headline_table.Missing.count()
-    #     remaining = fixable_headline_count - counter
-    #     return remaining
 
     def fixable_headline_stats(df, primary="Headline", secondary="Author"):
         """tells you how many author fields can be fixed and other stats"""
@@ -188,12 +203,13 @@ else:
         statscol1, statscol2 = st.columns(2)
 
         with statscol1:
-            st.metric(label="Reviewed", value=counter)
+            st.metric(label="Updated", value=reviewed)
             # st.metric(label="Total Rows", value=remaining['total'])
             st.metric(label="Percent Known", value=remaining['percent_known'])
 
         with statscol2:
-            st.metric(label="Unreviewed", value=remaining['remaining'])
+            st.metric(label="Not Updated", value=len(temp_headline_list) - reviewed)
+            # st.metric(label="Unreviewed", value=remaining['remaining'])
             # st.metric(label="Total Known", value=remaining['total_known'])
             st.metric(label="Percent Knowable", value=remaining['percent_knowable'])
 

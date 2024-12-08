@@ -22,6 +22,10 @@ def standard_sidebar():
     # Inject CSS with Markdown
     st.markdown(adjust_nav, unsafe_allow_html=True)
 
+    # Add link to submit bug reports and feature requests
+    st.sidebar.markdown(
+        "[App Feedback](https://forms.office.com/Pages/ResponsePage.aspx?id=GvcJkLbBVUumZQrrWC6V07d2jCu79C5FsfEZJPZEfZxUNVlIVDRNNVBQVEgxQVFXNEM5VldUMkpXNS4u)")
+
 
 def top_x_by_mentions(df, column_name):
     """Returns top 10 items by mention count"""
@@ -56,7 +60,3 @@ def format_number(num):
         return f"{num / 1_000:.1f} K"
     else:
         return str(num)
-
-
-#TODO: submit bug reports and feature requests - could just be a link to MS forms.
-
