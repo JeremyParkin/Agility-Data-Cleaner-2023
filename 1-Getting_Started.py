@@ -106,7 +106,9 @@ if not st.session_state.upload_step:
                                                   "Image URLs",
                                                   "Folders",
                                                   "Notes",
-                                                  "County"],
+                                                  "County",
+                                                  "Saved Date",
+                                                  "Edited Date"],
                                                  axis=1, inplace=True, errors='ignore')
 
             columns_to_change = ["Sentiment", "Continent", "Country", "Province/State", "Prov/State", "City",
