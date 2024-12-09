@@ -35,7 +35,7 @@ elif st.session_state.standard_step:
                 st.subheader("Media Type")
                 st.write(st.session_state.df_traditional['Type'].value_counts())
             st.subheader("Data")
-            st.markdown('(First 50 rows)')
+            st.markdown('(Up to the first 1000 rows)')
             st.dataframe(st.session_state.df_traditional.head(1000).style.format(format_dict, na_rep=' '))
 
     if len(st.session_state.df_social) > 0:
