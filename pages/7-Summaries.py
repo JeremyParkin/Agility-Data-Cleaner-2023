@@ -103,7 +103,7 @@ else:
 
         # Define function to generate sentiment prompt
         def generate_sentiment_prompt(row, named_entity):
-            return f"Please indicate the sentiment of the following news story as it relates to {named_entity}. Start with one word: Positive, Neutral, or Negative - followed by a colon then a one sentence rationale as to why that sentiment was chosen.\n\nThis is the news story:\n{row['Headline']}. {row['Example Snippet']}"
+            return f"Please indicate the sentiment of the following news story toward {named_entity}. Start with one word: Positive, Neutral, or Negative - followed by a colon then a one sentence rationale as to why that sentiment was chosen.\n\nThis is the news story:\n{row['Headline']}. {row['Example Snippet']}"
 
 
         # Initialize progress bar
