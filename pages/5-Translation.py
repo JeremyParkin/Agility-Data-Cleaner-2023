@@ -97,6 +97,7 @@ else:
         headline_to_english = st.checkbox('Headline', value=True, disabled=headline_done)
         snippet_to_english = st.checkbox('Snippet (full text)', value=False, disabled=st.session_state.translated_snippet)
 
+
         if st.form_submit_button("Go!", type="primary"):
             st.warning("Stay on this page until translation is complete")
 

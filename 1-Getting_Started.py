@@ -50,21 +50,44 @@ if not st.session_state.upload_step:
                                      accept_multiple_files=False,
                                      help='Only use CSV files exported from the Agility Platform or XLSX files produced by this app.')
 
-    if not uploaded_file == None:
+    if uploaded_file is not None:
         if uploaded_file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
             # Read the xlsx file
             excel_file = pd.ExcelFile(uploaded_file)
-            # Get the sheet names
-            sheet_names = excel_file.sheet_names
-            # If there is more than one sheet, let the user select which one to use
-            if len(sheet_names) > 1:
 
+            # Get the sheet names and select if necessary
+            sheet_names = excel_file.sheet_names
+            if len(sheet_names) > 1:
                 sheet = st.selectbox('Select a sheet:', sheet_names)
-                st.session_state.df_untouched = pd.read_excel(excel_file, sheet_name=sheet)
             else:
-                st.session_state.df_untouched = pd.read_excel(excel_file)
+                sheet = sheet_names[0]
+
+            # Read only the selected sheet
+            st.session_state.df_untouched = pd.read_excel(excel_file, sheet_name=sheet)
+
         elif uploaded_file.type == 'text/csv':
-            st.session_state.df_untouched = pd.read_csv(uploaded_file)
+            # Use chunksize for large files
+            chunk_list = []
+            for chunk in pd.read_csv(uploaded_file, chunksize=5000):
+                chunk_list.append(chunk)
+            st.session_state.df_untouched = pd.concat(chunk_list, ignore_index=True)
+
+
+    # if not uploaded_file == None:
+    #     if uploaded_file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+    #         # Read the xlsx file
+    #         excel_file = pd.ExcelFile(uploaded_file)
+    #         # Get the sheet names
+    #         sheet_names = excel_file.sheet_names
+    #         # If there is more than one sheet, let the user select which one to use
+    #         if len(sheet_names) > 1:
+    #
+    #             sheet = st.selectbox('Select a sheet:', sheet_names)
+    #             st.session_state.df_untouched = pd.read_excel(excel_file, sheet_name=sheet)
+    #         else:
+    #             st.session_state.df_untouched = pd.read_excel(excel_file)
+    #     elif uploaded_file.type == 'text/csv':
+    #         st.session_state.df_untouched = pd.read_csv(uploaded_file)
 
     submitted = st.button("Submit", type="primary")
 
@@ -74,10 +97,9 @@ if not st.session_state.upload_step:
     elif submitted:
         with st.spinner("Converting file format."):
 
-            st.session_state.df_traditional = st.session_state.df_untouched
+            st.session_state.df_traditional = st.session_state.df_untouched.dropna(thresh=3)
 
-
-            st.session_state.df_traditional = st.session_state.df_traditional.dropna(thresh=3)
+            # st.session_state.df_traditional = st.session_state.df_traditional.dropna(thresh=3)
             st.session_state.df_traditional["Mentions"] = 1
 
             st.session_state.df_traditional['Impressions'] = st.session_state.df_traditional['Impressions'].astype(
@@ -118,15 +140,29 @@ if not st.session_state.upload_step:
                 if column in st.session_state.df_traditional.columns:
                     st.session_state.df_traditional[column] = st.session_state.df_traditional[column].astype('category')
 
-            if "Published Date" in st.session_state.df_traditional:
+            if "Published Date" in st.session_state.df_traditional.columns:
                 st.session_state.df_traditional['Date'] = pd.to_datetime(
-                    st.session_state.df_traditional['Published Date'] + ' ' + st.session_state.df_traditional[
-                        'Published Time'])
+                    st.session_state.df_traditional['Published Date'] + ' ' +
+                    st.session_state.df_traditional['Published Time'], errors='coerce'
+                )
                 st.session_state.df_traditional.drop(["Published Date", "Published Time"], axis=1, inplace=True,
                                                      errors='ignore')
 
+            # Move the Date column to the front
+            if 'Date' in st.session_state.df_traditional.columns:
                 first_column = st.session_state.df_traditional.pop('Date')
                 st.session_state.df_traditional.insert(0, 'Date', first_column)
+
+
+            # if "Published Date" in st.session_state.df_traditional:
+            #     st.session_state.df_traditional['Date'] = pd.to_datetime(
+            #         st.session_state.df_traditional['Published Date'] + ' ' + st.session_state.df_traditional[
+            #             'Published Time'])
+            #     st.session_state.df_traditional.drop(["Published Date", "Published Time"], axis=1, inplace=True,
+            #                                          errors='ignore')
+            #
+            #     first_column = st.session_state.df_traditional.pop('Date')
+            #     st.session_state.df_traditional.insert(0, 'Date', first_column)
 
             st.session_state.df_traditional = st.session_state.df_traditional.rename(columns={
                 'Media Type': 'Type',

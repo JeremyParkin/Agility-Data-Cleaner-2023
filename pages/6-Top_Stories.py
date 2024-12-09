@@ -132,20 +132,45 @@ else:
     @st.cache_data
     def group_and_process_data(df):
         # Group by 'Headline' and 'Date'
-        grouped_df = df.groupby(['Headline', 'Date']).agg(
-            {'Mentions': 'count', 'Impressions': 'sum'}).reset_index()
+        grouped_df = df.groupby(['Headline', 'Date'], as_index=False).agg(
+            {
+                'Mentions': 'count',
+                'Impressions': 'sum',
+                'Outlet': lambda x: x.iloc[0],  # Example: take the first outlet
+                'URL': lambda x: x.iloc[0] if not x.isnull().all() else None,  # First non-null URL
+                'Type': lambda x: x.iloc[0],  # Example: take the first type
+                'Snippet': lambda x: x.iloc[0],  # Example: take the first snippet
+            }
+        )
 
-        # Process each group
-        for i, row in grouped_df.iterrows():
-            headline_group = df[(df['Headline'] == row['Headline']) & (df['Date'] == row['Date'])]
-
-            best_outlet, best_url, best_type, best_snippet = pick_best_story_details(headline_group)
-            grouped_df.at[i, 'Example Outlet'] = best_outlet
-            grouped_df.at[i, 'Example URL'] = best_url
-            grouped_df.at[i, 'Example Type'] = best_type
-            grouped_df.at[i, 'Example Snippet'] = best_snippet
+        # Use vectorized operations where possible
+        grouped_df['Example Outlet'] = grouped_df['Outlet']
+        grouped_df['Example URL'] = grouped_df['URL']
+        grouped_df['Example Type'] = grouped_df['Type']
+        grouped_df['Example Snippet'] = grouped_df['Snippet']
 
         return grouped_df
+
+
+
+
+    # @st.cache_data
+    # def group_and_process_data(df):
+    #     # Group by 'Headline' and 'Date'
+    #     grouped_df = df.groupby(['Headline', 'Date']).agg(
+    #         {'Mentions': 'count', 'Impressions': 'sum'}).reset_index()
+    #
+    #     # Process each group
+    #     for i, row in grouped_df.iterrows():
+    #         headline_group = df[(df['Headline'] == row['Headline']) & (df['Date'] == row['Date'])]
+    #
+    #         best_outlet, best_url, best_type, best_snippet = pick_best_story_details(headline_group)
+    #         grouped_df.at[i, 'Example Outlet'] = best_outlet
+    #         grouped_df.at[i, 'Example URL'] = best_url
+    #         grouped_df.at[i, 'Example Type'] = best_type
+    #         grouped_df.at[i, 'Example Snippet'] = best_snippet
+    #
+    #     return grouped_df
 
 
     # Define a function to save selected rows without the 'Top Story' column
