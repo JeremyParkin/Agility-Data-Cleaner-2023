@@ -273,9 +273,10 @@ else:
                     "Toronto Life",
                     "BlogTO",
                     "CBC News",
+                    "CBC ",
                     "CityNews",
                     "City ",
-                    "Citytv"
+                    "Citytv ",
                     "CTV ",
                     "CP24",
                     "Daily Hive",
