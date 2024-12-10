@@ -67,9 +67,9 @@ elif st.session_state.standard_step:
 else:
     with st.form("my_form_basic_cleaning"):
         st.subheader("Cleaning options")
-        merge_online = st.checkbox("Merge 'blogs' and 'press releases' into 'Online'", value=True)
-        drop_dupes = st.checkbox("Drop duplicates", value=True)
-        coverage_flags = st.checkbox("Add possible coverage flags", value=True)
+        merge_online = st.checkbox("Merge 'blogs' and 'press releases' into 'Online'", value=True, help='Combine all three listed media types in the ONLINE category.')
+        drop_dupes = st.checkbox("Drop duplicates", value=True, help='Remove duplicates based on identical URLS or, for non-broadcast, based on 4 identical fields: Outlet, Date, Headline, Type.')
+        coverage_flags = st.checkbox("Add possible coverage flags", value=True, help='Add a column to flag stories as possible newsire coverage, possible stock moves coverage, possible market report spam, or known good outlets.')
 
         submitted = st.form_submit_button("Go!", type="primary")
         if submitted:

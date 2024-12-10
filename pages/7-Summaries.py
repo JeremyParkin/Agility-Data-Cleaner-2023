@@ -112,7 +112,7 @@ else:
                 Positive Sentiment: Praises or highlights the entity's achievements, contributions, or strengths. Uses favorable or supportive language toward the entity. Attributes beneficial or advantageous outcomes to the entity's actions.
                 Neutral Sentiment: Provides balanced or factual coverage regarding the entity without clear positive or negative framing. Avoids strong language or bias in favor of or against the entity. Mentions the entity in a way that is neither supportive nor critical.
                 Negative Sentiment: Criticizes, highlights failures, or associates the entity with challenges or issues. Uses unfavorable, disparaging, or hostile language toward the entity. Attributes negative outcomes or controversies to the entity's actions or decisions.
-                Note: Focus your analysis strictly on the sentiment toward [Entity Name] rather than the broader topic or context of the story. Provide a single-word sentiment classification (Positive, Neutral, or Negative) followed by a colon, then a one to two sentence explanation supporting your assessment. Here is the story:
+                Note: Focus your analysis strictly on the sentiment toward {named_entity} rather than the broader topic or context of the story. Provide a single-word sentiment classification (Positive, Neutral, or Negative) followed by a colon, then a one to two sentence explanation supporting your assessment. Here is the story:
                 \n{row['Headline']}. {row['Example Snippet']}
                 """
 
