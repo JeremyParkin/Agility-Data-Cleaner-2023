@@ -7,7 +7,7 @@ def standard_sidebar():
     # CSS to adjust sidebar
     adjust_nav = """
                             <style>
-                            .eczjsme9 {
+                            .eczjsme9, .st-emotion-cache-1wqrzgl {
                                 overflow: visible !important;
                                 max-width: 250px !important;
                                 }

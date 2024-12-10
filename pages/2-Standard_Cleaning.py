@@ -69,7 +69,7 @@ else:
         st.subheader("Cleaning options")
         merge_online = st.checkbox("Merge 'blogs' and 'press releases' into 'Online'", value=True, help='Combine all three listed media types in the ONLINE category.')
         drop_dupes = st.checkbox("Drop duplicates", value=True, help='Remove duplicates based on identical URLS or, for non-broadcast, based on 4 identical fields: Outlet, Date, Headline, Type.')
-        coverage_flags = st.checkbox("Add possible coverage flags", value=True, help='Add a column to flag stories as possible newsire coverage, possible stock moves coverage, possible market report spam, or known good outlets.')
+        coverage_flags = st.checkbox("Add possible coverage flags", value=True, help='Add a column to flag stories as possible newswire coverage, possible stock moves coverage, possible market report spam, or known good outlets.')
 
         submitted = st.form_submit_button("Go!", type="primary")
         if submitted:
