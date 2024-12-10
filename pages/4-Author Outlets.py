@@ -277,10 +277,10 @@ else:
 
                 # Render the links
                 st.markdown(
-                    f'<a href="{muckrack_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search Muckrack for {author_name}</a>',
+                    f'&nbsp;&nbsp;» <a href="{muckrack_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search Muckrack for {author_name}</a>',
                     unsafe_allow_html=True)
                 st.markdown(
-                    f'<a href="{linkedin_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search LinkedIn for {author_name}</a>',
+                    f'&nbsp;&nbsp;» <a href="{linkedin_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search LinkedIn for {author_name}</a>',
                     unsafe_allow_html=True)
 
 

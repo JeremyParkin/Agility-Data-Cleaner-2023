@@ -202,7 +202,7 @@ else:
                         st.session_state.df_traditional['Date']).dt.strftime('%Y-%m-%d')
 
                     st.session_state.df_traditional["dupe_helper"] = st.session_state.df_traditional['Type'].astype('string') + st.session_state.df_traditional['Outlet'].astype('string') + st.session_state.df_traditional[
-                        'Headline'] + st.session_state.df_traditional['Date_Helper'].astype('string')
+                        'Headline'] # + st.session_state.df_traditional['Date_Helper'].astype('string')
                     st.session_state.df_traditional = st.session_state.df_traditional.sort_values(["dupe_helper", "Author", "Impressions", "AVE", "Date"], axis=0,
                                                                                                   ascending=[True, True, False, False, True])
                     dupe_cols = st.session_state.df_traditional[st.session_state.df_traditional['dupe_helper'].duplicated(keep='first')]

@@ -88,7 +88,7 @@ else:
                 st.subheader("Headline")
                 st.table(headline_table.iloc[[counter]])
                 st.markdown(
-                    f'<a href="{google_search_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search Google for this headline</a>',
+                    f'&nbsp;&nbsp;» <a href="{google_search_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search Google for this headline</a>',
                     unsafe_allow_html=True
                 )
             with col2:

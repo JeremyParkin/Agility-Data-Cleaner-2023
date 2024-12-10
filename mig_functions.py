@@ -1,6 +1,6 @@
 def standard_sidebar():
     import streamlit as st
-    st.sidebar.image('https://agilitypr.news/images/Agility-centered.svg', width=200)
+    st.sidebar.image('https://agilitypr.news/images/Agility-centered.svg', width=180)
     st.sidebar.subheader('MIG Data Processing App')
     st.sidebar.caption("Version: Dec 2024")
 
