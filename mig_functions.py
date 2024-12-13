@@ -7,9 +7,10 @@ def standard_sidebar():
     # CSS to adjust sidebar
     adjust_nav = """
                             <style>
-                            .eczjsme9, .st-emotion-cache-1wqrzgl {
+                            .eczjsme9, .eczjsme10, .st-emotion-cache-1wqrzgl {
                                 overflow: visible !important;
                                 max-width: 250px !important;
+                                min-height: 66vh !important;
                                 }
                             .st-emotion-cache-a8w3f8 {
                                 overflow: visible !important;
@@ -17,6 +18,7 @@ def standard_sidebar():
                             .st-emotion-cache-1cypcdb {
                                 max-width: 250px !important;
                                 }
+                           
                             </style>
                             """
     # Inject CSS with Markdown
