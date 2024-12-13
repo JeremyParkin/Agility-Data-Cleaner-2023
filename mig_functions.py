@@ -10,7 +10,7 @@ def standard_sidebar():
                             .eczjsme9, .eczjsme10, .st-emotion-cache-1wqrzgl {
                                 overflow: visible !important;
                                 max-width: 250px !important;
-                                min-height: 66vh !important;
+                                min-height: 470px !important;
                                 }
                             .st-emotion-cache-a8w3f8 {
                                 overflow: visible !important;
