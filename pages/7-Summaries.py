@@ -222,9 +222,64 @@ else:
             "WARNING: Mentions and Impressions totals reflect exact match headlines on the same date only. Totals do not include coverage with headline or date variations.")
 
     st.write(" ")
-
+    st.divider()
     st.subheader("Copy-Paste Top Stories")
+    st.divider()
 
+    # # Initialize the HTML content
+    # html_content = ""
+    #
+    # # Loop through the DataFrame
+    # for story in df.index:
+    #
+    #     # Escape and format fields
+    #     head = df["Headline"][story]
+    #     outlet = df["Example Outlet"][story]
+    #     link = df["Example URL"][story]
+    #     date = df["Date"][story].strftime("%B %d, %Y")
+    #
+    #     # Add the story content
+    #     html_content += f"""
+    #         <strong><a href="{link}" style="text-decoration: none; color: inherit;" target="_blank">{head}</a></strong><br>
+    #         <em>{outlet} – {date}</em><br>
+    #     """
+    #
+    #     # Optional sections
+    #     if "Short Entity Summary" in df.columns and show_short_summary:
+    #         entity_summary = df["Short Entity Summary"][story]
+    #         html_content += f"{entity_summary}<br>"
+    #
+    #     if "Long Entity Summary" in df.columns and show_long_summary:
+    #         entity_summary = df["Long Entity Summary"][story]
+    #         html_content += f"{entity_summary}<br>"
+    #
+    #     if "Entity Sentiment" in df.columns and show_sentiment:
+    #         entity_sentiment = df["Entity Sentiment"][story]
+    #         html_content += f"<em>{entity_sentiment}</em><br>"
+    #
+    #     if show_mentions or show_impressions:
+    #         if show_mentions:
+    #             mentions = df["Mentions"][story]
+    #             html_content += f"<strong>Mentions:</strong> {mentions} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+    #         if show_impressions:
+    #             impressions = df["Impressions"][story]
+    #             html_content += f"<strong>Impressions:</strong> {impressions:,}<br>"
+    #
+    #     # Add a blank line for separation
+    #     html_content += "<br>"
+    #
+    # # Render the content
+    # with st.container():
+    #     st.markdown(
+    #         f"""
+    #         <div style="background-color: white; padding: 20px; border-radius: 5px; color: #000; font-family: Arial, sans-serif;">
+    #             <div>{html_content}
+    #         </div>
+    #         """,
+    #         unsafe_allow_html=True,
+    #     )
+
+    #
     for story in df.index:
 
 
@@ -232,9 +287,6 @@ else:
         outlet = escape_markdown(df["Example Outlet"][story])
         link = escape_markdown(df["Example URL"][story])
         date = df["Date"][story].strftime("%B %d, %Y")
-        # df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
-        # date = df.at[story, "Date"].strftime("%B %d, %Y")
-
 
 
         # Build the markdown string
@@ -254,7 +306,6 @@ else:
         if "Entity Sentiment" in df.columns:
             if show_sentiment:
                 entity_sentiment = df["Entity Sentiment"][story]
-                # markdown_content += "<br>"
                 markdown_content += f"_{entity_sentiment}_  \n\n"
 
         if show_mentions:

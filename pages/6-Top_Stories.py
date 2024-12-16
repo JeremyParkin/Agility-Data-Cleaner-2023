@@ -135,6 +135,14 @@ else:
         grouped_df = df.groupby(['Headline', 'Date']).agg(
             {'Mentions': 'count', 'Impressions': 'sum'}).reset_index()
 
+        # Ensure the columns exist in the DataFrame
+        grouped_df['Example Outlet'] = None
+        grouped_df['Example URL'] = None
+        grouped_df['Example Type'] = None
+        grouped_df['Example Snippet'] = None
+
+
+
         # Process each group
         for i, row in grouped_df.iterrows():
             headline_group = df[(df['Headline'] == row['Headline']) & (df['Date'] == row['Date'])]
