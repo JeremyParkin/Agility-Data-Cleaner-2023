@@ -12,7 +12,7 @@ def standard_sidebar():
                                 max-width: 250px !important;
                                 }
                                 
-                            .eczjsme10 {
+                            .eczjsme16 {
                                 min-height: 470px !important;
                                 }
                             
