@@ -610,9 +610,9 @@ else:
 
 
 
-                else:
-                    frames = [st.session_state.df_traditional] #, broadcast_set]
-                    st.session_state.df_traditional = pd.concat(frames)
+                # else:
+                #     frames = [st.session_state.df_traditional] #, broadcast_set]
+                #     st.session_state.df_traditional = pd.concat(frames)
 
 
                 st.session_state.standard_step = True
