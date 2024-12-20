@@ -48,6 +48,8 @@ elif st.session_state.standard_step:
                 st.metric(label="Impressions", value=mig.format_number(soc_impressions))
             with col2:
                 st.subheader("Media Type")
+                st.write(st.session_state.df_social['Type'].value_counts())
+
             st.subheader("Data")
             st.markdown('(First 50 rows)')
             st.dataframe(st.session_state.df_social.head(50).style.format(format_dict, na_rep=' '))
@@ -66,11 +68,14 @@ elif st.session_state.standard_step:
             st.dataframe(st.session_state.df_dupes.style.format(format_dict, na_rep=' '))
 else:
     with st.form("my_form_basic_cleaning"):
+
+        # User options
         st.subheader("Cleaning options")
         merge_online = st.checkbox("Merge 'blogs' and 'press releases' into 'Online'", value=True, help='Combine all three listed media types in the ONLINE category.')
         drop_dupes = st.checkbox("Drop duplicates", value=True, help='Remove duplicates based on identical URLS or, for non-broadcast, based on 4 identical fields: Outlet, Date, Headline, Type.')
         coverage_flags = st.checkbox("Add possible coverage flags", value=True, help='Add a column to flag stories as possible newswire coverage, possible stock moves coverage, possible market report spam, or known good outlets.')
 
+        # Cleaning process
         submitted = st.form_submit_button("Go!", type="primary")
         if submitted:
             with st.spinner("Running standard data cleaning steps..."):
@@ -135,7 +140,7 @@ else:
 
 
 
-                # Remove (Online)
+                # Remove '(Online)' from outlet names
                 st.session_state.df_traditional['Outlet'] = st.session_state.df_traditional['Outlet'].str.replace(' \\(Online\\)', '')
 
                 # Replace wonky apostrophes
@@ -165,11 +170,12 @@ else:
 
                     # DROP DUPLICATES BY URL MATCHES
 
-                    # Set aside blank URLs
+                    # Set aside blank URLs for later
                     blank_urls = st.session_state.df_traditional[st.session_state.df_traditional.URL.isna()]
+                    # Remove blank URLs from main df
                     st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.URL.isna()]
 
-                    # Add temporary dupe URL helper column
+                    # Add temporary dupe URL helper column and normalize URL formats
                     st.session_state.df_traditional['URL_Helper'] = st.session_state.df_traditional['URL'].str.lower()
                     st.session_state.df_traditional['URL_Helper'] = st.session_state.df_traditional['URL_Helper'].str.replace('http:', 'https:')
 
@@ -542,7 +548,6 @@ else:
 
                     # GOOD OUTLETS MASK - based on outlet name
                     start_time = time.time()
-                    # Create a mask for reputable outlets
                     reputable_outlet_mask = st.session_state.df_traditional["Outlet"].str.contains(
                         "|".join(map(re.escape, outlet_names)), case=False, na=False
                     )
@@ -562,30 +567,22 @@ else:
                     st.write(f"Aggregators flagged in {time.time() - start_time:.2f} seconds.")
 
 
-                    # Assign flags based on priority
-                    # start_time = time.time()
+                    # Assign junk flags based on priority
                     st.session_state.df_traditional.loc[newswire_mask, "Newswire Flag"] = "Newswire?"
-                    # st.write(f"Newswire flagging completed in {time.time() - start_time:.2f} seconds.")
 
-                    # start_time = time.time()
                     st.session_state.df_traditional.loc[
                         ~newswire_mask & market_report_mask, "Market Report Flag"] = "Market Report Spam?"
-                    # st.write(f"Market report flagging completed in {time.time() - start_time:.2f} seconds.")
 
-                    # start_time = time.time()
                     st.session_state.df_traditional.loc[
                         ~newswire_mask & ~market_report_mask & stock_moves_mask, "Stock Moves Flag"] = "Stocks / Financials?"
-                    # st.write(f"Stock Moves flagging completed in {time.time() - start_time:.2f} seconds.")
 
-                    # start_time = time.time()
+                    st.session_state.df_traditional.loc[aggregator_mask, "Aggregator Flag"] = "Aggregator"
+
+
                     # Apply the flag for reputable outlets
                     st.session_state.df_traditional.loc[
                         ~newswire_mask & ~market_report_mask & ~stock_moves_mask & reputable_outlet_mask, "Good Outlet Flag"] = "Good Outlet"
-                    # st.write(f"Reputable Outlet flagging completed in {time.time() - start_time:.2f} seconds.")
 
-                    # start_time = time.time()
-                    st.session_state.df_traditional.loc[aggregator_mask, "Aggregator Flag"] = "Aggregator"
-                    # st.write(f"News aggregator flagging completed in {time.time() - start_time:.2f} seconds.")
 
 
                     def combine_flags(row):
@@ -614,7 +611,7 @@ else:
 
 
                 else:
-                    frames = [st.session_state.df_traditional, broadcast_set]
+                    frames = [st.session_state.df_traditional] #, broadcast_set]
                     st.session_state.df_traditional = pd.concat(frames)
 
 
