@@ -168,7 +168,7 @@ else:
                 # Duplicate removal
                 if drop_dupes:
 
-                    # DROP DUPLICATES BY URL MATCHES
+                    # DROP DUPLICATES BY URL MATCHES #########################################
 
                     # Set aside blank URLs for later
                     blank_urls = st.session_state.df_traditional[st.session_state.df_traditional.URL.isna()]
@@ -195,7 +195,7 @@ else:
                     frames = [st.session_state.df_traditional, blank_urls]
                     st.session_state.df_traditional = pd.concat(frames)
 
-                    # DROP DUPLICATES BY COLUMN MATCHES
+                    # DROP DUPLICATES BY COLUMN MATCHES ###########################################
 
                     # Split off records with blank headline/outlet/type
                     blank_set = st.session_state.df_traditional[st.session_state.df_traditional.Headline.isna() | st.session_state.df_traditional.Outlet.isna() | st.session_state.df_traditional.Type.isna() | len(st.session_state.df_traditional.Headline) == 0]
@@ -204,8 +204,8 @@ else:
                     st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Type.isna()]
 
                     # Add helper columns
-                    st.session_state.df_traditional['Date_Helper'] = pd.to_datetime(
-                        st.session_state.df_traditional['Date']).dt.strftime('%Y-%m-%d')
+                    # st.session_state.df_traditional['Date_Helper'] = pd.to_datetime(
+                    #     st.session_state.df_traditional['Date']).dt.strftime('%Y-%m-%d')
 
                     st.session_state.df_traditional["dupe_helper"] = st.session_state.df_traditional['Type'].astype('string') + st.session_state.df_traditional['Outlet'].astype('string') + st.session_state.df_traditional[
                         'Headline'] # + st.session_state.df_traditional['Date_Helper'].astype('string')
@@ -214,279 +214,285 @@ else:
                     dupe_cols = st.session_state.df_traditional[st.session_state.df_traditional['dupe_helper'].duplicated(keep='first')]
                     st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['dupe_helper'].duplicated(keep='first')]
 
-                    # Drop helper column and rejoin broadcast
+                    # Drop helper column and rejoin blank set
                     st.session_state.df_traditional.drop(["dupe_helper", "Date_Helper"], axis=1, inplace=True,
                                                          errors='ignore')
                     dupe_cols.drop(["dupe_helper", "Date_Helper"], axis=1, inplace=True, errors='ignore')
-                    frames = [st.session_state.df_traditional, broadcast_set, st.session_state.blank_set]
+
+                    frames = [st.session_state.df_traditional, st.session_state.blank_set]
                     st.session_state.df_traditional = pd.concat(frames)
                     st.session_state.df_dupes = pd.concat([dupe_urls, dupe_cols])
 
-
-
-                # COVERAGE FLAGS
-                # List of keywords and phrases to search for newswire junk
-                newswire_phrases = [
-                    "pressrelease", #
-                    "accesswire", #
-                    "business wire", #
-                    "businesswire", #
-                    "CNW", #
-                    "newswire", #
-                    "presswire", #
-                    "openPR",
-                    "pr-gateway",
-                    "Prlog",
-                    "PRWEB", #
-                    "Pressebox",
-                    "Presseportal",
-                    "RTTNews",
-                    "SBWIRE",
-                    "issuewire",
-                    "prunderground"
-                ]
-
-                stock_moves_phrases = [
-                    "ADVFN", "ARIVA.DE", "Benzinga", "Barchart", "Daily Advent", "ETF Daily News",
-                    "FinanzNachrichten.de", "Finanzen.at", "Finanzen.ch", "FONDS exclusiv", "Market Beat",
-                    "Market Newsdesk", "Market Newswire", "Market Screener", "Market Wire News", "MarketBeat",
-                    "MarketScreener", "MarketWatch", "Nasdaq", "Seeking Alpha", "Stock Observer", "Stock Titan",
-                    "Stockhouse", "Stockstar", "Zacks"
-
-                ]
-
-                # Define a list of aggregator outlet names
-                aggregators_list = [
-                    "Yahoo", "MSN", "News Break", "Google News", "Apple News", "Flipboard",
-                    "Pocket", "Feedly", "SmartNews", "StumbleUpon"
-                ]
-
-                # Define a list of reputable outlet names
-                outlet_names = [
-                    "National Post",
-                    "The Canadian Press",
-                    "The Globe and Mail",
-                    "Toronto Star",
-                    "Calgary Herald",
-                    "Edmonton Journal",
-                    "Montreal Gazette",
-                    "Ottawa Citizen",
-                    "The Chronicle Herald",
-                    "The Telegram",
-                    "Vancouver Sun",
-                    "Winnipeg Free Press",
-                    "The Globe",
-                    "Toronto Life",
-                    "BlogTO",
-                    "CBC News",
-                    "CBC ",
-                    "CityNews",
-                    "City ",
-                    "Citytv ",
-                    "CTV ",
-                    "CP24",
-                    "Daily Hive",
-                    "Global News",
-                    "La Presse",
-                    "Le Devoir",
-                    "Le Journal de Montréal",
-                    "Radio-Canada",
-                    "BNN Bloomberg",
-                    "Financial Post",
-                    "rabble.ca",
-                    "The Tyee",
-                    "The Walrus",
-                    "CHCH",
-                    "CHEK News",
-                    "NOW Magazine",
-                    "The Georgia Straight",
-                    "HuffPost Canada",
-                    "iPolitics",
-                    "TVO.org",
-                    "OMNI Television",
-                    "Sing Tao Daily",
-                    "APTN National News",
-                    "Calgary Sun",
-                    "Edmonton Sun",
-                    "Hamilton Spectator",
-                    "Kingston Whig-Standard",
-                    "London Free Press",
-                    "Ottawa Sun",
-                    "Regina Leader-Post",
-                    "Sault Star",
-                    "StarPhoenix",
-                    "Sudbury Star",
-                    "The Province",
-                    "Toronto Sun",
-                    "Windsor Star",
-                    "Winnipeg Sun",
-                    "Bloomberg",
-                    "Financial Times",
-                    "Macleans",
-                    "Reuters",
-                    "Journal de Quebec",
-                    "L'Actualite",
-                    "Le Droit",
-                    "Le Soleil",
-                    "Les Affaires",
-                    "TVA Nouvelles",
-                    "Times Colonist",
-                    "The New York Times",
-                    "The Washington Post",
-                    "USA Today",
-                    "Los Angeles Times",
-                    "Chicago Tribune",
-                    "The Boston Globe",
-                    "The Dallas Morning News",
-                    "The Philadelphia Inquirer",
-                    "San Francisco Chronicle",
-                    "Miami Herald",
-                    "The Seattle Times",
-                    "Houston Chronicle",
-                    "The Salt Lake Tribune",
-                    "Deseret News",
-                    "Albany Times Union",
-                    "Arkansas Democrat-Gazette",
-                    "Austin American-Statesman",
-                    "Bakersfield Californian",
-                    "Buffalo News",
-                    "Charleston Gazette-Mail",
-                    "The Columbus Dispatch",
-                    "The Fresno Bee",
-                    "Hartford Courant",
-                    "Idaho Statesman",
-                    "Las Vegas Review-Journal",
-                    "The Ledger",
-                    "Lexington Herald-Leader",
-                    "The Modesto Bee",
-                    "The Morning Call",
-                    "New Haven Register",
-                    "Omaha World-Herald",
-                    "Palm Beach Post",
-                    "Patriot-News",
-                    "Pittsburgh Post-Gazette",
-                    "Richmond Times-Dispatch",
-                    "The Sacramento Bee",
-                    "The Spokesman-Review",
-                    "Syracuse Post-Standard",
-                    "The Tennessean",
-                    "The Trentonian",
-                    "Tulsa World",
-                    "The Virginian-Pilot",
-                    "The Wichita Eagle",
-                    "The Star-Ledger",
-                    "The News & Observer",
-                    "The News Tribune",
-                    "Reno Gazette-Journal",
-                    "The Clarion-Ledger",
-                    "The State",
-                    "Daily Press",
-                    "The Ann Arbor News",
-                    "The Day",
-                    "The Press-Enterprise",
-                    "South Florida Sun Sentinel",
-                    "The Providence Journal",
-                    "Daily Herald",
-                    "The Times-Picayune/The New Orleans Advocate",
-                    "The Star Press",
-                    "The Pueblo Chieftain",
-                    "The Record",
-                    "The Roanoke Times",
-                    "The Daily Breeze",
-                    "The Vindicator",
-                    "Waco Tribune-Herald",
-                    "Yakima Herald-Republic",
-                    "York Daily Record",
-                    "NPR",
-                    "ABC News",
-                    "NBC News",
-                    "CBS News",
-                    "CNN",
-                    "Fox News",
-                    "CNBC",
-                    "The Wall Street Journal",
-                    "Barron's",
-                    "ProPublica",
-                    "The Atlantic",
-                    "Politico",
-                    "Vox",
-                    "Slate",
-                    "The Nation",
-                    "Mother Jones",
-                    "The Hill",
-                    "Axios",
-                    "BuzzFeed News",
-                    "Vice News",
-                    "HuffPost",
-                    "The Verge",
-                    "Univision",
-                    "Telemundo",
-                    "Indian Country Today",
-                    "The Detroit News",
-                    "New York Post",
-                    "San Diego Union-Tribune",
-                    "The Baltimore Sun",
-                    "Orlando Sentinel",
-                    "The Denver Post",
-                    "The Plain Dealer",
-                    "The Charlotte Observer",
-                    "St. Louis Post-Dispatch",
-                    "The Kansas City Star",
-                    "The Tampa Bay Times",
-                    "The Star Tribune",
-                    "Milwaukee Journal Sentinel",
-                    "The Indianapolis Star",
-                    "The Courier-Journal",
-                    "The Times",
-                    "The Guardian",
-                    "The Daily Telegraph",
-                    "The Independent",
-                    "The Sun",
-                    "The Daily Mail",
-                    "The Mirror",
-                    "The Observer",
-                    "The Sunday Times",
-                    "The Evening Standard",
-                    "Yorkshire Post",
-                    "The Scotsman",
-                    "Manchester Evening News",
-                    "Liverpool Echo",
-                    "Birmingham Mail",
-                    "Wales Online",
-                    "Belfast Telegraph",
-                    "The Herald Scotland",
-                    "ITV News",
-                    "BBC News",
-                    "Channel 4 News",
-                    "Sky News",
-                    "Reuters UK",
-                    "City A.M.",
-                    "The Economist",
-                    "The Spectator",
-                    "New Statesman",
-                    "The Week",
-                    "Prospect Magazine",
-                    "The Conversation UK",
-                    "HuffPost UK",
-                    "Metro",
-                    "The Register",
-                    "PinkNews",
-                    "Al Jazeera English (UK)",
-                    "The National (Scotland)",
-                    "The Courier (Dundee)",
-                    "Cambridge News",
-                    "Eastern Daily Press",
-                    "Oxford Mail",
-                    "Swindon Advertiser",
-                    "The Argus (Brighton)",
-                    "Kent Online",
-                    "Lincolnshire Echo",
-                    "Gloucestershire Live"
-                ]
+                # Rejoin broadcast ###########################
+                frames = [st.session_state.df_traditional, broadcast_set]
+                st.session_state.df_traditional = pd.concat(frames)
 
                 st.write(f"Standard Cleaning completed in {time.time() - start_time:.2f} seconds.")
 
+
+
                 if coverage_flags:
+
+                    # List of keywords and phrases to search for newswire junk
+                    newswire_phrases = [
+                        "pressrelease",
+                        "accesswire",
+                        "business wire",
+                        "businesswire",
+                        "CNW",
+                        "newswire",
+                        "presswire",
+                        "openPR",
+                        "pr-gateway",
+                        "Prlog",
+                        "PRWEB",
+                        "Pressebox",
+                        "Presseportal",
+                        "RTTNews",
+                        "SBWIRE",
+                        "issuewire",
+                        "prunderground"
+                    ]
+
+                    stock_moves_phrases = [
+                        "ADVFN", "ARIVA.DE", "Benzinga", "Barchart", "Daily Advent", "ETF Daily News",
+                        "FinanzNachrichten.de", "Finanzen.at", "Finanzen.ch", "FONDS exclusiv", "Market Beat",
+                        "Market Newsdesk", "Market Newswire", "Market Screener", "Market Wire News", "MarketBeat",
+                        "MarketScreener", "MarketWatch", "Nasdaq", "Seeking Alpha", "Stock Observer", "Stock Titan",
+                        "Stockhouse", "Stockstar", "Zacks"
+
+                    ]
+
+                    # Define a list of aggregator outlet names
+                    aggregators_list = [
+                        "Yahoo", "MSN", "News Break", "Google News", "Apple News", "Flipboard",
+                        "Pocket", "Feedly", "SmartNews", "StumbleUpon"
+                    ]
+
+                    # Define a list of reputable outlet names
+                    outlet_names = [
+                        "National Post",
+                        "The Canadian Press",
+                        "The Globe and Mail",
+                        "Toronto Star",
+                        "Calgary Herald",
+                        "Edmonton Journal",
+                        "Montreal Gazette",
+                        "Ottawa Citizen",
+                        "The Chronicle Herald",
+                        "The Telegram",
+                        "Vancouver Sun",
+                        "Winnipeg Free Press",
+                        "The Globe",
+                        "Toronto Life",
+                        "BlogTO",
+                        "CBC News",
+                        "CBC ",
+                        "CityNews",
+                        "City ",
+                        "Citytv ",
+                        "CTV ",
+                        "CP24",
+                        "Daily Hive",
+                        "Global News",
+                        "La Presse",
+                        "Le Devoir",
+                        "Le Journal de Montréal",
+                        "Radio-Canada",
+                        "BNN Bloomberg",
+                        "Financial Post",
+                        "rabble.ca",
+                        "The Tyee",
+                        "The Walrus",
+                        "CHCH",
+                        "CHEK News",
+                        "NOW Magazine",
+                        "The Georgia Straight",
+                        "HuffPost Canada",
+                        "iPolitics",
+                        "TVO.org",
+                        "OMNI Television",
+                        "Sing Tao Daily",
+                        "APTN National News",
+                        "Calgary Sun",
+                        "Edmonton Sun",
+                        "Hamilton Spectator",
+                        "Kingston Whig-Standard",
+                        "London Free Press",
+                        "Ottawa Sun",
+                        "Regina Leader-Post",
+                        "Sault Star",
+                        "StarPhoenix",
+                        "Sudbury Star",
+                        "The Province",
+                        "Toronto Sun",
+                        "Windsor Star",
+                        "Winnipeg Sun",
+                        "Bloomberg",
+                        "Financial Times",
+                        "Macleans",
+                        "Reuters",
+                        "Journal de Quebec",
+                        "L'Actualite",
+                        "Le Droit",
+                        "Le Soleil",
+                        "Les Affaires",
+                        "TVA Nouvelles",
+                        "Times Colonist",
+                        "The New York Times",
+                        "The Washington Post",
+                        "USA Today",
+                        "Los Angeles Times",
+                        "Chicago Tribune",
+                        "The Boston Globe",
+                        "The Dallas Morning News",
+                        "The Philadelphia Inquirer",
+                        "San Francisco Chronicle",
+                        "Miami Herald",
+                        "The Seattle Times",
+                        "Houston Chronicle",
+                        "The Salt Lake Tribune",
+                        "Deseret News",
+                        "Albany Times Union",
+                        "Arkansas Democrat-Gazette",
+                        "Austin American-Statesman",
+                        "Bakersfield Californian",
+                        "Buffalo News",
+                        "Charleston Gazette-Mail",
+                        "The Columbus Dispatch",
+                        "The Fresno Bee",
+                        "Hartford Courant",
+                        "Idaho Statesman",
+                        "Las Vegas Review-Journal",
+                        "The Ledger",
+                        "Lexington Herald-Leader",
+                        "The Modesto Bee",
+                        "The Morning Call",
+                        "New Haven Register",
+                        "Omaha World-Herald",
+                        "Palm Beach Post",
+                        "Patriot-News",
+                        "Pittsburgh Post-Gazette",
+                        "Richmond Times-Dispatch",
+                        "The Sacramento Bee",
+                        "The Spokesman-Review",
+                        "Syracuse Post-Standard",
+                        "The Tennessean",
+                        "The Trentonian",
+                        "Tulsa World",
+                        "The Virginian-Pilot",
+                        "The Wichita Eagle",
+                        "The Star-Ledger",
+                        "The News & Observer",
+                        "The News Tribune",
+                        "Reno Gazette-Journal",
+                        "The Clarion-Ledger",
+                        "The State",
+                        "Daily Press",
+                        "The Ann Arbor News",
+                        "The Day",
+                        "The Press-Enterprise",
+                        "South Florida Sun Sentinel",
+                        "The Providence Journal",
+                        "Daily Herald",
+                        "The Times-Picayune/The New Orleans Advocate",
+                        "The Star Press",
+                        "The Pueblo Chieftain",
+                        "The Record",
+                        "The Roanoke Times",
+                        "The Daily Breeze",
+                        "The Vindicator",
+                        "Waco Tribune-Herald",
+                        "Yakima Herald-Republic",
+                        "York Daily Record",
+                        "NPR",
+                        "ABC News",
+                        "NBC News",
+                        "CBS News",
+                        "CNN",
+                        "Fox News",
+                        "CNBC",
+                        "The Wall Street Journal",
+                        "Barron's",
+                        "ProPublica",
+                        "The Atlantic",
+                        "Politico",
+                        "Vox",
+                        "Slate",
+                        "The Nation",
+                        "Mother Jones",
+                        "The Hill",
+                        "Axios",
+                        "BuzzFeed News",
+                        "Vice News",
+                        "HuffPost",
+                        "The Verge",
+                        "Univision",
+                        "Telemundo",
+                        "Indian Country Today",
+                        "The Detroit News",
+                        "New York Post",
+                        "San Diego Union-Tribune",
+                        "The Baltimore Sun",
+                        "Orlando Sentinel",
+                        "The Denver Post",
+                        "The Plain Dealer",
+                        "The Charlotte Observer",
+                        "St. Louis Post-Dispatch",
+                        "The Kansas City Star",
+                        "The Tampa Bay Times",
+                        "The Star Tribune",
+                        "Milwaukee Journal Sentinel",
+                        "The Indianapolis Star",
+                        "The Courier-Journal",
+                        "The Times",
+                        "The Guardian",
+                        "The Daily Telegraph",
+                        "The Independent",
+                        "The Sun",
+                        "The Daily Mail",
+                        "The Mirror",
+                        "The Observer",
+                        "The Sunday Times",
+                        "The Evening Standard",
+                        "Yorkshire Post",
+                        "The Scotsman",
+                        "Manchester Evening News",
+                        "Liverpool Echo",
+                        "Birmingham Mail",
+                        "Wales Online",
+                        "Belfast Telegraph",
+                        "The Herald Scotland",
+                        "ITV News",
+                        "BBC News",
+                        "Channel 4 News",
+                        "Sky News",
+                        "Reuters UK",
+                        "City A.M.",
+                        "The Economist",
+                        "The Spectator",
+                        "New Statesman",
+                        "The Week",
+                        "Prospect Magazine",
+                        "The Conversation UK",
+                        "HuffPost UK",
+                        "Metro",
+                        "The Register",
+                        "PinkNews",
+                        "Al Jazeera English (UK)",
+                        "The National (Scotland)",
+                        "The Courier (Dundee)",
+                        "Cambridge News",
+                        "Eastern Daily Press",
+                        "Oxford Mail",
+                        "Swindon Advertiser",
+                        "The Argus (Brighton)",
+                        "Kent Online",
+                        "Lincolnshire Echo",
+                        "Gloucestershire Live"
+                    ]
+
+
                     # Create temporary flagging columns
                     st.session_state.df_traditional["Newswire Flag"] = ""
                     st.session_state.df_traditional["Market Report Flag"] = ""
@@ -608,11 +614,6 @@ else:
                     st.session_state.df_traditional.drop(
                         columns=[col for col in flag_columns if col in st.session_state.df_traditional], inplace=True)
 
-
-
-                # else:
-                #     frames = [st.session_state.df_traditional] #, broadcast_set]
-                #     st.session_state.df_traditional = pd.concat(frames)
 
 
                 st.session_state.standard_step = True
