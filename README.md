@@ -27,7 +27,7 @@ The MIG Data Processing App is a comprehensive tool designed for media analysts 
 - **Filtering and Selection**: Apply custom filters and select stories significant to the analysis.
 
 ## Top Stories Summaries
-- **AI-Generated Summaries**: Leverage OpenAI's GPT-3.5 model to summarize or analyze the sentiment of top stories.
+- **AI-Generated Summaries**: Leverage OpenAI's GPT-4o model to summarize or analyze the sentiment of top stories.
 - **Efficient Insights**: Quickly comprehend the essence and sentiment of media coverage.
 
 ## Download
