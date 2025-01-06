@@ -80,7 +80,7 @@ else:
         if submitted:
             with st.spinner("Running standard data cleaning steps..."):
                 # Ensure Headline and Snippet columns are strings, even if they are blank or NaN
-                for column in ["Headline", "Snippet", "Outlet"]:
+                for column in ["Headline", "Snippet", "Outlet", "Author"]:
                     if column in st.session_state.df_traditional.columns:
                         st.session_state.df_traditional[column] = st.session_state.df_traditional[column].fillna(
                             "").astype(str)
