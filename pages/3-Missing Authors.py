@@ -3,6 +3,7 @@ import pandas as pd
 import mig_functions as mig
 import warnings
 import urllib.parse
+import numpy as np
 
 
 
@@ -27,9 +28,6 @@ else:
     counter = st.session_state.auth_skip_counter
     reviewed = st.session_state.get('auth_reviewed_count', 0)  # Initialize reviewed count if not present
 
-    # MOVE ON NOTIFICATION
-    # if reviewed > 30:
-    #     st.info("You've reviewed the most significant headlines with missing authors. It's probably safe to move on.")
 
     # CSS to inject contained in a string
     hide_table_row_index = """
@@ -40,6 +38,9 @@ else:
                         """
     # Inject CSS with Markdown
     st.markdown(hide_table_row_index, unsafe_allow_html=True)
+
+    # Replace blank strings in the 'Author' column with NaN
+    st.session_state.df_traditional['Author'].replace('', np.nan, inplace=True)
 
     headline_table = st.session_state.df_traditional[['Headline', 'Mentions', 'Author']]
     headline_table = headline_table.groupby("Headline").count()
