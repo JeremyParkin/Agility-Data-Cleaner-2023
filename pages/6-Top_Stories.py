@@ -49,7 +49,13 @@ else:
     columns_to_keep.extend(tag_group_columns)
 
     # Filter the DataFrame to only keep these columns
-    st.session_state['filtered_df'] = st.session_state.df_traditional[columns_to_keep].copy()
+    # st.session_state['filtered_df'] = st.session_state.df_traditional[columns_to_keep].copy()
+
+    # Filter the list to only include existing columns
+    existing_columns = [col for col in columns_to_keep if col in st.session_state.df_traditional.columns]
+
+    # Filter the DataFrame safely
+    st.session_state['filtered_df'] = st.session_state.df_traditional[existing_columns].copy()
 
     ###################################
 
