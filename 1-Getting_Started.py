@@ -176,8 +176,8 @@ if st.session_state.upload_step:
         original_top_outlets = (mig.top_x_by_mentions(st.session_state.df_untouched, "Outlet"))
         st.write(original_top_outlets)
 
-    df = st.session_state.df_traditional.copy()
-    df['Date'] = pd.to_datetime(df['Date']).dt.date
+    df = st.session_state.df_untouched.copy()
+    df['Date'] = pd.to_datetime(df['Published Date']).dt.date
     summary_stats = df.groupby("Date").agg({"Date": "count", "Impressions": "sum"})
     summary_stats.rename(columns={"Date": "Mentions"}, inplace=True)
     summary_stats.reset_index(inplace=True)
