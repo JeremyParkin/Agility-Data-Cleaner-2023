@@ -8,7 +8,7 @@ import warnings
 
 warnings.filterwarnings('ignore')
 st.set_page_config(layout="wide", page_title="MIG Data Processing App",
-                   page_icon="https://www.agilitypr.com/wp-content/uploads/2018/02/favicon-192.png")
+                   page_icon="https://www.agilitypr.com/wp-content/uploads/2025/01/favicon.png")
 
 
 mig.standard_sidebar()

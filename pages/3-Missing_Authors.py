@@ -10,7 +10,8 @@ import numpy as np
 
 warnings.filterwarnings('ignore')
 st.set_page_config(layout="wide", page_title="MIG Data Processing App",
-                   page_icon="https://www.agilitypr.com/wp-content/uploads/2018/02/favicon-192.png")
+                   page_icon="https://www.agilitypr.com/wp-content/uploads/2025/01/favicon.png"
+                   )
 
 mig.standard_sidebar()
 
@@ -201,20 +202,19 @@ else:
         st.subheader("Fixable Author Stats")
         remaining = (fixable_headline_stats(st.session_state.df_traditional, primary="Headline", secondary="Author"))
 
+
         statscol1, statscol2 = st.columns(2)
 
+
         with statscol1:
+            st.metric(label="Reviewed", value=len(temp_headline_list) - remaining['remaining'] + reviewed)
             st.metric(label="Updated", value=reviewed)
+            # st.metric(label="Fixed", value=len(temp_headline_list) - reviewed) # SUSPECT
             # st.metric(label="Total Rows", value=remaining['total'])
-            st.metric(label="Percent Known", value=remaining['percent_known'])
+            # st.metric(label="Percent Known", value=remaining['percent_known'])
 
         with statscol2:
-            st.metric(label="Not Updated", value=len(temp_headline_list) - reviewed)
-            # st.metric(label="Unreviewed", value=remaining['remaining'])
+            # st.metric(label="Not Updated", value=len(temp_headline_list) - reviewed)
+            st.metric(label="Remaining", value=remaining['remaining'])
             # st.metric(label="Total Known", value=remaining['total_known'])
-            st.metric(label="Percent Knowable", value=remaining['percent_knowable'])
-
-        # st.write(remaining)
-
-
-
+            # st.metric(label="Percent Knowable", value=remaining['percent_knowable'])

@@ -7,8 +7,7 @@ warnings.filterwarnings('ignore')
 
 # Set page configuration
 st.set_page_config(layout="wide", page_title="MIG Data Processing App",
-                   page_icon="https://www.agilitypr.com/wp-content/uploads/2018/02/favicon-192.png")
-
+                   page_icon="https://www.agilitypr.com/wp-content/uploads/2025/01/favicon.png")
 
 # Define global variables for the DataFrame names
 df_vars = ['filtered_df', 'df_grouped', 'selected_df', 'selected_rows', 'top_stories', 'added_df']
@@ -171,8 +170,10 @@ else:
         if st.button("Save Selected", key=key, type="primary"):
             # Concatenate while keeping all columns except 'Top Story'
             st.session_state.added_df = pd.concat([st.session_state.added_df, selected_rows])
-            st.session_state.added_df.drop_duplicates(subset=["Headline"], keep='last', inplace=True)
+            st.session_state.added_df.drop_duplicates(subset=["Headline", "Date"], keep='last', inplace=True)
             st.session_state.added_df.reset_index(drop=True, inplace=True)
+
+            st.rerun()
 
     # Then use this function to get the processed data
     st.session_state['df_grouped'] = group_and_process_data(st.session_state.filtered_df)
@@ -236,6 +237,29 @@ else:
     # Sort the DataFrame first by 'Mentions' in descending order, then by 'Impressions' also in descending order
     df_grouped_custom = df_grouped_custom.sort_values(by=['Mentions', 'Impressions'],
                                                                                 ascending=[False, False])
+
+    ##########
+
+    # ----------- INSERT THIS BLOCK ------------
+    # Filter out rows already present in added_df based on Headline and Date
+    if not st.session_state.added_df.empty:
+        st.session_state.added_df['Date'] = pd.to_datetime(st.session_state.added_df['Date']).dt.date
+        df_grouped_custom['Date'] = pd.to_datetime(df_grouped_custom['Date']).dt.date
+
+        existing_pairs = set(zip(st.session_state.added_df['Headline'], st.session_state.added_df['Date']))
+        df_grouped_custom = df_grouped_custom[
+            ~df_grouped_custom.apply(lambda row: (row['Headline'], row['Date']) in existing_pairs, axis=1)
+        ]
+    # ----------- END INSERT -------------------
+
+
+
+
+
+    ##########
+
+
+
 
     df_grouped_custom["Top Story"] = False
 

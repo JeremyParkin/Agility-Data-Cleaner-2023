@@ -22,7 +22,7 @@ warnings.filterwarnings('ignore')
 
 # Set page configuration
 st.set_page_config(layout="wide", page_title="MIG Data Processing App",
-                   page_icon="https://www.agilitypr.com/wp-content/uploads/2018/02/favicon-192.png")
+                   page_icon="https://www.agilitypr.com/wp-content/uploads/2025/01/favicon.png")
 
 # Standard sidebar
 mig.standard_sidebar()
@@ -144,7 +144,7 @@ else:
 
                 # Call the OpenAI API using the chat interface
                 response = client.chat.completions.create(
-                    model="gpt-4o",
+                    model="gpt-4.1-mini",
                     messages=[
                         {"role": "system", "content": "You are a highly knowledgeable media analysis AI."},
                         {"role": "user", "content": prompt}
@@ -189,6 +189,12 @@ else:
 
     markdown_content = ""
 
+    st.write(" ")
+    st.divider()
+    st.subheader("Copy-Paste Top Stories")
+    st.markdown(":mag: **VIEW OPTIONS**")
+
+
 
     def escape_markdown(text):
         # List of Markdown special characters to escape
@@ -204,82 +210,31 @@ else:
 
 
     # # Checkboxes for displaying additional information
-    col3, col4 = st.columns(2, gap="medium")
+    col3, col4, col5 = st.columns(3, gap="medium")
     with col3:
         show_mentions = st.checkbox("Show mentions", value=False)
         show_impressions = st.checkbox("Show impressions", value=False)
-        if "Entity Sentiment" in df.columns:
-            show_sentiment = st.checkbox("Show sentiment", value=True)
+
     with col4:
         if "Short Entity Summary" in df.columns:
             show_short_summary = st.checkbox("Show short summary", value=True)
         if "Long Entity Summary" in df.columns:
             show_long_summary = st.checkbox("Show long summary", value=False)
 
+    with col5:
+        if "Entity Sentiment" in df.columns:
+            show_sentiment = st.checkbox("Show sentiment", value=True)
+
+
     # Show warning if show_mentions or show_impressions is checked
     if show_mentions or show_impressions:
         st.warning(
-            "WARNING: Mentions and Impressions totals reflect exact match headlines on the same date only. Totals do not include coverage with headline or date variations.")
+            "WARNING: Mentions and Impressions totals reflect exact match headlines on the same date only, not including coverage with headline or date variations.")
 
-    st.write(" ")
+
+
     st.divider()
-    st.subheader("Copy-Paste Top Stories")
-    st.divider()
 
-    # # Initialize the HTML content
-    # html_content = ""
-    #
-    # # Loop through the DataFrame
-    # for story in df.index:
-    #
-    #     # Escape and format fields
-    #     head = df["Headline"][story]
-    #     outlet = df["Example Outlet"][story]
-    #     link = df["Example URL"][story]
-    #     date = df["Date"][story].strftime("%B %d, %Y")
-    #
-    #     # Add the story content
-    #     html_content += f"""
-    #         <strong><a href="{link}" style="text-decoration: none; color: inherit;" target="_blank">{head}</a></strong><br>
-    #         <em>{outlet} – {date}</em><br>
-    #     """
-    #
-    #     # Optional sections
-    #     if "Short Entity Summary" in df.columns and show_short_summary:
-    #         entity_summary = df["Short Entity Summary"][story]
-    #         html_content += f"{entity_summary}<br>"
-    #
-    #     if "Long Entity Summary" in df.columns and show_long_summary:
-    #         entity_summary = df["Long Entity Summary"][story]
-    #         html_content += f"{entity_summary}<br>"
-    #
-    #     if "Entity Sentiment" in df.columns and show_sentiment:
-    #         entity_sentiment = df["Entity Sentiment"][story]
-    #         html_content += f"<em>{entity_sentiment}</em><br>"
-    #
-    #     if show_mentions or show_impressions:
-    #         if show_mentions:
-    #             mentions = df["Mentions"][story]
-    #             html_content += f"<strong>Mentions:</strong> {mentions} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
-    #         if show_impressions:
-    #             impressions = df["Impressions"][story]
-    #             html_content += f"<strong>Impressions:</strong> {impressions:,}<br>"
-    #
-    #     # Add a blank line for separation
-    #     html_content += "<br>"
-    #
-    # # Render the content
-    # with st.container():
-    #     st.markdown(
-    #         f"""
-    #         <div style="background-color: white; padding: 20px; border-radius: 5px; color: #000; font-family: Arial, sans-serif;">
-    #             <div>{html_content}
-    #         </div>
-    #         """,
-    #         unsafe_allow_html=True,
-    #     )
-
-    #
     for story in df.index:
 
 

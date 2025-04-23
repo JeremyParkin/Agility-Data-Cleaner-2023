@@ -1,8 +1,8 @@
 def standard_sidebar():
     import streamlit as st
-    st.sidebar.image('https://agilitypr.news/images/Agility-centered.svg', width=180)
+    st.sidebar.image('https://app.agilitypr.com/app/assets/images/agility-logo-vertical.png', width=180)
     st.sidebar.subheader('MIG Data Processing App')
-    st.sidebar.caption("Version: Dec 2024")
+    st.sidebar.caption("Version: Apr 2025")
 
     # CSS to adjust sidebar
     adjust_nav = """
@@ -13,7 +13,7 @@ def standard_sidebar():
                                 }
                                 
                             .eczjsme16 {
-                                min-height: 470px !important;
+                                min-height: 450px !important;
                                 }
                             
                             .st-emotion-cache-a8w3f8 {
@@ -22,6 +22,9 @@ def standard_sidebar():
                             .st-emotion-cache-1cypcdb {
                                 max-width: 250px !important;
                                 }
+                            .e115fcil1 {
+                                filter: brightness(2000%);
+                            }
                            
                             </style>
                             """

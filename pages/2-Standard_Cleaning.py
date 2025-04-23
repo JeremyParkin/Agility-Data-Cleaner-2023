@@ -8,8 +8,7 @@ import warnings
 import re
 warnings.filterwarnings('ignore')
 st.set_page_config(layout="wide", page_title="MIG Data Processing App",
-                   page_icon="https://www.agilitypr.com/wp-content/uploads/2018/02/favicon-192.png")
-
+                   page_icon="https://www.agilitypr.com/wp-content/uploads/2025/01/favicon.png")
 
 mig.standard_sidebar()
 
@@ -87,6 +86,7 @@ else:
 
                 start_time = time.time()
 
+                # Standardize media types
                 st.session_state.df_traditional["Type"].replace({"ONLINE_NEWS": "ONLINE NEWS", "PRESS_RELEASE": "PRESS RELEASE"}, inplace=True)
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("www.facebook.com", na=False), 'Type'] = "FACEBOOK"
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("twitter.com", na=False), 'Type'] = "X"
@@ -98,6 +98,15 @@ else:
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("www.instagram.com", na=False), 'Type'] = "INSTAGRAM"
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("reddit.com", na=False), 'Type'] = "REDDIT"
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("youtube.com", na=False), 'Type'] = "YOUTUBE"
+
+                # Rename Report on Business to The Globe and Mail
+                if "Outlet" in st.session_state.df_traditional.columns and "URL" in st.session_state.df_traditional.columns:
+                    st.session_state.df_traditional.loc[
+                        (st.session_state.df_traditional["Outlet"].str.lower() == "report on business") &
+                        (st.session_state.df_traditional["URL"].str.contains("globeandmail", na=False)),
+                        "Outlet"
+                    ] = "The Globe and Mail"
+
 
                 if merge_online:
                     st.session_state.df_traditional.Type.replace({
