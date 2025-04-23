@@ -73,21 +73,6 @@ if not st.session_state.upload_step:
             st.session_state.df_untouched = pd.concat(chunk_list, ignore_index=True)
 
 
-    # if not uploaded_file == None:
-    #     if uploaded_file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-    #         # Read the xlsx file
-    #         excel_file = pd.ExcelFile(uploaded_file)
-    #         # Get the sheet names
-    #         sheet_names = excel_file.sheet_names
-    #         # If there is more than one sheet, let the user select which one to use
-    #         if len(sheet_names) > 1:
-    #
-    #             sheet = st.selectbox('Select a sheet:', sheet_names)
-    #             st.session_state.df_untouched = pd.read_excel(excel_file, sheet_name=sheet)
-    #         else:
-    #             st.session_state.df_untouched = pd.read_excel(excel_file)
-    #     elif uploaded_file.type == 'text/csv':
-    #         st.session_state.df_untouched = pd.read_csv(uploaded_file)
 
     submitted = st.button("Submit", type="primary")
 
@@ -154,16 +139,6 @@ if not st.session_state.upload_step:
                 st.session_state.df_traditional.insert(0, 'Date', first_column)
 
 
-            # if "Published Date" in st.session_state.df_traditional:
-            #     st.session_state.df_traditional['Date'] = pd.to_datetime(
-            #         st.session_state.df_traditional['Published Date'] + ' ' + st.session_state.df_traditional[
-            #             'Published Time'])
-            #     st.session_state.df_traditional.drop(["Published Date", "Published Time"], axis=1, inplace=True,
-            #                                          errors='ignore')
-            #
-            #     first_column = st.session_state.df_traditional.pop('Date')
-            #     st.session_state.df_traditional.insert(0, 'Date', first_column)
-
             st.session_state.df_traditional = st.session_state.df_traditional.rename(columns={
                 'Media Type': 'Type',
                 'Coverage Snippet': 'Snippet',
@@ -187,18 +162,18 @@ if st.session_state.upload_step:
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric(label="Mentions", value="{:,}".format(len(st.session_state.df_traditional.dropna(thresh=3))))
-        impressions = st.session_state.df_traditional['Impressions'].sum()
+        st.metric(label="Mentions", value="{:,}".format(len(st.session_state.df_untouched.dropna(thresh=3))))
+        impressions = st.session_state.df_untouched['Impressions'].sum()
         st.metric(label="Impressions", value=mig.format_number(impressions))
-        media_type_column = "Type" if "Type" in st.session_state.df_traditional.columns else "Media Type"
-        st.write(st.session_state.df_traditional[media_type_column].value_counts())
+        media_type_column = "Type" if "Type" in st.session_state.df_untouched.columns else "Media Type"
+        st.write(st.session_state.df_untouched[media_type_column].value_counts())
     with col2:
         st.subheader("Top Authors")
-        original_top_authors = (mig.top_x_by_mentions(st.session_state.df_traditional, "Author"))
+        original_top_authors = (mig.top_x_by_mentions(st.session_state.df_untouched, "Author"))
         st.write(original_top_authors)
     with col3:
         st.subheader("Top Outlets")
-        original_top_outlets = (mig.top_x_by_mentions(st.session_state.df_traditional, "Outlet"))
+        original_top_outlets = (mig.top_x_by_mentions(st.session_state.df_untouched, "Outlet"))
         st.write(original_top_outlets)
 
     df = st.session_state.df_traditional.copy()
