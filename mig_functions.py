@@ -23,9 +23,7 @@ def standard_sidebar():
                             .st-emotion-cache-1cypcdb {
                                 max-width: 250px !important;
                                 }
-                            .e115fcil1 {
-                                filter: brightness(2000%);
-                            }
+
                            
                             </style>
                             """
