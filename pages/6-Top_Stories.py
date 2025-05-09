@@ -289,6 +289,9 @@ else:
     if len(st.session_state['added_df']) > 0:
         st.subheader("Saved Top Stories")
 
+        # Sort the DataFrame by 'Date' in descending order
+        st.session_state.added_df = st.session_state.added_df.sort_values(by='Date', ascending=True).reset_index(
+            drop=True)
 
         # Add a 'Delete' checkbox column for user actions
         st.session_state.added_df['Delete'] = False  # Add a default 'Delete' column
@@ -296,6 +299,7 @@ else:
         # Pop the 'Date' column to move it to the second position
         date_column = st.session_state.added_df.pop("Date")
         st.session_state.added_df.insert(1, "Date", date_column)
+
 
         # Use the Data Editor to display stories with a delete option
         updated_data = st.data_editor(
