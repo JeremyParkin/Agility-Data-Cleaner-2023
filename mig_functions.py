@@ -8,13 +8,14 @@ def standard_sidebar():
     # CSS to adjust sidebar
     adjust_nav = """
                             <style>
+                            
                             .eczjsme9, .st-emotion-cache-1wqrzgl {
                                 overflow: visible !important;
                                 max-width: 250px !important;
                                 }
                                 
                             .eczjsme16 {
-                                min-height: 450px !important;
+                                min-height: 375px !important;
                                 }
                             
                             .st-emotion-cache-a8w3f8 {
@@ -23,7 +24,6 @@ def standard_sidebar():
                             .st-emotion-cache-1cypcdb {
                                 max-width: 250px !important;
                                 }
-
                            
                             </style>
                             """
