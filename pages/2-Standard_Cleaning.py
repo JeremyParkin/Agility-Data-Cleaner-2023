@@ -6,6 +6,7 @@ import mig_functions as mig
 from titlecase import titlecase
 import warnings
 import re
+import numpy as np
 warnings.filterwarnings('ignore')
 st.set_page_config(layout="wide", page_title="MIG Data Processing App",
                    page_icon="https://www.agilitypr.com/wp-content/uploads/2025/01/favicon.png")
@@ -85,6 +86,8 @@ else:
                             "").astype(str)
 
                 start_time = time.time()
+
+                st.session_state.df_traditional['Author'].replace('', np.nan, inplace=True)
 
                 # Standardize media types
                 st.session_state.df_traditional["Type"].replace({"ONLINE_NEWS": "ONLINE NEWS", "PRESS_RELEASE": "PRESS RELEASE"}, inplace=True)

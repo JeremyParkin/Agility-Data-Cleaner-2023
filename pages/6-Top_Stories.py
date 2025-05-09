@@ -58,7 +58,7 @@ else:
 
     ###################################
 
-    # Example of filling NaN values
+    # Filling NaN values
     st.session_state.filtered_df["Impressions"].fillna(0, inplace=True)
     st.session_state.filtered_df["Snippet"].fillna("", inplace=True)
 

@@ -22,7 +22,6 @@ if st.session_state.pickle_load == True:
 # st.write(st.session_state.auth_outlet_table)
 
 
-
 st.title("Author - Outlets")
 if not st.session_state.upload_step:
     st.error('Please upload a CSV before trying this step.')
@@ -64,8 +63,6 @@ else:
 
 
     st.session_state.df_traditional.Mentions = st.session_state.df_traditional.Mentions.astype('int')
-    # auth_outlet_skipped = st.session_state.auth_outlet_skipped
-    # auth_outlet_table = st.session_state.auth_outlet_table
 
     st.session_state.top_auths_by = st.selectbox('Top Authors by: ', ['Mentions', 'Impressions'], on_change=reset_skips)
     if len(st.session_state.auth_outlet_table) == 0:
