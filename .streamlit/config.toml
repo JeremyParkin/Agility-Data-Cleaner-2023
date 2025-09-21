@@ -6,4 +6,4 @@ primaryColor="#FF5026"
 enforceSerializableSessionState = true
 
 [server]
-maxUploadSize = 270
+maxUploadSize = 290

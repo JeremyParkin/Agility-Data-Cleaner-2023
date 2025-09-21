@@ -130,16 +130,12 @@ else:
                 submitted = st.form_submit_button("Update Author", type="primary")
                 if submitted:
                     mig.fix_author(st.session_state.df_traditional, headline_text, new_author)
-
-                    # Increment the counter to reflect the headline being reviewed
                     # Increment reviewed count and counter
                     reviewed += 1
                     st.session_state['auth_reviewed_count'] = reviewed
-
-                    # counter += 1
-                    # st.session_state.auth_skip_counter = counter
-
                     st.rerun()
+
+
     else:
         st.info("You've reached the end of the list!")
         if counter > 0:
@@ -209,12 +205,6 @@ else:
         with statscol1:
             st.metric(label="Reviewed", value=len(temp_headline_list) - remaining['remaining'] + reviewed)
             st.metric(label="Updated", value=reviewed)
-            # st.metric(label="Fixed", value=len(temp_headline_list) - reviewed) # SUSPECT
-            # st.metric(label="Total Rows", value=remaining['total'])
-            # st.metric(label="Percent Known", value=remaining['percent_known'])
 
         with statscol2:
-            # st.metric(label="Not Updated", value=len(temp_headline_list) - reviewed)
             st.metric(label="Remaining", value=remaining['remaining'])
-            # st.metric(label="Total Known", value=remaining['total_known'])
-            # st.metric(label="Percent Knowable", value=remaining['percent_knowable'])

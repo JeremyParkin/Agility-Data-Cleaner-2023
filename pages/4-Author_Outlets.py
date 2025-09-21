@@ -16,6 +16,7 @@ format_dict = {'AVE': '${0:,.0f}', 'Audience Reach': '{:,d}', 'Impressions': '{:
 import numpy as np
 
 if st.session_state.pickle_load == True:
+    # st.dataframe(st.session_state.auth_outlet_table)
     st.session_state.auth_outlet_table['Outlet'] = st.session_state.auth_outlet_table['Outlet'].replace([np.nan, None], "")
 
 # st.write(st.session_state.auth_outlet_skipped)
@@ -270,7 +271,7 @@ else:
 
                 # Update the URLs
                 muckrack_url = f"https://www.google.com/search?q=site%3Amuckrack.com+{encoded_author_name}"
-                linkedin_url = f"https://www.google.com/search?q=site%3Alinkedin.com+{encoded_author_name}"
+                linkedin_url = f"https://www.google.com/search?q=site%3Alinkedin.com+%22{encoded_author_name}%22+journalist"
 
                 # Render the links
                 st.markdown(
