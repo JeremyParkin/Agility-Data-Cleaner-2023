@@ -3,7 +3,7 @@ def standard_sidebar():
     st.sidebar.image('https://jeremyparkin.com/wp-content/uploads/2025/05/AG_main-light-grey.png', width=180)
 
     st.sidebar.subheader('MIG Data Processing App')
-    st.sidebar.caption("Version: May 2025")
+    st.sidebar.caption("Version: Sept 2025")
 
     # CSS to adjust sidebar
     adjust_nav = """
