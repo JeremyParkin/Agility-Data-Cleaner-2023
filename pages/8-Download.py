@@ -397,7 +397,12 @@ else:
 
     st.subheader("NotebookLM bundle")
 
-    build_nlm = st.button("Build NotebookLM bundle (zip)")
+    build_nlm = st.button("Build NotebookLM bundle (zip)",
+                          help=(
+                              "Creates a zip of JSON-formatted text files for NotebookLM. "
+                              "If the dataset exceeds ~50 files worth of content, "
+                              "a random sample is taken to stay within upload limits."
+                          ))
     if build_nlm:
         try:
             with st.spinner("Building NotebookLM bundle..."):
