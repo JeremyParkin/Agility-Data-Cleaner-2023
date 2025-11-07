@@ -87,7 +87,7 @@ else:
 
     with st.form('translation_form'):
         st.subheader("Pick columns for translations")
-        st.warning("WARNING: Snippet translation will over-write the original text and will cut off the ends of articles longer than ~ 700 words.")
+        st.warning("WARNING: Snippet translation will overwrite the original text and will cut off the ends of articles longer than ~ 700 words.")
 
         if st.session_state.translated_headline or 'Original Headline' in st.session_state.df_traditional.columns or 'Original Headline' in st.session_state.df_social.columns:
             headline_done = True
