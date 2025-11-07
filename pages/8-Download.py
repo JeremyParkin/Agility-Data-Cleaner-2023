@@ -395,7 +395,7 @@ else:
     st.divider()
     # ---------- NotebookLM bundle section ----------
 
-    st.subheader("NotebookLM-ready bundle")
+    st.subheader("NotebookLM bundle")
 
     build_nlm = st.button("Build NotebookLM bundle (zip)")
     if build_nlm:
