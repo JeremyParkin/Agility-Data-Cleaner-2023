@@ -48,9 +48,9 @@ def build_notebooklm_zip(
     df_social: pd.DataFrame,
     client_name: str,
     max_files: int = 50,
-    max_rows_per_file: int = 500,          # conservative row cap per file
-    max_words_per_file: int = 120_000,     # conservative word cap
-    max_bytes_per_file: int = 25 * 1024 * 1024,  # ~25 MB
+    max_rows_per_file: int = 450,          # conservative row cap per file
+    max_words_per_file: int = 200_000,     # conservative word cap
+    max_bytes_per_file: int = 50 * 1024 * 1024,  # ~50 MB
     text_truncate_len: int = 10_000
 ):
     """
