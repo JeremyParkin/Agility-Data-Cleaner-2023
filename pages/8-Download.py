@@ -439,3 +439,64 @@ else:
                 f"Word limit/file: {info.get('max_words_per_file', 0):,}, "
                 f"Size limit/file: {info.get('max_bytes_per_file', 0) // (1024 * 1024)} MB."
             )
+
+st.divider()
+client_name = st.session_state.client_name
+    # ---------- NotebookLM prompt examples ----------
+
+with st.expander("NotebookLM prompt examples for this client"):
+        st.markdown(
+            f"""
+### Executive Summary
+Generate a concise 2-paragraph executive summary of the media coverage of **{client_name}**.  
+Present the information as though it is going to be included as a lead into a media briefing for an executive.  
+Focus on high-level concepts rather than specific facts and figures.
+
+---
+
+### Coverage Themes
+What are the 5–7 key themes in the coverage that would be pertinent to **{client_name}**, and the communications and public relations professionals who work there?  
+For each theme, include **5 example headlines** of where that topic was found. For each headline, also include the **date and outlet**.
+
+---
+
+### Competitive Comparison
+Are any of **{client_name}**’s competitors mentioned in any of the stories?  
+If so, how does the media tend to characterize them? How are they compared to **{client_name}**?
+
+---
+
+### SWOT Analysis
+Analyze the news coverage and broadcast transcripts pertaining to **{client_name}**.  
+Propose ideas for a **SWOT analysis** targeting **{client_name}**’s reputation as a destination, considering the perspective of PR and earned media professionals responsible for the reputation.
+
+**For each category:**
+- **Strengths**: What positive themes or stories enhance the brand's reputation?  
+- **Weaknesses**: Where is the brand's presence lacking, or where are there negative perceptions?  
+- **Opportunities**: What developments or trends could the brand capitalize on to improve its reputation and profile?  
+- **Threats**: Are there any risks or negative narratives that could harm the brand's reputation?
+
+---
+
+### Issues and Risk Monitoring
+Review the coverage of {client_name} and describe any emerging or ongoing issues or risks that could affect the organization’s reputation.
+Present your findings as concise, clearly structured text (not tables).
+For each issue, include:
+- A brief summary of what the issue is about
+- An estimate of how common it is in the dataset (frequent / occasional / rare)
+- The general sentiment or framing of the coverage (positive / neutral / negative)
+- A few representative headlines or short quotes that illustrate the tone or context
+- A sentence or two on whether the issue appears to be growing, stable, or fading in prominence
+
+---
+
+### Implications and Recommendations for Comms
+Based on the coverage patterns for {client_name}, outline observations and cautious considerations that might inform communications planning — without prescribing strategy.
+Write your response as concise, clearly structured text (not tables).
+For example, you might note:
+- Which narratives appear most influential or persistent
+- Any patterns that might warrant closer monitoring or further validation
+- Possible areas where proactive engagement or clarification could help manage perceptions
+- Observations that may be useful for future reporting or research focus
+"""
+        )
