@@ -18,7 +18,6 @@ st.set_page_config(
 mig.standard_sidebar()
 
 st.title('Downloads')
-st.divider()
 
 
 # ---------- Helpers for main workbook ----------
@@ -225,6 +224,8 @@ if not st.session_state.upload_step:
 elif not st.session_state.standard_step:
     st.error('Please run the Standard Cleaning before trying this step.')
 else:
+    st.divider()
+
     # local copies so we don't mutate session_state data
     traditional = st.session_state.df_traditional.copy()
     social = st.session_state.df_social.copy()
@@ -440,11 +441,11 @@ else:
                 f"Size limit/file: {info.get('max_bytes_per_file', 0) // (1024 * 1024)} MB."
             )
 
-st.divider()
-client_name = st.session_state.client_name
+    st.divider()
+    client_name = st.session_state.client_name
     # ---------- NotebookLM prompt examples ----------
 
-with st.expander("NotebookLM prompt examples for this client"):
+    with st.expander("NotebookLM prompt examples for this client"):
         st.markdown(
             f"""
 ### Executive Summary
