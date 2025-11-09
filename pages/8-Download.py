@@ -454,6 +454,14 @@ Focus on high-level concepts rather than specific facts and figures.
 
 ---
 
+### High-level coverage summary
+
+You are analyzing media coverage for **{client_name}**.  
+Summarize the overall coverage tone, key themes, and notable storylines across this dataset.  
+Highlight the most influential outlets and authors, and note any spikes in volume, sentiment shifts, or recurring issues.
+
+---
+
 ### Coverage Themes
 What are the 5–7 key themes in the coverage that would be pertinent to **{client_name}**, and the communications and public relations professionals who work there?  
 For each theme, include **5 example headlines** of where that topic was found. For each headline, also include the **date and outlet**.
@@ -499,4 +507,4 @@ For example, you might note:
 - Possible areas where proactive engagement or clarification could help manage perceptions
 - Observations that may be useful for future reporting or research focus
 """
-        )
+)
