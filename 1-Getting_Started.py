@@ -177,15 +177,38 @@ if st.session_state.upload_step:
         st.write(original_top_outlets)
 
     df = st.session_state.df_untouched.copy()
-    df['Date'] = pd.to_datetime(df['Published Date']).dt.date
-    summary_stats = df.groupby("Date").agg({"Date": "count", "Impressions": "sum"})
-    summary_stats.rename(columns={"Date": "Mentions"}, inplace=True)
-    summary_stats.reset_index(inplace=True)
 
-    col1, col2 = st.columns(2, gap="large")
-    with col1:
-        st.subheader('Mention Trend')
-        st.area_chart(data=summary_stats, x="Date", y="Mentions", width=0, height=250, use_container_width=True)
-    with col2:
-        st.subheader('Impressions Trend')
-        st.area_chart(data=summary_stats, x="Date", y="Impressions", width=0, height=250, use_container_width=True)
+    if "Published Date" in df.columns:
+        df["Date"] = pd.to_datetime(df["Published Date"], errors='coerce').dt.date
+    elif "Date" in df.columns:
+        df["Date"] = pd.to_datetime(df["Date"], errors='coerce').dt.date
+    else:
+        df["Date"] = pd.NaT
+
+    if df["Date"].notna().any():
+        summary_stats = df.groupby("Date").agg({"Date": "count", "Impressions": "sum"})
+        summary_stats.rename(columns={"Date": "Mentions"}, inplace=True)
+        summary_stats.reset_index(inplace=True)
+
+        col1, col2 = st.columns(2, gap="large")
+        with col1:
+            st.subheader('Mention Trend')
+            st.area_chart(data=summary_stats, x="Date", y="Mentions", width=0, height=250, use_container_width=True)
+        with col2:
+            st.subheader('Impressions Trend')
+            st.area_chart(data=summary_stats, x="Date", y="Impressions", width=0, height=250, use_container_width=True)
+    else:
+        st.info("No date information available to display mention and impressions trends.")
+
+    # df['Date'] = pd.to_datetime(df['Published Date']).dt.date
+    # summary_stats = df.groupby("Date").agg({"Date": "count", "Impressions": "sum"})
+    # summary_stats.rename(columns={"Date": "Mentions"}, inplace=True)
+    # summary_stats.reset_index(inplace=True)
+    #
+    # col1, col2 = st.columns(2, gap="large")
+    # with col1:
+    #     st.subheader('Mention Trend')
+    #     st.area_chart(data=summary_stats, x="Date", y="Mentions", width=0, height=250, use_container_width=True)
+    # with col2:
+    #     st.subheader('Impressions Trend')
+    #     st.area_chart(data=summary_stats, x="Date", y="Impressions", width=0, height=250, use_container_width=True)
