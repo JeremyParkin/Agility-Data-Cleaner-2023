@@ -507,5 +507,32 @@ For example, you might note:
 - Any patterns that might warrant closer monitoring or further validation
 - Possible areas where proactive engagement or clarification could help manage perceptions
 - Observations that may be useful for future reporting or research focus
+
+---
+
+### Misinformation & False Claims
+Search the coverage of {client_name} for any mentions of false, misleading, or unverified information about the brand itself.
+Exclude stories where {client_name} is the one accused of misleading others.
+For each example, describe the nature of the misinformation, its origin (if known), and how the media handled it — corrected, ignored, or amplified it.
+Present your findings as structured text sections, not as a table.
+
+---
+
+### Negative Message Discovery
+You are analyzing media coverage of {client_name}.
+Ignore any existing sentiment labels or numerical scores in the data.
+Your goal is to identify and describe any negative messages or narratives about {client_name} that appear across the coverage, from the obvious to the more burried.
+
+For each distinct negative message you find:
+- Start a new short section with a clear heading naming the message (e.g., “Concerns about Product Safety”, “Leadership Controversies”).
+- Summarize what the message is and how it is expressed in the media (2–3 sentences).
+- Explain what aspect of {client_name} it relates to (e.g., reputation, products, financials, operations, ethics, customer experience, etc.).
+- Include one or two short quotes or paraphrased examples, with outlet names and dates mentioned inline where available.
+- Indicate whether the message appears isolated (few stories) or recurring (multiple outlets, ongoing).
+
+At the end, include a short paragraph summarizing what these negative messages collectively suggest about how {client_name} is being portrayed, without speculating about motives or offering recommendations.
+Present your findings as structured text sections, not as a table.
+
 """
+
 )
