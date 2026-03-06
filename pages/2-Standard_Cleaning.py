@@ -101,6 +101,9 @@ else:
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("www.instagram.com", na=False), 'Type'] = "INSTAGRAM"
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("reddit.com", na=False), 'Type'] = "REDDIT"
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("youtube.com", na=False), 'Type'] = "YOUTUBE"
+                st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("linkedin.com", na=False), 'Type'] = "LINKEDIN"
+                st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("bsky.app", na=False), 'Type'] = "BLUESKY"
+
 
                 # Rename Report on Business to The Globe and Mail
                 if "Outlet" in st.session_state.df_traditional.columns and "URL" in st.session_state.df_traditional.columns:
@@ -160,7 +163,7 @@ else:
                 st.session_state.df_traditional['Headline'] = st.session_state.df_traditional['Headline'].str.replace('\u2019', '\'')
 
                 # SOCIALS To sep df
-                soc_array = ['FACEBOOK', 'TWITTER', 'X', 'INSTAGRAM', 'REDDIT', 'YOUTUBE', 'TIKTOK']
+                soc_array = ['FACEBOOK', 'TWITTER', 'X', 'INSTAGRAM', 'REDDIT', 'YOUTUBE', 'TIKTOK', 'LINKEDIN', 'BLUESKY']
                 st.session_state.df_social = st.session_state.df_traditional.loc[st.session_state.df_traditional['Type'].isin(soc_array)]
                 st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['Type'].isin(soc_array)]
 
@@ -264,6 +267,7 @@ else:
                         "SBWIRE",
                         "issuewire",
                         "prunderground"
+
                     ]
 
                     stock_moves_phrases = [
@@ -278,7 +282,8 @@ else:
                     # Define a list of aggregator outlet names
                     aggregators_list = [
                         "Yahoo", "MSN", "News Break", "Google News", "Apple News", "Flipboard",
-                        "Pocket", "Feedly", "SmartNews", "StumbleUpon"
+                        "Pocket", "Feedly", "SmartNews", "StumbleUpon", "Ground News", "DNyuz",
+                        "Mirage News", "Newstex Blogs", "Trading View", "AOL", "Legacy.com", "World Atlas"
                     ]
 
                     # Define a list of reputable outlet names
@@ -509,6 +514,7 @@ else:
                     st.session_state.df_traditional["Newswire Flag"] = ""
                     st.session_state.df_traditional["Market Report Flag"] = ""
                     st.session_state.df_traditional["Stock Moves Flag"] = ""
+                    st.session_state.df_traditional["Advertorial Flag"] = ""
                     st.session_state.df_traditional["Good Outlet Flag"] = ""
                     st.session_state.df_traditional["Aggregator Flag"] = ""
                     st.session_state.df_traditional["Coverage Flags"] = ""
@@ -535,6 +541,24 @@ else:
                         case=False,
                         na=False,
                         regex=True
+                    )
+
+                    # Expand NEWSWIRE detection with outlet and URL criteria
+                    newswire_mask = (
+                        newswire_mask |
+                        st.session_state.df_traditional["Outlet"].str.contains("EurekAlert", case=False, na=False) |
+                        st.session_state.df_traditional["URL"].str.contains(r"/pr\.|news-release|press-release|newswise\.com", case=False, na=False, regex=True)
+                    )
+
+                    # ADVERTORIAL MASK - based on snippet text and author
+                    advertorial_mask = (
+                            st.session_state.df_traditional["Snippet_Limited"].str.contains(
+                                r"advertorial|sponsored content|brandpoint",
+                                case=False,
+                                na=False,
+                                regex=True
+                            ) |
+                            st.session_state.df_traditional["Author"].str.fullmatch("Brandpoint", case=False, na=False)
                     )
 
                     # Optional: Drop or keep the "Snippet_Limited" column based on your needs
@@ -594,19 +618,26 @@ else:
                     st.session_state.df_traditional.loc[
                         ~newswire_mask & ~market_report_mask & stock_moves_mask, "Stock Moves Flag"] = "Stocks / Financials?"
 
+                    st.session_state.df_traditional.loc[
+                        ~newswire_mask & advertorial_mask, "Advertorial Flag"] = "Advertorial?"
+
                     st.session_state.df_traditional.loc[aggregator_mask, "Aggregator Flag"] = "Aggregator"
 
 
                     # Apply the flag for reputable outlets
-                    st.session_state.df_traditional.loc[
-                        ~newswire_mask & ~market_report_mask & ~stock_moves_mask & reputable_outlet_mask, "Good Outlet Flag"] = "Good Outlet"
 
+
+                    st.session_state.df_traditional.loc[
+                        ~newswire_mask & ~advertorial_mask & ~market_report_mask & ~stock_moves_mask & reputable_outlet_mask,
+                        "Good Outlet Flag"] = "Good Outlet"
 
 
                     def combine_flags(row):
                         # Use .get() to avoid KeyError if a column is missing
                         if row.get("Newswire Flag"):
                             return row["Newswire Flag"]
+                        elif row.get("Advertorial Flag"):
+                            return row["Advertorial Flag"]
                         elif row.get("Good Outlet Flag"):
                             return row["Good Outlet Flag"]
                         elif row.get("Aggregator Flag"):
@@ -622,7 +653,7 @@ else:
                         combine_flags, axis=1)
 
                     # Drop individual flag columns
-                    flag_columns = ["Newswire Flag", "Good Outlet Flag", "Market Report Flag", "Stock Moves Flag", "Aggregator Flag"]
+                    flag_columns = ["Newswire Flag", "Advertorial Flag", "Good Outlet Flag", "Market Report Flag", "Stock Moves Flag", "Aggregator Flag"]
                     st.session_state.df_traditional.drop(
                         columns=[col for col in flag_columns if col in st.session_state.df_traditional], inplace=True)
 
