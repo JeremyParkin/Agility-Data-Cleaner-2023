@@ -7,6 +7,7 @@ from titlecase import titlecase
 import warnings
 import re
 import numpy as np
+from difflib import SequenceMatcher
 warnings.filterwarnings('ignore')
 st.set_page_config(layout="wide", page_title="MIG Data Processing App",
                    page_icon="https://www.agilitypr.com/wp-content/uploads/2025/01/favicon.png")
@@ -164,8 +165,8 @@ else:
 
                 # SOCIALS To sep df
                 soc_array = ['FACEBOOK', 'TWITTER', 'X', 'INSTAGRAM', 'REDDIT', 'YOUTUBE', 'TIKTOK', 'LINKEDIN', 'BLUESKY']
-                st.session_state.df_social = st.session_state.df_traditional.loc[st.session_state.df_traditional['Type'].isin(soc_array)]
-                st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['Type'].isin(soc_array)]
+                st.session_state.df_social = st.session_state.df_traditional.loc[st.session_state.df_traditional['Type'].isin(soc_array)].copy()
+                st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['Type'].isin(soc_array)].copy()
 
                 # original_top_authors = (top_x_by_mentions(st.session_state.df_untouched, "Author"))
                 original_trad_auths = (mig.top_x_by_mentions(st.session_state.df_traditional, "Author"))
@@ -188,7 +189,7 @@ else:
                     # Set aside blank URLs for later
                     blank_urls = st.session_state.df_traditional[st.session_state.df_traditional.URL.isna()]
                     # Remove blank URLs from main df
-                    st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.URL.isna()]
+                    st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.URL.isna()].copy()
 
                     # Add temporary dupe URL helper column and normalize URL formats
                     st.session_state.df_traditional['URL_Helper'] = st.session_state.df_traditional['URL'].str.lower()
@@ -198,22 +199,27 @@ else:
                     st.session_state.df_traditional = st.session_state.df_traditional.sort_values(["URL_Helper", "Author", "Impressions", "AVE", "Date"], axis=0,
                                                                                                   ascending=[True, True, False, False, True])
                     # Save duplicate URLS
-                    dupe_urls = st.session_state.df_traditional[st.session_state.df_traditional['URL_Helper'].duplicated(keep='first')]
+                    dupe_urls = st.session_state.df_traditional[st.session_state.df_traditional['URL_Helper'].duplicated(keep='first')].copy()
 
                     # Remove duplicate URLS
-                    st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['URL_Helper'].duplicated(keep='first')]
+                    st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['URL_Helper'].duplicated(keep='first')].copy()
 
                     # Drop URL Helper column from both dfs
                     st.session_state.df_traditional.drop(["URL_Helper"], axis=1, inplace=True, errors='ignore')
                     dupe_urls.drop(["URL_Helper"], axis=1, inplace=True, errors='ignore')
 
                     frames = [st.session_state.df_traditional, blank_urls]
-                    st.session_state.df_traditional = pd.concat(frames)
+                    st.session_state.df_traditional = pd.concat(frames, ignore_index=True)
 
                     # DROP DUPLICATES BY COLUMN MATCHES ###########################################
 
                     # Split off records with blank headline/outlet/type
-                    blank_set = st.session_state.df_traditional[st.session_state.df_traditional.Headline.isna() | st.session_state.df_traditional.Outlet.isna() | st.session_state.df_traditional.Type.isna() | len(st.session_state.df_traditional.Headline) == 0]
+                    # blank_set = st.session_state.df_traditional[st.session_state.df_traditional.Headline.isna() | st.session_state.df_traditional.Outlet.isna() | st.session_state.df_traditional.Type.isna() | len(st.session_state.df_traditional.Headline) == 0]
+                    blank_set = st.session_state.df_traditional[
+                        st.session_state.df_traditional["Headline"].fillna("").str.strip().eq("") |
+                        st.session_state.df_traditional["Outlet"].isna() |
+                        st.session_state.df_traditional["Type"].isna()
+                        ].copy()
                     st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Headline.isna()]
                     st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Outlet.isna()]
                     st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Type.isna()]
@@ -226,21 +232,118 @@ else:
                         'Headline'] # + st.session_state.df_traditional['Date_Helper'].astype('string')
                     st.session_state.df_traditional = st.session_state.df_traditional.sort_values(["dupe_helper", "Author", "Impressions", "AVE", "Date"], axis=0,
                                                                                                   ascending=[True, True, False, False, True])
-                    dupe_cols = st.session_state.df_traditional[st.session_state.df_traditional['dupe_helper'].duplicated(keep='first')]
-                    st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['dupe_helper'].duplicated(keep='first')]
+                    dupe_cols = st.session_state.df_traditional[st.session_state.df_traditional['dupe_helper'].duplicated(keep='first')].copy()
+                    st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['dupe_helper'].duplicated(keep='first')].copy()
 
                     # Drop helper column and rejoin blank set
                     st.session_state.df_traditional.drop(["dupe_helper", "Date_Helper"], axis=1, inplace=True,
                                                          errors='ignore')
                     dupe_cols.drop(["dupe_helper", "Date_Helper"], axis=1, inplace=True, errors='ignore')
+                    # frames = [st.session_state.df_traditional, st.session_state.blank_set]
+                    frames = [st.session_state.df_traditional, blank_set]
+                    st.session_state.df_traditional = pd.concat(frames, ignore_index=True)
 
-                    frames = [st.session_state.df_traditional, st.session_state.blank_set]
-                    st.session_state.df_traditional = pd.concat(frames)
-                    st.session_state.df_dupes = pd.concat([dupe_urls, dupe_cols])
+
+                    # DROP DUPLICATES IN BROADCAST SET ###########################################
+                    broadcast_dupes = pd.DataFrame()
+                    if len(broadcast_set) > 0:
+                        broadcast_working = broadcast_set.reset_index(drop=True).copy()
+                        broadcast_working["_original_order"] = np.arange(len(broadcast_working))
+                        broadcast_working["_date_time"] = pd.to_datetime(broadcast_working["Date"], errors='coerce')
+                        broadcast_working["_date_only"] = broadcast_working["_date_time"].dt.date
+                        snippet_col = "Snippet" if "Snippet" in broadcast_working.columns else "Coverage Snippet" if "Coverage Snippet" in broadcast_working.columns else None
+                        if snippet_col is None:
+                            broadcast_working["_snippet_text"] = ""
+                        else:
+                            broadcast_working["_snippet_text"] = broadcast_working[snippet_col].fillna("").astype(str)
+
+                        broadcast_working["_snippet_norm"] = (
+                            broadcast_working["_snippet_text"]
+                            .str.lower().str.replace(r"\s+", " ", regex=True).str.strip()
+                        )
+                        broadcast_working["_snippet_len"] = broadcast_working["_snippet_text"].str.len()
+
+                        duplicate_indexes = set()
+                        # Group by outlet, media type (Type), and date to limit comparison set
+                        for _, group in broadcast_working.groupby(["Outlet", "Type", "_date_only"], dropna=False):
+                            valid_group = group[group["_date_time"].notna()].sort_values(
+                                ["_date_time", "_original_order"])
+                            if len(valid_group) < 2:
+                                continue
+
+                            group_indices = valid_group.index.tolist()
+                            adjacency = {idx: set() for idx in group_indices}
+
+                            for i, idx_i in enumerate(group_indices):
+                                row_i = valid_group.loc[idx_i]
+                                snippet_i = row_i["_snippet_norm"]
+                                time_i = row_i["_date_time"]
+
+                                for idx_j in group_indices[i + 1:]:
+                                    row_j = valid_group.loc[idx_j]
+                                    time_j = row_j["_date_time"]
+                                    seconds_diff = abs((time_j - time_i).total_seconds())
+
+                                    if seconds_diff > 60:
+                                        # Sorted by time, so all later rows will also be > 60 seconds
+                                        break
+
+                                    snippet_j = row_j["_snippet_norm"]
+                                    snippets_match = snippet_i == snippet_j
+                                    if not snippets_match:
+                                        snippets_match = SequenceMatcher(None, snippet_i, snippet_j).ratio() >= 0.90
+
+                                    if snippets_match:
+                                        adjacency[idx_i].add(idx_j)
+                                        adjacency[idx_j].add(idx_i)
+
+                            # Resolve connected duplicate groups and keep one row by tie-break rules
+                            visited = set()
+                            for idx in group_indices:
+                                if idx in visited:
+                                    continue
+                                stack = [idx]
+                                component = []
+                                while stack:
+                                    node = stack.pop()
+                                    if node in visited:
+                                        continue
+                                    visited.add(node)
+                                    component.append(node)
+                                    stack.extend(adjacency[node] - visited)
+
+                                if len(component) <= 1:
+                                    continue
+
+                                component_rows = broadcast_working.loc[component].copy()
+                                component_rows = component_rows.sort_values(
+                                    ["_snippet_len", "_date_time", "_original_order"],
+                                    ascending=[False, True, True]
+                                )
+                                keep_index = component_rows.index[0]
+                                duplicate_indexes.update(set(component) - {keep_index})
+
+                        if duplicate_indexes:
+                            broadcast_dupes = broadcast_working.loc[list(duplicate_indexes)].copy()
+                            broadcast_set = broadcast_working.drop(index=list(duplicate_indexes)).copy()
+                        else:
+                            broadcast_set = broadcast_working.copy()
+
+                        helper_cols = ["_original_order", "_date_time", "_date_only", "_snippet_text", "_snippet_norm",
+                                       "_snippet_len"]
+                        broadcast_set.drop(columns=helper_cols, inplace=True, errors='ignore')
+                        broadcast_dupes.drop(columns=helper_cols, inplace=True, errors='ignore')
+
+                    st.session_state.df_dupes = pd.concat([dupe_urls, dupe_cols, broadcast_dupes], ignore_index=True)
 
                 # Rejoin broadcast ###########################
                 frames = [st.session_state.df_traditional, broadcast_set]
-                st.session_state.df_traditional = pd.concat(frames)
+                st.session_state.df_traditional = pd.concat(frames, ignore_index=True)
+
+                st.session_state.df_traditional = (
+                    st.session_state.df_traditional
+                    .reset_index(drop=True)
+                )
 
                 st.write(f"Standard Cleaning completed in {time.time() - start_time:.2f} seconds.")
 
