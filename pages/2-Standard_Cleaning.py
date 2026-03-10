@@ -134,25 +134,41 @@ else:
 
                 # Strip extra white space
                 strip_columns = ['Headline', 'Outlet', 'Author', 'Snippet']
+
                 for column in strip_columns:
+                    if column not in st.session_state.df_traditional.columns:
+                        continue
 
-                    st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.replace('    ', ' ')
-                    st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.replace('   ', ' ')
-                    st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.replace('  ', ' ')
+                    st.session_state.df_traditional[column] = (
+                        st.session_state.df_traditional[column]
+                        .fillna("")
+                        .astype(str)
+                        .str.replace(r"\s+", " ", regex=True)
+                        .str.strip()
+                        .str.replace("& amp;", "&", regex=False)
+                    )
 
-
-                    if st.session_state.df_traditional[column].notna().all():
-                        # Strip leading and trailing spaces
-                        st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.strip()
-
-                        # Replace multiple spaces with a single space
-                        st.session_state.df_traditional[column] = st.session_state.df_traditional[column].apply(
-                            lambda x: " ".join(x.split()))
-
-                        # Strip leading and trailing spaces
-                        st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.strip()
-
-                        st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.replace('& amp;', '&')
+                # # Strip extra white space
+                # strip_columns = ['Headline', 'Outlet', 'Author', 'Snippet']
+                # for column in strip_columns:
+                #
+                #     st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.replace('    ', ' ')
+                #     st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.replace('   ', ' ')
+                #     st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.replace('  ', ' ')
+                #
+                #
+                #     if st.session_state.df_traditional[column].notna().all():
+                #         # Strip leading and trailing spaces
+                #         st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.strip()
+                #
+                #         # Replace multiple spaces with a single space
+                #         st.session_state.df_traditional[column] = st.session_state.df_traditional[column].apply(
+                #             lambda x: " ".join(x.split()))
+                #
+                #         # Strip leading and trailing spaces
+                #         st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.strip()
+                #
+                #         st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.replace('& amp;', '&')
 
 
 
@@ -262,6 +278,7 @@ else:
                             .str.lower().str.replace(r"\s+", " ", regex=True).str.strip()
                         )
                         broadcast_working["_snippet_len"] = broadcast_working["_snippet_text"].str.len()
+
 
                         duplicate_indexes = set()
                         # Group by outlet, media type (Type), and date to limit comparison set
