@@ -1,6 +1,8 @@
 [theme]
 base="dark"
-primaryColor="#FF5026"
+primaryColor="#AB26EF"
+#primaryColor="#19bdf8"
+
 
 [runner]
 enforceSerializableSessionState = true
