@@ -311,22 +311,63 @@ else:
                         top_stories = top_stories.sort_values(
                             by=['Mentions', 'Impressions'],
                             ascending=False
-                        )
+                        ).copy()
+
+                        # Keep only the columns we actually want in the exported Top Stories sheet
+                        desired_top_story_columns = [
+                            "Headline",
+                            "Date",
+                            "Mentions",
+                            "Impressions",
+                            "Example Outlet",
+                            "Example URL",
+                            "Chart Callout",
+                            "Top Story Summary",
+                            "Entity Sentiment",
+                        ]
+
+                        existing_top_story_columns = [
+                            col for col in desired_top_story_columns if col in top_stories.columns
+                        ]
+                        top_stories = top_stories[existing_top_story_columns].copy()
+
                         top_stories.to_excel(writer, sheet_name='Top Stories', header=True, index=False)
                         worksheet6 = writer.sheets['Top Stories']
                         worksheet6.set_tab_color('green')
-                        worksheet6.set_column('A:A', 35, None)          # headline
-                        worksheet6.set_column('B:B', 12, None)          # date
-                        worksheet6.set_column('C:C', 12, number_format) # mentions
-                        worksheet6.set_column('D:D', 12, number_format) # impressions
-                        worksheet6.set_column('E:E', 20, None)          # outlet
-                        worksheet6.set_column('F:F', 15, None)          # url
-                        worksheet6.set_column('G:G', 15, None)          # type
-                        worksheet6.set_column('H:H', 15, None)          # snippet
-                        worksheet6.set_column('I:I', 40, None)          # summary
-                        worksheet6.set_column('J:J', 40, None)          # sentiment
+
+                        # Set widths based on the cleaned column order above
+                        if "Headline" in top_stories.columns:
+                            worksheet6.set_column(top_stories.columns.get_loc("Headline"),
+                                                  top_stories.columns.get_loc("Headline"), 35)
+                        if "Date" in top_stories.columns:
+                            worksheet6.set_column(top_stories.columns.get_loc("Date"),
+                                                  top_stories.columns.get_loc("Date"), 12)
+                        if "Mentions" in top_stories.columns:
+                            col_idx = top_stories.columns.get_loc("Mentions")
+                            worksheet6.set_column(col_idx, col_idx, 12, number_format)
+                        if "Impressions" in top_stories.columns:
+                            col_idx = top_stories.columns.get_loc("Impressions")
+                            worksheet6.set_column(col_idx, col_idx, 12, number_format)
+                        if "Example Outlet" in top_stories.columns:
+                            col_idx = top_stories.columns.get_loc("Example Outlet")
+                            worksheet6.set_column(col_idx, col_idx, 20)
+                        if "Example URL" in top_stories.columns:
+                            col_idx = top_stories.columns.get_loc("Example URL")
+                            worksheet6.set_column(col_idx, col_idx, 30)
+                        if "Chart Callout" in top_stories.columns:
+                            col_idx = top_stories.columns.get_loc("Chart Callout")
+                            worksheet6.set_column(col_idx, col_idx, 40)
+                        if "Top Story Summary" in top_stories.columns:
+                            col_idx = top_stories.columns.get_loc("Top Story Summary")
+                            worksheet6.set_column(col_idx, col_idx, 55)
+                        if "Entity Sentiment" in top_stories.columns:
+                            col_idx = top_stories.columns.get_loc("Entity Sentiment")
+                            worksheet6.set_column(col_idx, col_idx, 45)
+
                         worksheet6.freeze_panes(1, 0)
                         cleaned_dfs.append((top_stories, worksheet6))
+
+
 
                     # Deleted dupes
                     if len(dupes) > 0:
