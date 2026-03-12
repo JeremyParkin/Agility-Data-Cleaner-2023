@@ -516,15 +516,66 @@ If so, how does the media tend to characterize them? How are they compared to **
 
 ---
 
-### SWOT Analysis
-Analyze the news coverage and broadcast transcripts pertaining to **{client_name}**.  
-Propose ideas for a **SWOT analysis** targeting **{client_name}**’s reputation as a destination, considering the perspective of PR and earned media professionals responsible for the reputation.
+### SWOT Analysis (Media Coverage Perspective)
 
-**For each category:**
-- **Strengths**: What positive themes or stories enhance the brand's reputation?  
-- **Weaknesses**: Where is the brand's presence lacking, or where are there negative perceptions?  
-- **Opportunities**: What developments or trends could the brand capitalize on to improve its reputation and profile?  
-- **Threats**: Are there any risks or negative narratives that could harm the brand's reputation?
+Task  
+Analyze the news articles and broadcast transcripts related to **{client_name}** contained in this notebook.  
+Generate a media-coverage-driven SWOT analysis that reflects how **{client_name}** is positioned through earned media, based solely on observable patterns, themes, and narratives in the coverage.
+
+Audience & Perspective  
+Write for communications and PR professionals responsible for understanding how organizational reputation is shaped in the media.  
+Act strictly as a **media analyst**, not as a strategist or advisor.
+
+Do not:
+- Recommend actions, tactics, messaging, or strategy  
+- Suggest what the organization “should” do  
+- Speculate beyond what is supported by coverage evidence  
+
+Analytical Framing Rules  
+- Base all points on **coverage patterns**, not assumptions about operations or intent  
+- Use neutral analytical phrasing such as:
+  - “coverage reflects…”
+  - “media frequently positions…”
+  - “reporting emphasizes…”  
+- Avoid consulting or marketing jargon (e.g., “own the narrative,” “optimize messaging,” “capitalize on”)  
+- Where relevant, distinguish between:
+  - **Story volume**
+  - **Story type**
+  - **Audience reach / outlet credibility**
+  as drivers of reputational impact  
+
+SWOT Structure  
+
+Provide **4–5 concise bullets per quadrant**, written in clear, plain language and consistent in specificity.
+
+**Strengths**  
+Positive reputational signals conveyed through coverage (e.g., authority positioning, association with innovation or leadership, visibility in high-credibility outlets, trusted expert commentary).
+
+**Weaknesses**  
+Reputational vulnerabilities or negative associations reflected in coverage (e.g., incident-driven reporting, legal or safety narratives, uneven sub-brand perception, contextual linkage to negative events).
+
+**Opportunities**  
+Gaps, under-developed narratives, or emerging themes suggesting potential for broader or more balanced reputational positioning — without implying recommended action.
+
+**Threats**  
+External or category-level narratives present in coverage that may pose reputational risk (e.g., regulatory scrutiny, cybersecurity issues, political framing, sector instability).
+
+Observations Section  
+
+After the SWOT bullets, write a brief **“SWOT Analysis Observations”** section.  
+Include **one short paragraph per quadrant** synthesizing what the coverage patterns suggest at a higher level.
+
+These observations should:
+- Explain why the patterns matter from a media-analysis standpoint  
+- Not repeat bullets verbatim  
+- Not introduce new unsupported claims  
+
+Tone & Constraints  
+- Analytical, neutral, evidence-based  
+- No prescriptive or advisory language  
+- No operational judgments  
+- No generalized industry claims unless clearly reflected in the sources  
+
 
 ---
 
