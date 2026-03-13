@@ -240,19 +240,6 @@ else:
                     blank_set = st.session_state.df_traditional[blank_mask].copy()
                     st.session_state.df_traditional = st.session_state.df_traditional[~blank_mask].copy()
 
-                    # blank_set = st.session_state.df_traditional[st.session_state.df_traditional.Headline.isna() | st.session_state.df_traditional.Outlet.isna() | st.session_state.df_traditional.Type.isna() | len(st.session_state.df_traditional.Headline) == 0]
-                    # blank_set = st.session_state.df_traditional[
-                    #     st.session_state.df_traditional["Headline"].fillna("").str.strip().eq("") |
-                    #     st.session_state.df_traditional["Outlet"].isna() |
-                    #     st.session_state.df_traditional["Type"].isna()
-                    #     ].copy()
-                    # st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Headline.isna()]
-                    # st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Outlet.isna()]
-                    # st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Type.isna()]
-
-                    # Add helper columns
-                    # st.session_state.df_traditional['Date_Helper'] = pd.to_datetime(
-                    #     st.session_state.df_traditional['Date']).dt.strftime('%Y-%m-%d')
 
                     st.session_state.df_traditional["dupe_helper"] = st.session_state.df_traditional['Type'].astype('string') + st.session_state.df_traditional['Outlet'].astype('string') + st.session_state.df_traditional[
                         'Headline'] # + st.session_state.df_traditional['Date_Helper'].astype('string')
