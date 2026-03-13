@@ -16,57 +16,6 @@ st.set_page_config(
 
 mig.standard_sidebar()
 
-col1, col2 = st.columns([2,3], gap="medium")
-
-with col1:
-    st.title("Top Stories")
-
-with col2:
-    trend_df = st.session_state.get("filtered_df", pd.DataFrame()).copy()
-
-    if not trend_df.empty and "Date" in trend_df.columns:
-        trend_df["Date"] = pd.to_datetime(trend_df["Date"], errors="coerce")
-        trend_df = trend_df.dropna(subset=["Date"])
-    # trend_df = st.session_state["filtered_df"].copy()
-    # trend_df["Date"] = pd.to_datetime(trend_df["Date"], errors="coerce")
-    # trend_df = trend_df.dropna(subset=["Date"])
-
-        summary_stats = (
-            trend_df.groupby(pd.Grouper(key="Date", freq="D"))
-            .agg({"Mentions": "count", "Impressions": "sum"})
-            .reset_index()
-            .sort_values("Date")
-        )
-
-        # Decide whether to show time labels
-        show_time = False
-        if not summary_stats.empty:
-            date_span = summary_stats["Date"].max() - summary_stats["Date"].min()
-            show_time = date_span <= pd.Timedelta(days=1)
-
-        x_axis = alt.Axis(
-            title=None,
-            labelAngle=0,
-            format="%b %d, %-I %p" if show_time else "%b %d"
-        )
-
-        line = alt.Chart(summary_stats).mark_line(size=2).encode(
-            x=alt.X("Date:T", axis=x_axis),
-            y=alt.Y("Mentions:Q", axis=None)
-        )
-
-        points = alt.Chart(summary_stats).mark_circle(size=55, opacity=0).encode(
-            x="Date:T",
-            y="Mentions:Q",
-            tooltip=[
-                alt.Tooltip("Date:T", title="Date", format="%b %d, %Y" if not show_time else "%b %d, %Y %-I:%M %p"),
-                alt.Tooltip("Mentions:Q", title="Mentions", format=",")
-            ]
-        )
-
-        chart = (line + points).properties(height=130)
-
-        st.altair_chart(chart, use_container_width=True)
 
 def normalize_top_stories_df(df: pd.DataFrame) -> pd.DataFrame:
     """Normalize dataframe enough for Top Stories page to work safely."""
@@ -452,6 +401,62 @@ elif not st.session_state.get("standard_step", False):
 else:
     source_df = normalize_top_stories_df(st.session_state.df_traditional.copy())
 
+    title_col, chart_col = st.columns([2, 3], gap="medium")
+
+    with title_col:
+        st.title("Top Stories")
+
+    with chart_col:
+        trend_df = (
+            st.session_state.filtered_df.copy()
+            if st.session_state.top_stories_generated and not st.session_state.filtered_df.empty
+            else source_df.copy()
+        )
+
+        if not trend_df.empty and "Date" in trend_df.columns:
+            trend_df["Date"] = pd.to_datetime(trend_df["Date"], errors="coerce")
+            trend_df = trend_df.dropna(subset=["Date"]).copy()
+
+            if not trend_df.empty:
+                summary_stats = (
+                    trend_df.groupby(pd.Grouper(key="Date", freq="D"))
+                    .agg({"Mentions": "count", "Impressions": "sum"})
+                    .reset_index()
+                    .sort_values("Date")
+                )
+
+                if not summary_stats.empty:
+                    show_time = False
+                    date_span = summary_stats["Date"].max() - summary_stats["Date"].min()
+                    show_time = date_span <= pd.Timedelta(days=1)
+
+                    x_axis = alt.Axis(
+                        title=None,
+                        labelAngle=0,
+                        format="%b %d, %-I %p" if show_time else "%b %d"
+                    )
+
+                    line = alt.Chart(summary_stats).mark_line(size=2).encode(
+                        x=alt.X("Date:T", axis=x_axis),
+                        y=alt.Y("Mentions:Q", axis=None)
+                    )
+
+                    points = alt.Chart(summary_stats).mark_circle(size=55, opacity=0).encode(
+                        x="Date:T",
+                        y="Mentions:Q",
+                        tooltip=[
+                            alt.Tooltip(
+                                "Date:T",
+                                title="Date",
+                                format="%b %d, %Y" if not show_time else "%b %d, %Y %-I:%M %p"
+                            ),
+                            alt.Tooltip("Mentions:Q", title="Mentions", format=",")
+                        ]
+                    )
+
+                    chart = (line + points).properties(height=130)
+                    st.altair_chart(chart, use_container_width=True)
+
     # Keep columns needed for this page plus tag/prominence fields if present
     all_columns = list(source_df.columns)
     columns_to_keep = [
@@ -520,7 +525,7 @@ else:
                 "Exclude coverage flags",
                 options=available_flags,
                 default=[f for f in available_flags if f in [
-                    "Newswire?", "Market Report Spam?", "Stocks / Financials?", "Advertorial?", "Aggregator"
+                    "Newswire?", "Market Report Spam?", "Stocks / Financials?", "Advertorial?",
                 ]]
             )
 
