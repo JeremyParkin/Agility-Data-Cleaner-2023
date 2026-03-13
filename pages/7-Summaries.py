@@ -12,15 +12,6 @@ from streamlit_tags import st_tags
 
 warnings.filterwarnings("ignore")
 
-for key, default in {
-    "top_story_entity_names": [st.session_state.client_name] if st.session_state.get("client_name") else [],
-    "top_story_spokespeople": [],
-    "top_story_products": [],
-    "top_story_guidance": "",
-}.items():
-    if key not in st.session_state:
-        st.session_state[key] = default
-
 type_dict = {
     "RADIO": "broadcast transcript",
     "TV": "broadcast transcript",
@@ -28,6 +19,16 @@ type_dict = {
     "ONLINE": "online article",
     "PRINT": "print article",
 }
+
+for key, default in {
+    "top_story_entity_names": [],
+    "top_story_spokespeople": [],
+    "top_story_products": [],
+    "top_story_guidance": "",
+    "top_story_entity_names_seeded": False,
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
 DEFAULT_MODEL = "gpt-5-mini"
 SHORT_SNIPPET_THRESHOLD = 150
@@ -204,6 +205,19 @@ Body:
 {snippet}
 """.strip()
 
+
+def build_prompt_preview(entity_context: str) -> str:
+    preview_row = pd.Series({
+        "Headline": "Example headline placeholder",
+        "Example Outlet": "Example outlet",
+        "Example Type": "ONLINE",
+        "Example Snippet": "Example story text placeholder showing how the AI will interpret coverage.",
+    })
+
+    return build_master_prompt(
+        row=preview_row,
+        entity_context=entity_context
+    )
 
 def get_structured_schema() -> Dict[str, Any]:
     return {
@@ -438,6 +452,18 @@ else:
     summary_col1, summary_col2, summary_col3 = st.columns(3, gap="small")
 
     with summary_col1:
+        client_name = str(st.session_state.get("client_name", "")).strip()
+
+        if not st.session_state.get("top_story_entity_names_seeded", False):
+            current_entity_names = st.session_state.get("top_story_entity_names", [])
+            current_entity_names = [str(x).strip() for x in current_entity_names if str(x).strip()]
+
+            if client_name and not any(x.lower() == client_name.lower() for x in current_entity_names):
+                current_entity_names = [client_name] + current_entity_names
+
+            st.session_state.top_story_entity_names = current_entity_names
+            st.session_state.top_story_entity_names_seeded = True
+
         entity_names = st_tags(
             label="Entity names and aliases",
             text="Primary then aliases",
@@ -449,6 +475,19 @@ else:
 
         primary_name = entity_names[0].strip() if entity_names else ""
         alternate_names = [name.strip() for name in entity_names[1:] if name.strip()]
+
+    # with summary_col1:
+    #     entity_names = st_tags(
+    #         label="Entity names and aliases",
+    #         text="Primary then aliases",
+    #         maxtags=20,
+    #         value=st.session_state.top_story_entity_names,
+    #         key="top_story_entity_names_tags",
+    #     )
+    #     st.session_state.top_story_entity_names = entity_names
+    #
+    #     primary_name = entity_names[0].strip() if entity_names else ""
+    #     alternate_names = [name.strip() for name in entity_names[1:] if name.strip()]
 
     with summary_col2:
         spokespeople = st_tags(
@@ -544,6 +583,20 @@ else:
             with st.expander(f"Completed with {len(errors)} error(s)", expanded=False):
                 for err in errors:
                     st.write(err)
+
+    entity_context = ""
+
+    if primary_name.strip():
+        entity_context = build_entity_context(
+            primary_name=primary_name,
+            alternate_names=alternate_names,
+            spokespeople=spokespeople,
+            products=products,
+            additional_guidance=additional_guidance,
+        )
+    with st.expander("Show AI prompt preview", expanded=False):
+        st.caption("This shows the exact prompt template sent to OpenAI (with example story placeholders).")
+        st.code(build_prompt_preview(entity_context), language="text")
 
     st.divider()
     st.subheader("Copy-Paste Top Stories")
