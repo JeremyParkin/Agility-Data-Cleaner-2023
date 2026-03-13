@@ -446,59 +446,6 @@ else:
         )
 
     st.divider()
-
-    # ---------- NotebookLM bundle section ----------
-
-    st.subheader("NotebookLM bundle")
-
-    build_nlm = st.button(
-        "Build NotebookLM bundle (zip)",
-        help=(
-            "Creates a zip of JSON-formatted text files for NotebookLM. "
-            "If the dataset exceeds ~50 files worth of content, "
-            "a random sample is taken to stay within upload limits."
-        )
-    )
-
-    if build_nlm:
-        try:
-            with st.spinner("Building NotebookLM bundle..."):
-                nlm_zip_io, nlm_info = build_notebooklm_zip(
-                    st.session_state.df_traditional,
-                    st.session_state.df_social,
-                    client_name=st.session_state.client_name
-                )
-            st.session_state.notebooklm_zip_bytes = nlm_zip_io.getvalue()
-            st.session_state.notebooklm_info = nlm_info
-        except ValueError as e:
-            st.error(str(e))
-        except Exception as e:
-            st.error(f"Error building NotebookLM bundle: {e}")
-
-    if "notebooklm_zip_bytes" in st.session_state:
-        info = st.session_state.get("notebooklm_info", {})
-        client_short = info.get("client_short", "Client")
-        zip_filename = f"NLM_prepared_data-{client_short}.zip"
-
-        st.download_button(
-            "Download NotebookLM bundle",
-            data=st.session_state.notebooklm_zip_bytes,
-            file_name=zip_filename,
-            type="primary",
-            key = "download_notebooklm_bundle"
-        )
-
-        if info:
-            st.caption(
-                f"Rows in cleaned dataset: {info.get('total_rows', 0):,} · "
-                f"Rows included in bundle: {info.get('rows_included', 0):,} · "
-                f"Files: {info.get('files_created', 0)} (max {info.get('max_files', 0)}), "
-                f"Rows/file cap: {info.get('max_rows_per_file', 0)}, "
-                f"Word limit/file: {info.get('max_words_per_file', 0):,}, "
-                f"Size limit/file: {info.get('max_bytes_per_file', 0) // (1024 * 1024)} MB."
-            )
-
-    st.divider()
     client_name = st.session_state.client_name
     # ---------- NotebookLM bundle section ----------
 
