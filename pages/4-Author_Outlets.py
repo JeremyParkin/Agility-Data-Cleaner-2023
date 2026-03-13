@@ -1,197 +1,406 @@
-import streamlit as st
-import pandas as pd
-import mig_functions as mig
-from unidecode import unidecode
-import requests
-from requests.structures import CaseInsensitiveDict
+import urllib.parse
 import warnings
-warnings.filterwarnings('ignore')
-st.set_page_config(layout="wide", page_title="MIG Data Processing App",
-                   page_icon="https://www.agilitypr.com/wp-content/uploads/2025/01/favicon.png")
+
+import numpy as np
+import pandas as pd
+import requests
+import streamlit as st
+from requests.structures import CaseInsensitiveDict
+from unidecode import unidecode
+
+import mig_functions as mig
+
+warnings.filterwarnings("ignore")
+
+st.set_page_config(
+    layout="wide",
+    page_title="MIG Data Processing App",
+    page_icon="https://www.agilitypr.com/wp-content/uploads/2025/01/favicon.png"
+)
 
 mig.standard_sidebar()
 
-format_dict = {'AVE': '${0:,.0f}', 'Audience Reach': '{:,d}', 'Impressions': '{:,d}'}
+format_dict = {
+    'AVE': '${0:,.0f}',
+    'Audience Reach': '{:,d}',
+    'Impressions': '{:,d}'
+}
 
-import numpy as np
 
-if st.session_state.pickle_load == True:
-    # st.dataframe(st.session_state.auth_outlet_table)
-    st.session_state.auth_outlet_table['Outlet'] = st.session_state.auth_outlet_table['Outlet'].replace([np.nan, None], "")
+def reset_skips():
+    st.session_state.auth_outlet_skipped = 0
 
-# st.write(st.session_state.auth_outlet_skipped)
-# st.write(st.session_state.auth_outlet_table)
+
+def fetch_outlet(author_name: str):
+    contact_url = "https://mediadatabase.agilitypr.com/api/v4/contacts/search"
+
+    headers = CaseInsensitiveDict()
+    headers["Content-Type"] = "text/json"
+    headers["Accept"] = "text/json"
+    headers["Authorization"] = st.secrets["authorization"]
+    headers["client_id"] = st.secrets["client_id"]
+    headers["userclient_id"] = st.secrets["userclient_id"]
+
+    data = f"""
+    {{
+      "aliases": [
+        "{author_name}"
+      ]
+    }}
+    """
+
+    contact_resp = requests.post(contact_url, headers=headers, data=data)
+    return contact_resp.json()
+
+def build_auth_outlet_table(df: pd.DataFrame, top_auths_by: str, existing_assignments: pd.DataFrame | None = None) -> pd.DataFrame:
+    """
+    Rebuild the author-outlet summary table from df_traditional and preserve
+    any existing outlet assignments where possible.
+    """
+    working = df[["Author", "Mentions", "Impressions"]].copy()
+
+    rebuilt = (
+        working.groupby("Author", as_index=False)[["Mentions", "Impressions"]]
+        .sum()
+    )
+
+    if existing_assignments is not None and len(existing_assignments) > 0 and "Outlet" in existing_assignments.columns:
+        assignment_map = (
+            existing_assignments[["Author", "Outlet"]]
+            .copy()
+            .fillna("")
+        )
+
+        # Prefer a non-blank outlet if duplicates exist for an author
+        assignment_map["has_outlet"] = assignment_map["Outlet"].str.strip().ne("")
+        assignment_map = (
+            assignment_map.sort_values(["Author", "has_outlet"], ascending=[True, False])
+            .drop_duplicates(subset=["Author"], keep="first")
+            .drop(columns=["has_outlet"])
+        )
+
+        rebuilt = rebuilt.merge(assignment_map, on="Author", how="left")
+        rebuilt["Outlet"] = rebuilt["Outlet"].fillna("")
+    else:
+        rebuilt.insert(loc=1, column="Outlet", value="")
+
+    if top_auths_by == "Mentions":
+        rebuilt = rebuilt.sort_values(["Mentions", "Impressions"], ascending=False).reset_index(drop=True)
+    else:
+        rebuilt = rebuilt.sort_values(["Impressions", "Mentions"], ascending=False).reset_index(drop=True)
+
+    desired_order = ["Author", "Outlet", "Mentions", "Impressions"]
+    existing_order = [c for c in desired_order if c in rebuilt.columns]
+    rebuilt = rebuilt[existing_order].copy()
+
+    return rebuilt
+
+def build_auth_outlet_table(df: pd.DataFrame, top_auths_by: str, existing_assignments: pd.DataFrame | None = None) -> pd.DataFrame:
+    """
+    Rebuild the author-outlet summary table from df_traditional and preserve
+    any existing outlet assignments where possible.
+    """
+    working = df[["Author", "Mentions", "Impressions"]].copy()
+
+    rebuilt = (
+        working.groupby("Author", as_index=False)[["Mentions", "Impressions"]]
+        .sum()
+    )
+
+    if existing_assignments is not None and len(existing_assignments) > 0 and "Outlet" in existing_assignments.columns:
+        assignment_map = (
+            existing_assignments[["Author", "Outlet"]]
+            .copy()
+            .fillna("")
+            .drop_duplicates(subset=["Author"], keep="last")
+        )
+        rebuilt = rebuilt.merge(assignment_map, on="Author", how="left")
+        rebuilt["Outlet"] = rebuilt["Outlet"].fillna("")
+    else:
+        rebuilt.insert(loc=1, column="Outlet", value="")
+
+    if top_auths_by == "Mentions":
+        rebuilt = rebuilt.sort_values(["Mentions", "Impressions"], ascending=False).reset_index(drop=True)
+    else:
+        rebuilt = rebuilt.sort_values(["Impressions", "Mentions"], ascending=False).reset_index(drop=True)
+
+    # Put Outlet back in position 1 if merge reordered columns
+    desired_order = ["Author", "Outlet", "Mentions", "Impressions"]
+    existing_order = [c for c in desired_order if c in rebuilt.columns]
+    rebuilt = rebuilt[existing_order].copy()
+
+    return rebuilt
+
+
+def apply_author_name_fix(old_name: str, new_name: str):
+    """
+    Apply a corrected author name to df_traditional and rebuild auth_outlet_table.
+    """
+    old_name = str(old_name).strip()
+    new_name = str(new_name).strip()
+
+    if not old_name or not new_name or old_name == new_name:
+        return
+
+    # Update source coverage data
+    st.session_state.df_traditional = st.session_state.df_traditional.copy()
+    st.session_state.df_traditional.loc[
+        st.session_state.df_traditional["Author"] == old_name,
+        "Author"
+    ] = new_name
+
+    # Rebuild grouped author table while preserving existing outlet assignments
+    existing_assignments = st.session_state.auth_outlet_table.copy() if len(st.session_state.auth_outlet_table) > 0 else None
+    st.session_state.auth_outlet_table = build_auth_outlet_table(
+        st.session_state.df_traditional.copy(),
+        st.session_state.top_auths_by,
+        existing_assignments=existing_assignments
+    )
+
+    # Keep skip counter in a safe range
+    st.session_state.auth_outlet_skipped = max(0, min(
+        st.session_state.auth_outlet_skipped,
+        len(st.session_state.auth_outlet_table) - 1
+    ))
+
+
+def get_matched_authors_df(search_results, outlets_in_coverage_list, author_name_for_styling):
+    """
+    Build dataframe of matched authors from database response.
+    Also returns db_outlets and possibles lists.
+    """
+    db_outlets = []
+    possibles = []
+
+    if not search_results or "results" not in search_results or not search_results["results"]:
+        return pd.DataFrame(), db_outlets, possibles
+
+    response_results = search_results["results"]
+    outlet_results = []
+
+    for result in response_results:
+        first = result.get("firstName", "") or ""
+        last = result.get("lastName", "") or ""
+        auth_name = f"{first} {last}".strip()
+
+        primary_employment = result.get("primaryEmployment") or {}
+        job_title = primary_employment.get("jobTitle", "") or ""
+        outlet = primary_employment.get("outletName", "") or ""
+
+        country_obj = result.get("country")
+        country = country_obj.get("name", "") if country_obj else ""
+
+        outlet_results.append((auth_name, job_title, outlet, country))
+
+    matched_authors = pd.DataFrame.from_records(
+        outlet_results,
+        columns=["Name", "Title", "Outlet", "Country"]
+    ).copy()
+
+    if len(matched_authors) == 0:
+        return matched_authors, db_outlets, possibles
+
+    matched_authors.loc[matched_authors["Outlet"] == "[Freelancer]", "Outlet"] = "Freelance"
+
+    db_outlets = matched_authors["Outlet"].tolist()
+    possibles = matched_authors["Outlet"].tolist()
+
+    matching_outlets = set(outlets_in_coverage_list).intersection(set(possibles))
+
+    if len(matching_outlets) > 0 and len(possibles) > 1:
+        matched_authors_top = matched_authors[matched_authors["Outlet"].isin(matching_outlets)].copy()
+        matched_authors_bottom = matched_authors[~matched_authors["Outlet"].isin(matching_outlets)].copy()
+        matched_authors = pd.concat([matched_authors_top, matched_authors_bottom], ignore_index=True)
+
+        possibles = matched_authors["Outlet"].tolist()
+
+    matching_outlet = [outlet for outlet in outlets_in_coverage_list if outlet in possibles]
+    if len(matching_outlet) == 1:
+        index = possibles.index(matching_outlet[0])
+        possibles = [matching_outlet[0]] + possibles[:index] + possibles[index + 1:]
+
+    return matched_authors, db_outlets, possibles
 
 
 st.title("Author - Outlets")
+
+if st.session_state.pickle_load is True and len(st.session_state.auth_outlet_table) > 0:
+    st.session_state.auth_outlet_table = st.session_state.auth_outlet_table.copy()
+    st.session_state.auth_outlet_table["Outlet"] = st.session_state.auth_outlet_table["Outlet"].replace([np.nan, None], "")
+
 if not st.session_state.upload_step:
-    st.error('Please upload a CSV before trying this step.')
+    st.error("Please upload a CSV before trying this step.")
 elif not st.session_state.standard_step:
-    st.error('Please run the Standard Cleaning before trying this step.')
+    st.error("Please run the Standard Cleaning before trying this step.")
 else:
+    # defensive copy + dtype cleanup
+    st.session_state.df_traditional = st.session_state.df_traditional.copy()
+    st.session_state.df_traditional["Mentions"] = pd.to_numeric(
+        st.session_state.df_traditional["Mentions"],
+        errors="coerce"
+    ).fillna(0).astype(int)
 
-    def name_match(series):
-        non_match = 'color: #985331;'
-        match = 'color: goldenrod'
-        return [non_match if cell_value != author_name else match for cell_value in series]
+    # CSS helpers
+    hide_table_row_index = """
+        <style>
+        tbody th {display:none}
+        .blank {display:none}
+        .row_heading.level0 {width:0; display:none}
+        </style>
+    """
+    st.markdown(hide_table_row_index, unsafe_allow_html=True)
 
-    def reset_skips():
-        st.session_state.auth_outlet_skipped = 0
-
-    def fetch_outlet(author_name):
-        contact_url = "https://mediadatabase.agilitypr.com/api/v4/contacts/search"
-        headers = CaseInsensitiveDict()
-        headers["Content-Type"] = "text/json"
-        headers["Accept"] = "text/json"
-        headers["Authorization"] = st.secrets["authorization"]
-        headers["client_id"] = st.secrets["client_id"]
-        headers["userclient_id"] = st.secrets["userclient_id"]
-
-        data_a = '''
-      {  
-        "aliases": [  
-          "'''
-
-        data_b = '''"  
-        ]   
-      }
-      '''
-
-        data = data_a + author_name + data_b
-        contact_resp = requests.post(contact_url, headers=headers, data=data)
-
-        return contact_resp.json()
+    st.session_state.top_auths_by = st.selectbox(
+        "Top Authors by:",
+        ["Mentions", "Impressions"],
+        on_change=reset_skips
+    )
 
 
-    st.session_state.df_traditional.Mentions = st.session_state.df_traditional.Mentions.astype('int')
-
-    st.session_state.top_auths_by = st.selectbox('Top Authors by: ', ['Mentions', 'Impressions'], on_change=reset_skips)
+    # Build or rebuild author-outlet table if needed
     if len(st.session_state.auth_outlet_table) == 0:
-        if st.session_state.top_auths_by == 'Mentions':
-            st.session_state.auth_outlet_table = st.session_state.df_traditional[['Author', 'Mentions', 'Impressions']].groupby(
-                by=['Author']).sum().sort_values(
-                ['Mentions', 'Impressions'], ascending=False).reset_index()
-
-        elif st.session_state.top_auths_by == 'Impressions':
-            st.session_state.auth_outlet_table = st.session_state.df_traditional[['Author', 'Mentions', 'Impressions']].groupby(
-                by=['Author']).sum().sort_values(
-                ['Impressions', 'Mentions'], ascending=False).reset_index()
-
-        # auth_outlet_table['Outlet'] = ''
-        st.session_state.auth_outlet_table.insert(loc=1, column='Outlet', value='')
-
-        auth_outlet_todo = st.session_state.auth_outlet_table
-
+        st.session_state.auth_outlet_table = build_auth_outlet_table(
+            st.session_state.df_traditional.copy(),
+            st.session_state.top_auths_by
+        )
     else:
-        if st.session_state.top_auths_by == 'Mentions':
-            st.session_state.auth_outlet_table = st.session_state.auth_outlet_table.sort_values(['Mentions', 'Impressions'],
-                                                              ascending=False)  # .reset_index()
+        st.session_state.auth_outlet_table = build_auth_outlet_table(
+            st.session_state.df_traditional.copy(),
+            st.session_state.top_auths_by,
+            existing_assignments=st.session_state.auth_outlet_table.copy()
+        )
 
-        elif st.session_state.top_auths_by == 'Impressions':
-            st.session_state.auth_outlet_table = st.session_state.auth_outlet_table.sort_values(['Impressions', 'Mentions'],
-                                                              ascending=False)  # .reset_index()
-
-        auth_outlet_todo = st.session_state.auth_outlet_table.loc[st.session_state.auth_outlet_table['Outlet'] == '']
-
-    # auth_outlet_skipped = st.session_state.auth_outlet_skipped
+    auth_outlet_todo = st.session_state.auth_outlet_table.loc[
+        st.session_state.auth_outlet_table["Outlet"] == ""
+    ].copy()
 
     if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
-        author_name = auth_outlet_todo.iloc[st.session_state.auth_outlet_skipped]['Author']
+        original_author_name = auth_outlet_todo.iloc[st.session_state.auth_outlet_skipped]["Author"]
 
-        # NAME, SKIP & RESET SKIP SECTION
-        col1, but1, but2 = st.columns([2, 1, 1])
-        with col1:
-            st.markdown("""
-                            <h2 style="color: goldenrod; padding-top:0!important; margin-top:-"> 
-                            """ + author_name +
-                        """</h2>
-                        <style>.css-12w0qpk {padding-top:22px !important}</style>
-                        """, unsafe_allow_html=True)
-        with but1:
-            next_auth = st.button('Skip to Next Author')
+        # Editable author field for matching
+        with st.expander("Author name fix tools", expanded=False):
+            edit_col1, edit_col2 = st.columns([3, 2], gap="medium")
+
+            with edit_col1:
+                edited_author_name = st.text_input(
+                    "Edit author name for matching",
+                    value=original_author_name,
+                    help="Use this to clean up the author name before matching. Example: remove outlet text, extra names, or trailing descriptors."
+                ).strip()
+
+            with edit_col2:
+                st.write(" ")
+                st.write(" ")
+                apply_fix = st.button("Apply corrected author name to data")
+
+            st.caption(
+                "Edits here affect media database lookup immediately. The underlying author data is only changed if you click Apply corrected author name to data.")
+
+        # Current author heading
+        header_col, skip_col, reset_col = st.columns([2, 1, 1])
+
+        with header_col:
+            st.markdown(
+                f"""
+                <h2 style="color: goldenrod; padding-top:0!important; margin-top:0;">
+                    {original_author_name}
+                </h2>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with skip_col:
+            st.write(" ")
+            next_auth = st.button("Skip to Next Author")
             if next_auth:
                 st.session_state.auth_outlet_skipped += 1
-                # st.session_state.auth_outlet_skipped = auth_outlet_skipped
                 st.rerun()
 
-            with but2:
-                reset_counter = st.button('Reset Skips')
-                if reset_counter:
-                    st.session_state.auth_outlet_skipped = 0
-                    # st.session_state.auth_outlet_skipped = auth_outlet_skipped
-                    st.rerun()
+        with reset_col:
+            st.write(" ")
+            reset_counter = st.button("Reset Skips")
+            if reset_counter:
+                st.session_state.auth_outlet_skipped = 0
+                st.rerun()
 
-        search_results = fetch_outlet(unidecode(author_name))
-        db_outlets = []
 
-        if 'results' in search_results:
-            number_of_authors = len(search_results['results'])
 
-            if not search_results['results']:
-                matched_authors = []
-            elif search_results['results'] is None:
-                matched_authors = []
+        # st.markdown("**Author matching tools**")
+        # edit_col1, edit_col2 = st.columns([3, 2], gap="medium")
+        #
+        # with edit_col1:
+        #     edited_author_name = st.text_input(
+        #         "Edit author name for matching",
+        #         value=original_author_name,
+        #         help="Use this to clean up the author name before matching. Example: remove outlet text, extra names, or trailing descriptors."
+        #     ).strip()
+        #
+        # with edit_col2:
+        #     st.write(" ")
+        #     st.write(" ")
+        #     apply_fix = st.button("Apply corrected author name to data")
+
+        match_author_name = edited_author_name if edited_author_name else original_author_name
+
+        if apply_fix:
+            if not edited_author_name:
+                st.warning("Please enter a corrected author name first.")
+            elif edited_author_name == original_author_name:
+                st.info("The edited author name matches the current author name, so no change was applied.")
             else:
-                response_results = search_results['results']
-                outlet_results = []
+                apply_author_name_fix(original_author_name, edited_author_name)
+                st.success(f'Updated author name from "{original_author_name}" to "{edited_author_name}".')
+                st.rerun()
 
-                for result in response_results:
-                    auth_name = result['firstName'] + " " + result['lastName']
-                    job_title = result['primaryEmployment']['jobTitle']
-                    outlet = result['primaryEmployment']['outletName']
-                    if result['country'] is None:
-                        country = ''
+        # Fetch database results using the edited / cleaned name
+        search_results = fetch_outlet(unidecode(match_author_name))
 
-                    else:
-                        country = result['country']['name']
-                    auth_tuple = (auth_name, job_title, outlet, country)
-                    outlet_results.append(auth_tuple)
+        # Styling helper for matched names table
+        def name_match(series):
+            non_match = "color: #985331;"
+            match = "color: goldenrod"
+            return [non_match if cell_value != match_author_name else match for cell_value in series]
 
-                matched_authors = pd.DataFrame.from_records(outlet_results,
-                                                            columns=['Name', 'Title', 'Outlet', 'Country'])
-                matched_authors.loc[matched_authors.Outlet == "[Freelancer]", "Outlet"] = "Freelance"
+        # Coverage-side outlets still based on original current dataset author until fix is applied
+        outlets_in_coverage = (
+            st.session_state.df_traditional.loc[
+                st.session_state.df_traditional["Author"] == original_author_name,
+                "Outlet"
+            ]
+            .value_counts()
+            .rename_axis("Outlet")
+            .reset_index(name="Hits")
+            .copy()
+        )
 
-                db_outlets = matched_authors.Outlet.tolist()
+        outlets_in_coverage_list = pd.Index(outlets_in_coverage["Outlet"].tolist())
+        outlets_in_coverage_list = outlets_in_coverage_list.insert(0, "Freelance")
 
-        # OUTLETS IN COVERAGE VS DATABASE
-        # CSS to inject contained in a string
-        hide_table_row_index = """
-                                        <style>
-                                        tbody th {display:none}
-                                        .blank {display:none}
-                                        </style>
-                                        """
-
-        hide_dataframe_row_index = """
-                    <style>
-                    .row_heading.level0 {width:0; display:none}
-                    .blank {width:0; display:none}
-                    </style>
-                    """
-
-        # Inject CSS with Markdown
-        st.markdown(hide_table_row_index, unsafe_allow_html=True)
-        st.markdown(hide_dataframe_row_index, unsafe_allow_html=True)
+        matched_authors, db_outlets, possibles = get_matched_authors_df(
+            search_results=search_results,
+            outlets_in_coverage_list=outlets_in_coverage_list,
+            author_name_for_styling=match_author_name
+        )
 
         form_block = st.container()
         info_block = st.container()
 
+
         with info_block:
             col1, col2, col3 = st.columns([8, 1, 16])
+
             with col1:
                 st.subheader("Outlets in CSV")
-                outlets_in_coverage = st.session_state.df_traditional.loc[
-                    st.session_state.df_traditional.Author == author_name].Outlet.value_counts()
-                outlets_in_coverage_list = outlets_in_coverage.index
-                outlets_in_coverage_list = outlets_in_coverage_list.insert(0, "Freelance")
-                outlets_in_coverage = outlets_in_coverage.rename_axis('Outlet').reset_index(name='Hits')
 
-                # Apply style to DataFrame
                 outlets_in_coverage_styled = outlets_in_coverage.style.apply(
-                    lambda x: ['background-color: goldenrod; color: black' if v in db_outlets else '' for v in x], axis=1,
-                    subset="Outlet")
+                    lambda x: [
+                        "background-color: goldenrod; color: black" if v in db_outlets else ""
+                        for v in x
+                    ],
+                    axis=1,
+                    subset="Outlet"
+                )
 
-                # Display styled DataFrame
                 if len(outlets_in_coverage) > 7:
                     st.dataframe(outlets_in_coverage_styled)
                 else:
@@ -202,156 +411,127 @@ else:
 
             with col3:
                 st.subheader("Media Database Results")
-                if 'results' not in search_results:
-                    st.warning("NO MATCH FOUND")
-                    matched_authors = []
-                elif not search_results['results']:
-                    st.warning("NO MATCH FOUND")
-                    matched_authors = []
-                elif search_results is None:
-                    st.warning("NO MATCH FOUND")
-                    matched_authors = []
 
+                if len(matched_authors) == 0:
+                    st.warning("NO MATCH FOUND")
                 else:
-                    response_results = search_results['results']
-                    outlet_results = []
-
-                    for result in response_results:
-                        auth_name = result['firstName'] + " " + result['lastName']
-                        job_title = result['primaryEmployment']['jobTitle']
-                        outlet = result['primaryEmployment']['outletName']
-                        if result['country'] is None:
-                            country = 'None'
-
-                        else:
-                            country = result['country']['name']
-                        auth_tuple = (auth_name, job_title, outlet, country)
-                        outlet_results.append(auth_tuple)
-
-                    matched_authors = pd.DataFrame.from_records(outlet_results,
-                                                                columns=['Name', 'Title', 'Outlet', 'Country'])
-                    matched_authors.loc[matched_authors.Outlet == "[Freelancer]", "Outlet"] = "Freelance"
-
-                    # Check if any outlets in `matched_authors` match `outlets_in_coverage_list`
-                    matching_outlets = set(outlets_in_coverage_list).intersection(set(matched_authors.Outlet.tolist()))
-
-                    possibles = matched_authors.Outlet.tolist()
-
-                    # If a matching outlet is found and there are multiple entries in `possibles`, move the matched outlet to the top
-                    if len(matching_outlets) > 0 and len(possibles) > 1:
-                        matched_authors_top = matched_authors[matched_authors.Outlet.isin(matching_outlets)]
-                        matched_authors_bottom = matched_authors[~matched_authors.Outlet.isin(matching_outlets)]
-                        matched_authors = pd.concat([matched_authors_top, matched_authors_bottom])
-
                     if len(matched_authors) > 7:
-                        st.dataframe(matched_authors.style.apply(lambda x: [
-                            'background: goldenrod; color: black' if v in outlets_in_coverage.Outlet.tolist() else ""
-                            for v in x], axis=1).apply(name_match, axis=0, subset='Name'))
-
+                        st.dataframe(
+                            matched_authors.style
+                            .apply(
+                                lambda x: [
+                                    "background: goldenrod; color: black"
+                                    if v in outlets_in_coverage["Outlet"].tolist() else ""
+                                    for v in x
+                                ],
+                                axis=1
+                            )
+                            .apply(name_match, axis=0, subset="Name")
+                        )
                     else:
-                        st.table(matched_authors.style.apply(lambda x: [
-                            'background: goldenrod; color: black' if v in outlets_in_coverage.Outlet.tolist() else ""
-                            for v in x], axis=1).apply(name_match, axis=0, subset='Name'))
+                        st.table(
+                            matched_authors.style
+                            .apply(
+                                lambda x: [
+                                    "background: goldenrod; color: black"
+                                    if v in outlets_in_coverage["Outlet"].tolist() else ""
+                                    for v in x
+                                ],
+                                axis=1
+                            )
+                            .apply(name_match, axis=0, subset="Name")
+                        )
 
-                    # Check if there is a match between outlets_in_coverage_list and possibles
-                    matching_outlet = [outlet for outlet in outlets_in_coverage_list if outlet in possibles]
-
-                    if len(matching_outlet) == 1:
-                        # Get the index of the matching element in possibles
-                        index = possibles.index(matching_outlet[0])
-                        # Move the matching element to the first place
-                        possibles = [matching_outlet[0]] + possibles[:index] + possibles[index + 1:]
-
-                    # Add buttons for Google searches after Media Database Results
-
-                import urllib.parse
-
-                # Encode the author name to handle spaces and special characters
-                encoded_author_name = urllib.parse.quote(author_name)
-
-                # Update the URLs
+                encoded_author_name = urllib.parse.quote(match_author_name)
                 muckrack_url = f"https://www.google.com/search?q=site%3Amuckrack.com+{encoded_author_name}"
-                linkedin_url = f"https://www.google.com/search?q=site%3Alinkedin.com+%22{encoded_author_name}%22+journalist"
+                linkedin_url = f'https://www.google.com/search?q=site%3Alinkedin.com+%22{encoded_author_name}%22+journalist'
 
-                # Render the links
                 st.markdown(
-                    f'&nbsp;&nbsp;» <a href="{muckrack_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search Muckrack for {author_name}</a>',
-                    unsafe_allow_html=True)
+                    f'&nbsp;&nbsp;» <a href="{muckrack_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search Muckrack for {match_author_name}</a>',
+                    unsafe_allow_html=True
+                )
                 st.markdown(
-                    f'&nbsp;&nbsp;» <a href="{linkedin_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search LinkedIn for {author_name}</a>',
-                    unsafe_allow_html=True)
-
-
+                    f'&nbsp;&nbsp;» <a href="{linkedin_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search LinkedIn for {match_author_name}</a>',
+                    unsafe_allow_html=True
+                )
 
         with form_block:
-            # FORM TO UPDATE AUTHOR OUTLET ######################
-            with st.form('auth updater', clear_on_submit=True):
+            with st.form("auth updater", clear_on_submit=True):
                 col1, col2, col3 = st.columns([8, 1, 8])
+
                 with col1:
                     if len(matched_authors) > 0:
-                        box_outlet = st.selectbox('Pick outlet from DATABASE MATCHES', possibles,
-                                                  help='Pick from one of the outlets associated with this author name.')
-
+                        box_outlet = st.selectbox(
+                            "Pick outlet from DATABASE MATCHES",
+                            possibles,
+                            help="Pick from one of the outlets associated with this author name."
+                        )
                     else:
-                        box_outlet = st.selectbox('Pick outlet from COVERAGE or "Freelance"', outlets_in_coverage_list)
+                        box_outlet = st.selectbox(
+                            'Pick outlet from COVERAGE or "Freelance"',
+                            outlets_in_coverage_list
+                        )
 
                 with col2:
                     st.write(" ")
                     st.subheader("OR")
+
                 with col3:
-                    string_outlet = st.text_input("Write in an outlet name",
-                                                  help='Override above selection by writing in a custom name.')
+                    string_outlet = st.text_input(
+                        "Write in an outlet name",
+                        help="Override the selection by writing a custom outlet name."
+                    )
 
                 submitted = st.form_submit_button("Assign Outlet", type="primary")
 
         if submitted:
-            if len(string_outlet) > 0:
-                new_outlet = string_outlet
-            else:
-                new_outlet = box_outlet
+            new_outlet = string_outlet.strip() if len(string_outlet.strip()) > 0 else box_outlet
 
-            st.session_state.auth_outlet_table.loc[st.session_state.auth_outlet_table["Author"] == author_name, "Outlet"] = new_outlet
-            # st.session_state.auth_outlet_skipped = auth_outlet_skipped
-            st.session_state.auth_outlet_table = st.session_state.auth_outlet_table
+            st.session_state.auth_outlet_table = st.session_state.auth_outlet_table.copy()
+            st.session_state.auth_outlet_table.loc[
+                st.session_state.auth_outlet_table["Author"] == original_author_name,
+                "Outlet"
+            ] = new_outlet
+
             st.rerun()
 
         st.divider()
-        col1, col2, col3 = st.columns([8, 1, 4])
-        with col1:
+
+        bottom_col1, bottom_col2, bottom_col3 = st.columns([8, 1, 4])
+
+        with bottom_col1:
             st.subheader("Top Authors")
-            if 'Outlet' in st.session_state.auth_outlet_table.columns:
-                if st.session_state.top_auths_by == 'Mentions':
-                    st.table(
-                        st.session_state.auth_outlet_table[['Author', 'Outlet', 'Mentions', 'Impressions']].fillna('').sort_values(
-                            ['Mentions', 'Impressions'], ascending=False).head(15).style.format(
-                            format_dict, na_rep=' '))
-                if st.session_state.top_auths_by == 'Impressions':
-                    st.table(
-                        st.session_state.auth_outlet_table[['Author', 'Outlet', 'Mentions', 'Impressions']].fillna('').sort_values(
-                            ['Impressions', 'Mentions'], ascending=False).head(15).style.format(
-                            format_dict, na_rep=' '))
 
+            table_df = st.session_state.auth_outlet_table[["Author", "Outlet", "Mentions", "Impressions"]].copy()
+            table_df = table_df.fillna("")
+
+            if st.session_state.top_auths_by == "Mentions":
+                table_df = table_df.sort_values(["Mentions", "Impressions"], ascending=False).head(15)
             else:
-                st.table(st.session_state.auth_outlet_table[['Author', 'Mentions', 'Impressions']].fillna('').head(15).style.format(
-                    format_dict, na_rep=' '))
-        with col2:
+                table_df = table_df.sort_values(["Impressions", "Mentions"], ascending=False).head(15)
+
+            st.table(table_df.style.format(format_dict, na_rep=" "))
+
+        with bottom_col2:
             st.write(" ")
-        with col3:
-            st.subheader('Outlets assigned')
 
-            if 'Outlet' in st.session_state.auth_outlet_table.columns:
-                assigned = len(st.session_state.auth_outlet_table.loc[st.session_state.auth_outlet_table['Outlet'] != ''])
-                st.metric(label='Assigned', value=assigned)
-            else:
-                st.metric(label='Assigned', value=0)
+        with bottom_col3:
+            st.subheader("Outlets assigned")
+            assigned = len(
+                st.session_state.auth_outlet_table.loc[
+                    st.session_state.auth_outlet_table["Outlet"] != ""
+                ]
+            )
+            st.metric(label="Assigned", value=assigned)
+
     else:
         st.info("You've reached the end of the list!")
         st.write(f"Authors skipped: {st.session_state.auth_outlet_skipped}")
+
         if st.session_state.auth_outlet_skipped > 0:
-            reset_counter = st.button('Reset Counter')
+            reset_counter = st.button("Reset Counter")
             if reset_counter:
                 st.session_state.auth_outlet_skipped = 0
-                # st.session_state.auth_outlet_skipped = auth_outlet_skipped
                 st.rerun()
         else:
             st.write("✓ Nothing left to update here.")

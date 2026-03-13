@@ -40,6 +40,33 @@ def explode_tags(df: pd.DataFrame) -> pd.DataFrame:
     return df.join(dummies, how="left", rsuffix=" (tag)")
 
 
+def build_authors_export_table(df: pd.DataFrame, existing_assignments: pd.DataFrame | None = None) -> pd.DataFrame:
+    """
+    Rebuild author summary from current df_traditional and preserve any assigned outlets.
+    """
+    working = df[["Author", "Mentions", "Impressions"]].copy()
+
+    rebuilt = (
+        working.groupby("Author", as_index=False)[["Mentions", "Impressions"]]
+        .sum()
+    )
+
+    if existing_assignments is not None and len(existing_assignments) > 0 and "Outlet" in existing_assignments.columns:
+        assignment_map = (
+            existing_assignments[["Author", "Outlet"]]
+            .copy()
+            .fillna("")
+            .drop_duplicates(subset=["Author"], keep="last")
+        )
+        rebuilt = rebuilt.merge(assignment_map, on="Author", how="left")
+        rebuilt["Outlet"] = rebuilt["Outlet"].fillna("")
+    else:
+        rebuilt.insert(loc=1, column="Outlet", value="")
+
+    rebuilt = rebuilt[["Author", "Outlet", "Mentions", "Impressions"]].copy()
+    return rebuilt
+
+
 # ---------- Helper: build NotebookLM ZIP ----------
 
 def build_notebooklm_zip(
@@ -47,19 +74,13 @@ def build_notebooklm_zip(
     df_social: pd.DataFrame,
     client_name: str,
     max_files: int = 50,
-    max_rows_per_file: int = 450,          # conservative row cap per file
-    max_words_per_file: int = 200_000,     # conservative word cap
-    max_bytes_per_file: int = 50 * 1024 * 1024,  # ~50 MB
+    max_rows_per_file: int = 450,
+    max_words_per_file: int = 200_000,
+    max_bytes_per_file: int = 50 * 1024 * 1024,
     text_truncate_len: int = 10_000
 ):
     """
     Build an in-memory ZIP containing JSON .txt files for NotebookLM.
-
-    - Uses df_traditional and df_social combined (no df_untouched).
-    - Keeps a fixed set of columns (base list + Tags + Prominence*).
-    - Truncates all text columns to text_truncate_len chars.
-    - Streams rows into chunks respecting row/word/byte limits and max_files.
-    - If data can't fully fit, output is a random sample (due to shuffling).
     """
 
     frames = []
@@ -73,7 +94,6 @@ def build_notebooklm_zip(
 
     df = pd.concat(frames, ignore_index=True)
 
-    # Columns to keep
     base_cols = [
         'Published Date', 'Date', 'Author', 'Outlet', 'Headline',
         'Coverage Snippet', 'Snippet', 'Summary', 'Title', 'Content',
@@ -88,33 +108,27 @@ def build_notebooklm_zip(
 
     df = df[cols_to_keep].copy()
 
-    # Normalize dates to strings where possible
     for date_col in ['Published Date', 'Date']:
         if date_col in df.columns:
             try:
                 tmp = pd.to_datetime(df[date_col], errors='coerce')
                 df[date_col] = tmp.dt.strftime('%Y-%m-%d')
             except Exception:
-                # If conversion fails, leave as is
                 pass
 
-    # Truncate all text-like columns
     text_cols = df.select_dtypes(include=['object', 'string']).columns.tolist()
     for col in text_cols:
         s = df[col].astype("string")
         s = s.str.slice(0, text_truncate_len)
         df[col] = s
 
-    # Force to plain Python objects and replace NA/NaN with None
     df = df.astype(object)
     df = df.where(df.notna(), None)
 
-    # Shuffle once so truncation at max_files is effectively a random sample
     df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
     n_total_rows = len(df)
 
-    # Short, safe client name for filenames
     client_clean = re.sub(r'[^A-Za-z0-9]+', '', str(client_name))
     if not client_clean:
         client_clean = "Client"
@@ -136,13 +150,11 @@ def build_notebooklm_zip(
             return 0
         return len(" ".join(parts).split())
 
-    # Extra guard: normalize values to JSON-safe types
     def make_json_safe(val):
         try:
             if pd.isna(val):
                 return None
         except TypeError:
-            # Some types (e.g. dict) can throw in isna; leave them as-is
             pass
         return val
 
@@ -166,7 +178,6 @@ def build_notebooklm_zip(
             if file_index > max_files:
                 break
 
-            # Build row dict and sanitize values
             row_dict = {}
             for col in cols_to_keep:
                 val = row[col]
@@ -176,7 +187,6 @@ def build_notebooklm_zip(
             row_json = json.dumps(row_dict, ensure_ascii=False)
             b = len(row_json.encode('utf-8'))
 
-            # If adding this row would exceed any limit and we already have some rows, flush first
             if chunk_rows and (
                 len(chunk_rows) >= max_rows_per_file or
                 chunk_words + w > max_words_per_file or
@@ -197,7 +207,6 @@ def build_notebooklm_zip(
                 total_rows_included += 1
                 total_words_included += w
 
-        # Flush final chunk if any
         if chunk_rows and file_index <= max_files:
             flush_chunk(chunk_rows, file_index)
 
@@ -229,26 +238,23 @@ else:
     # local copies so we don't mutate session_state data
     traditional = st.session_state.df_traditional.copy()
     social = st.session_state.df_social.copy()
-    auth_outlet_table = st.session_state.auth_outlet_table.copy()
     top_stories = st.session_state.added_df.copy()
     dupes = st.session_state.df_dupes.copy()
     raw = st.session_state.df_untouched.copy()
 
-    # Tag exploder for the Excel outputs (on the copies)
+    # Tag exploder for the Excel outputs
     traditional = explode_tags(traditional)
     social = explode_tags(social)
 
-    # ---------- Cleaned workbook section (no form) ----------
-
     st.subheader("Clean data workbook")
 
-    build_xlsx = st.button("Build cleaned data workbook")
+    build_xlsx = st.button("Build cleaned data workbook", key="build_clean_workbook")
     if build_xlsx:
         try:
             with st.spinner('Building workbook now...'):
                 output = io.BytesIO()
-                with pd.ExcelWriter(output, engine='xlsxwriter', datetime_format='yyyy-mm-dd') as writer:
 
+                with pd.ExcelWriter(output, engine='xlsxwriter', datetime_format='yyyy-mm-dd') as writer:
                     workbook = writer.book
                     cleaned_dfs = []
                     cleaned_sheets = []
@@ -259,9 +265,9 @@ else:
 
                     # CLEAN TRAD
                     if len(traditional) > 0:
-                        traditional = rename_ave(traditional)
-                        traditional = traditional.sort_values(by=['Impressions'], ascending=False)
-                        traditional.to_excel(
+                        trad_export = rename_ave(traditional.copy())
+                        trad_export = trad_export.sort_values(by=['Impressions'], ascending=False)
+                        trad_export.to_excel(
                             writer,
                             sheet_name='CLEAN TRAD',
                             startrow=1,
@@ -270,14 +276,14 @@ else:
                         )
                         worksheet1 = writer.sheets['CLEAN TRAD']
                         worksheet1.set_tab_color('black')
-                        cleaned_dfs.append((traditional, worksheet1))
+                        cleaned_dfs.append((trad_export, worksheet1))
                         cleaned_sheets.append(worksheet1)
 
                     # CLEAN SOCIAL
                     if len(social) > 0:
-                        social = rename_ave(social)
-                        social = social.sort_values(by=['Impressions'], ascending=False)
-                        social.to_excel(
+                        social_export = rename_ave(social.copy())
+                        social_export = social_export.sort_values(by=['Impressions'], ascending=False)
+                        social_export.to_excel(
                             writer,
                             sheet_name='CLEAN SOCIAL',
                             startrow=1,
@@ -286,34 +292,36 @@ else:
                         )
                         worksheet2 = writer.sheets['CLEAN SOCIAL']
                         worksheet2.set_tab_color('black')
-                        cleaned_dfs.append((social, worksheet2))
+                        cleaned_dfs.append((social_export, worksheet2))
                         cleaned_sheets.append(worksheet2)
 
-                    # Authors
-                    if len(auth_outlet_table) > 0:
-                        authors = auth_outlet_table.sort_values(
-                            by=['Mentions', 'Impressions'],
-                            ascending=False
-                        )
+                    # Authors (rebuilt fresh from df_traditional at export time)
+                    authors = build_authors_export_table(
+                        st.session_state.df_traditional.copy(),
+                        existing_assignments=st.session_state.auth_outlet_table.copy()
+                        if len(st.session_state.auth_outlet_table) > 0 else None
+                    )
+
+                    if len(authors) > 0:
+                        authors = authors.sort_values(by=["Mentions", "Impressions"], ascending=False).copy()
                         authors.to_excel(writer, sheet_name='Authors', header=True, index=False)
                         worksheet5 = writer.sheets['Authors']
                         worksheet5.set_tab_color('green')
                         worksheet5.set_default_row(22)
-                        worksheet5.set_column('A:A', 30, None)       # author
-                        worksheet5.set_column('C:C', 12, None)       # mentions
-                        worksheet5.set_column('D:D', 15, number_format)  # impressions
-                        worksheet5.set_column('B:B', 35, None)       # outlet
+                        worksheet5.set_column('A:A', 30, None)            # author
+                        worksheet5.set_column('B:B', 35, None)            # outlet
+                        worksheet5.set_column('C:C', 12, number_format)   # mentions
+                        worksheet5.set_column('D:D', 15, number_format)   # impressions
                         worksheet5.freeze_panes(1, 0)
                         cleaned_dfs.append((authors, worksheet5))
 
                     # Top Stories
                     if len(top_stories) > 0:
-                        top_stories = top_stories.sort_values(
+                        top_stories_export = top_stories.sort_values(
                             by=['Mentions', 'Impressions'],
                             ascending=False
                         ).copy()
 
-                        # Keep only the columns we actually want in the exported Top Stories sheet
                         desired_top_story_columns = [
                             "Headline",
                             "Date",
@@ -327,52 +335,49 @@ else:
                         ]
 
                         existing_top_story_columns = [
-                            col for col in desired_top_story_columns if col in top_stories.columns
+                            col for col in desired_top_story_columns if col in top_stories_export.columns
                         ]
-                        top_stories = top_stories[existing_top_story_columns].copy()
+                        top_stories_export = top_stories_export[existing_top_story_columns].copy()
 
-                        top_stories.to_excel(writer, sheet_name='Top Stories', header=True, index=False)
+                        top_stories_export.to_excel(writer, sheet_name='Top Stories', header=True, index=False)
                         worksheet6 = writer.sheets['Top Stories']
                         worksheet6.set_tab_color('green')
 
-                        # Set widths based on the cleaned column order above
-                        if "Headline" in top_stories.columns:
-                            worksheet6.set_column(top_stories.columns.get_loc("Headline"),
-                                                  top_stories.columns.get_loc("Headline"), 35)
-                        if "Date" in top_stories.columns:
-                            worksheet6.set_column(top_stories.columns.get_loc("Date"),
-                                                  top_stories.columns.get_loc("Date"), 12)
-                        if "Mentions" in top_stories.columns:
-                            col_idx = top_stories.columns.get_loc("Mentions")
+                        if "Headline" in top_stories_export.columns:
+                            col_idx = top_stories_export.columns.get_loc("Headline")
+                            worksheet6.set_column(col_idx, col_idx, 35)
+                        if "Date" in top_stories_export.columns:
+                            col_idx = top_stories_export.columns.get_loc("Date")
+                            worksheet6.set_column(col_idx, col_idx, 12)
+                        if "Mentions" in top_stories_export.columns:
+                            col_idx = top_stories_export.columns.get_loc("Mentions")
                             worksheet6.set_column(col_idx, col_idx, 12, number_format)
-                        if "Impressions" in top_stories.columns:
-                            col_idx = top_stories.columns.get_loc("Impressions")
+                        if "Impressions" in top_stories_export.columns:
+                            col_idx = top_stories_export.columns.get_loc("Impressions")
                             worksheet6.set_column(col_idx, col_idx, 12, number_format)
-                        if "Example Outlet" in top_stories.columns:
-                            col_idx = top_stories.columns.get_loc("Example Outlet")
+                        if "Example Outlet" in top_stories_export.columns:
+                            col_idx = top_stories_export.columns.get_loc("Example Outlet")
                             worksheet6.set_column(col_idx, col_idx, 20)
-                        if "Example URL" in top_stories.columns:
-                            col_idx = top_stories.columns.get_loc("Example URL")
+                        if "Example URL" in top_stories_export.columns:
+                            col_idx = top_stories_export.columns.get_loc("Example URL")
                             worksheet6.set_column(col_idx, col_idx, 30)
-                        if "Chart Callout" in top_stories.columns:
-                            col_idx = top_stories.columns.get_loc("Chart Callout")
+                        if "Chart Callout" in top_stories_export.columns:
+                            col_idx = top_stories_export.columns.get_loc("Chart Callout")
                             worksheet6.set_column(col_idx, col_idx, 40)
-                        if "Top Story Summary" in top_stories.columns:
-                            col_idx = top_stories.columns.get_loc("Top Story Summary")
+                        if "Top Story Summary" in top_stories_export.columns:
+                            col_idx = top_stories_export.columns.get_loc("Top Story Summary")
                             worksheet6.set_column(col_idx, col_idx, 55)
-                        if "Entity Sentiment" in top_stories.columns:
-                            col_idx = top_stories.columns.get_loc("Entity Sentiment")
+                        if "Entity Sentiment" in top_stories_export.columns:
+                            col_idx = top_stories_export.columns.get_loc("Entity Sentiment")
                             worksheet6.set_column(col_idx, col_idx, 45)
 
                         worksheet6.freeze_panes(1, 0)
-                        cleaned_dfs.append((top_stories, worksheet6))
-
-
+                        cleaned_dfs.append((top_stories_export, worksheet6))
 
                     # Deleted dupes
                     if len(dupes) > 0:
-                        dupes = rename_ave(dupes)
-                        dupes.to_excel(
+                        dupes_export = rename_ave(dupes.copy())
+                        dupes_export.to_excel(
                             writer,
                             sheet_name='DLTD DUPES',
                             header=True,
@@ -380,18 +385,13 @@ else:
                         )
                         worksheet3 = writer.sheets['DLTD DUPES']
                         worksheet3.set_tab_color('#c26f4f')
-                        cleaned_dfs.append((dupes, worksheet3))
+                        cleaned_dfs.append((dupes_export, worksheet3))
                         cleaned_sheets.append(worksheet3)
 
-                    # RAW (untouched)
-                    raw = rename_ave(raw)
-                    raw.drop(
-                        ["Mentions"],
-                        axis=1,
-                        inplace=True,
-                        errors='ignore'
-                    )
-                    raw.to_excel(
+                    # RAW
+                    raw_export = rename_ave(raw.copy())
+                    raw_export.drop(["Mentions"], axis=1, inplace=True, errors='ignore')
+                    raw_export.to_excel(
                         writer,
                         sheet_name='RAW',
                         header=True,
@@ -399,29 +399,29 @@ else:
                     )
                     worksheet4 = writer.sheets['RAW']
                     worksheet4.set_tab_color('#c26f4f')
-                    cleaned_dfs.append((raw, worksheet4))
+                    cleaned_dfs.append((raw_export, worksheet4))
 
                     # Add table structures
                     for clean_df, ws in cleaned_dfs:
-                        (max_row, max_col) = clean_df.shape
+                        max_row, max_col = clean_df.shape
                         column_settings = [{'header': column} for column in clean_df.columns]
                         ws.add_table(0, 0, max_row, max_col - 1, {'columns': column_settings})
 
-                    # Styling for main cleaned sheets
+                    # Styling for main cleaned sheets only
                     for sheet in cleaned_sheets:
                         sheet.set_default_row(22)
-                        sheet.set_column('A:A', 12, None)           # datetime
-                        sheet.set_column('B:B', 12, None)           # author
-                        sheet.set_column('C:C', 22, None)           # outlet
-                        sheet.set_column('D:D', 40, None)           # headline
-                        sheet.set_column('E:E', 0, None)            # mentions
-                        sheet.set_column('F:F', 12, number_format)  # impressions
-                        sheet.set_column('L:L', 10, None)           # type
-                        sheet.set_column('Q:Q', 12, currency_format)  # AVE
+                        sheet.set_column('A:A', 12, None)              # datetime
+                        sheet.set_column('B:B', 12, None)              # author
+                        sheet.set_column('C:C', 22, None)              # outlet
+                        sheet.set_column('D:D', 40, None)              # headline
+                        sheet.set_column('E:E', 0, None)               # mentions
+                        sheet.set_column('F:F', 12, number_format)     # impressions
+                        sheet.set_column('L:L', 10, None)              # type
+                        sheet.set_column('Q:Q', 12, currency_format)   # AVE
                         sheet.freeze_panes(1, 0)
 
-                # store bytes for download button
                 st.session_state.clean_excel_bytes = output.getvalue()
+
         except Exception as e:
             st.error(f"Error building Excel workbook: {e}")
 
@@ -431,15 +431,71 @@ else:
             'Download cleaned data workbook',
             st.session_state.clean_excel_bytes,
             file_name=export_name,
-            type="primary"
+            type="primary",
+            key="download_clean_workbook"
         )
 
     st.divider()
+
+    # ---------- NotebookLM bundle section ----------
+
+    st.subheader("NotebookLM bundle")
+
+    build_nlm = st.button(
+        "Build NotebookLM bundle (zip)",
+        help=(
+            "Creates a zip of JSON-formatted text files for NotebookLM. "
+            "If the dataset exceeds ~50 files worth of content, "
+            "a random sample is taken to stay within upload limits."
+        )
+    )
+
+    if build_nlm:
+        try:
+            with st.spinner("Building NotebookLM bundle..."):
+                nlm_zip_io, nlm_info = build_notebooklm_zip(
+                    st.session_state.df_traditional,
+                    st.session_state.df_social,
+                    client_name=st.session_state.client_name
+                )
+            st.session_state.notebooklm_zip_bytes = nlm_zip_io.getvalue()
+            st.session_state.notebooklm_info = nlm_info
+        except ValueError as e:
+            st.error(str(e))
+        except Exception as e:
+            st.error(f"Error building NotebookLM bundle: {e}")
+
+    if "notebooklm_zip_bytes" in st.session_state:
+        info = st.session_state.get("notebooklm_info", {})
+        client_short = info.get("client_short", "Client")
+        zip_filename = f"NLM_prepared_data-{client_short}.zip"
+
+        st.download_button(
+            "Download NotebookLM bundle",
+            data=st.session_state.notebooklm_zip_bytes,
+            file_name=zip_filename,
+            type="primary",
+            key = "download_notebooklm_bundle"
+        )
+
+        if info:
+            st.caption(
+                f"Rows in cleaned dataset: {info.get('total_rows', 0):,} · "
+                f"Rows included in bundle: {info.get('rows_included', 0):,} · "
+                f"Files: {info.get('files_created', 0)} (max {info.get('max_files', 0)}), "
+                f"Rows/file cap: {info.get('max_rows_per_file', 0)}, "
+                f"Word limit/file: {info.get('max_words_per_file', 0):,}, "
+                f"Size limit/file: {info.get('max_bytes_per_file', 0) // (1024 * 1024)} MB."
+            )
+
+    st.divider()
+    client_name = st.session_state.client_name
     # ---------- NotebookLM bundle section ----------
 
     st.subheader("NotebookLM bundle")
 
     build_nlm = st.button("Build NotebookLM bundle (zip)",
+                          key="build_notebooklm_bundle",
                           help=(
                               "Creates a zip of JSON-formatted text files for NotebookLM. "
                               "If the dataset exceeds ~50 files worth of content, "
