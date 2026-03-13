@@ -22,46 +22,51 @@ with col1:
     st.title("Top Stories")
 
 with col2:
-    trend_df = st.session_state["filtered_df"].copy()
-    trend_df["Date"] = pd.to_datetime(trend_df["Date"], errors="coerce")
-    trend_df = trend_df.dropna(subset=["Date"])
+    trend_df = st.session_state.get("filtered_df", pd.DataFrame()).copy()
 
-    summary_stats = (
-        trend_df.groupby(pd.Grouper(key="Date", freq="D"))
-        .agg({"Mentions": "count", "Impressions": "sum"})
-        .reset_index()
-        .sort_values("Date")
-    )
+    if not trend_df.empty and "Date" in trend_df.columns:
+        trend_df["Date"] = pd.to_datetime(trend_df["Date"], errors="coerce")
+        trend_df = trend_df.dropna(subset=["Date"])
+    # trend_df = st.session_state["filtered_df"].copy()
+    # trend_df["Date"] = pd.to_datetime(trend_df["Date"], errors="coerce")
+    # trend_df = trend_df.dropna(subset=["Date"])
 
-    # Decide whether to show time labels
-    show_time = False
-    if not summary_stats.empty:
-        date_span = summary_stats["Date"].max() - summary_stats["Date"].min()
-        show_time = date_span <= pd.Timedelta(days=1)
+        summary_stats = (
+            trend_df.groupby(pd.Grouper(key="Date", freq="D"))
+            .agg({"Mentions": "count", "Impressions": "sum"})
+            .reset_index()
+            .sort_values("Date")
+        )
 
-    x_axis = alt.Axis(
-        title=None,
-        labelAngle=0,
-        format="%b %d, %-I %p" if show_time else "%b %d"
-    )
+        # Decide whether to show time labels
+        show_time = False
+        if not summary_stats.empty:
+            date_span = summary_stats["Date"].max() - summary_stats["Date"].min()
+            show_time = date_span <= pd.Timedelta(days=1)
 
-    line = alt.Chart(summary_stats).mark_line(size=2).encode(
-        x=alt.X("Date:T", axis=x_axis),
-        y=alt.Y("Mentions:Q", axis=None)
-    )
+        x_axis = alt.Axis(
+            title=None,
+            labelAngle=0,
+            format="%b %d, %-I %p" if show_time else "%b %d"
+        )
 
-    points = alt.Chart(summary_stats).mark_circle(size=55, opacity=0).encode(
-        x="Date:T",
-        y="Mentions:Q",
-        tooltip=[
-            alt.Tooltip("Date:T", title="Date", format="%b %d, %Y" if not show_time else "%b %d, %Y %-I:%M %p"),
-            alt.Tooltip("Mentions:Q", title="Mentions", format=",")
-        ]
-    )
+        line = alt.Chart(summary_stats).mark_line(size=2).encode(
+            x=alt.X("Date:T", axis=x_axis),
+            y=alt.Y("Mentions:Q", axis=None)
+        )
 
-    chart = (line + points).properties(height=130)
+        points = alt.Chart(summary_stats).mark_circle(size=55, opacity=0).encode(
+            x="Date:T",
+            y="Mentions:Q",
+            tooltip=[
+                alt.Tooltip("Date:T", title="Date", format="%b %d, %Y" if not show_time else "%b %d, %Y %-I:%M %p"),
+                alt.Tooltip("Mentions:Q", title="Mentions", format=",")
+            ]
+        )
 
-    st.altair_chart(chart, use_container_width=True)
+        chart = (line + points).properties(height=130)
+
+        st.altair_chart(chart, use_container_width=True)
 
 def normalize_top_stories_df(df: pd.DataFrame) -> pd.DataFrame:
     """Normalize dataframe enough for Top Stories page to work safely."""

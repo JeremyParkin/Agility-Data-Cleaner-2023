@@ -230,15 +230,25 @@ else:
                     # DROP DUPLICATES BY COLUMN MATCHES ###########################################
 
                     # Split off records with blank headline/outlet/type
+
+                    blank_mask = (
+                            st.session_state.df_traditional["Headline"].fillna("").str.strip().eq("") |
+                            st.session_state.df_traditional["Outlet"].isna() |
+                            st.session_state.df_traditional["Type"].isna()
+                    )
+
+                    blank_set = st.session_state.df_traditional[blank_mask].copy()
+                    st.session_state.df_traditional = st.session_state.df_traditional[~blank_mask].copy()
+
                     # blank_set = st.session_state.df_traditional[st.session_state.df_traditional.Headline.isna() | st.session_state.df_traditional.Outlet.isna() | st.session_state.df_traditional.Type.isna() | len(st.session_state.df_traditional.Headline) == 0]
-                    blank_set = st.session_state.df_traditional[
-                        st.session_state.df_traditional["Headline"].fillna("").str.strip().eq("") |
-                        st.session_state.df_traditional["Outlet"].isna() |
-                        st.session_state.df_traditional["Type"].isna()
-                        ].copy()
-                    st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Headline.isna()]
-                    st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Outlet.isna()]
-                    st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Type.isna()]
+                    # blank_set = st.session_state.df_traditional[
+                    #     st.session_state.df_traditional["Headline"].fillna("").str.strip().eq("") |
+                    #     st.session_state.df_traditional["Outlet"].isna() |
+                    #     st.session_state.df_traditional["Type"].isna()
+                    #     ].copy()
+                    # st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Headline.isna()]
+                    # st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Outlet.isna()]
+                    # st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.Type.isna()]
 
                     # Add helper columns
                     # st.session_state.df_traditional['Date_Helper'] = pd.to_datetime(
