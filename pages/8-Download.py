@@ -43,8 +43,13 @@ def explode_tags(df: pd.DataFrame) -> pd.DataFrame:
 def build_authors_export_table(df: pd.DataFrame, existing_assignments: pd.DataFrame | None = None) -> pd.DataFrame:
     """
     Rebuild author summary from current df_traditional and preserve any assigned outlets.
+    Excludes blank author names.
     """
     working = df[["Author", "Mentions", "Impressions"]].copy()
+
+    # Normalize and exclude blank authors
+    working["Author"] = working["Author"].fillna("").astype(str).str.strip()
+    working = working[working["Author"] != ""].copy()
 
     rebuilt = (
         working.groupby("Author", as_index=False)[["Mentions", "Impressions"]]
@@ -56,8 +61,13 @@ def build_authors_export_table(df: pd.DataFrame, existing_assignments: pd.DataFr
             existing_assignments[["Author", "Outlet"]]
             .copy()
             .fillna("")
-            .drop_duplicates(subset=["Author"], keep="last")
         )
+
+        assignment_map["Author"] = assignment_map["Author"].fillna("").astype(str).str.strip()
+        assignment_map = assignment_map[assignment_map["Author"] != ""].copy()
+
+        assignment_map = assignment_map.drop_duplicates(subset=["Author"], keep="last")
+
         rebuilt = rebuilt.merge(assignment_map, on="Author", how="left")
         rebuilt["Outlet"] = rebuilt["Outlet"].fillna("")
     else:

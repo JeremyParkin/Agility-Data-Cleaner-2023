@@ -52,24 +52,33 @@ def fetch_outlet(author_name: str):
     contact_resp = requests.post(contact_url, headers=headers, data=data)
     return contact_resp.json()
 
-def build_auth_outlet_table(df: pd.DataFrame, top_auths_by: str, existing_assignments: pd.DataFrame | None = None) -> pd.DataFrame:
+def build_auth_outlet_table(df: pd.DataFrame, top_auths_by: str,
+                            existing_assignments: pd.DataFrame | None = None) -> pd.DataFrame:
     """
     Rebuild the author-outlet summary table from df_traditional and preserve
     any existing outlet assignments where possible.
     """
     working = df[["Author", "Mentions", "Impressions"]].copy()
 
+    # Normalize and exclude blank authors
+    working["Author"] = working["Author"].fillna("").astype(str).str.strip()
+    working = working[working["Author"] != ""].copy()
+
     rebuilt = (
         working.groupby("Author", as_index=False)[["Mentions", "Impressions"]]
         .sum()
     )
 
-    if existing_assignments is not None and len(existing_assignments) > 0 and "Outlet" in existing_assignments.columns:
+    if existing_assignments is not None and len(
+            existing_assignments) > 0 and "Outlet" in existing_assignments.columns:
         assignment_map = (
             existing_assignments[["Author", "Outlet"]]
             .copy()
             .fillna("")
         )
+
+        assignment_map["Author"] = assignment_map["Author"].fillna("").astype(str).str.strip()
+        assignment_map = assignment_map[assignment_map["Author"] != ""].copy()
 
         # Prefer a non-blank outlet if duplicates exist for an author
         assignment_map["has_outlet"] = assignment_map["Outlet"].str.strip().ne("")
@@ -95,41 +104,6 @@ def build_auth_outlet_table(df: pd.DataFrame, top_auths_by: str, existing_assign
 
     return rebuilt
 
-def build_auth_outlet_table(df: pd.DataFrame, top_auths_by: str, existing_assignments: pd.DataFrame | None = None) -> pd.DataFrame:
-    """
-    Rebuild the author-outlet summary table from df_traditional and preserve
-    any existing outlet assignments where possible.
-    """
-    working = df[["Author", "Mentions", "Impressions"]].copy()
-
-    rebuilt = (
-        working.groupby("Author", as_index=False)[["Mentions", "Impressions"]]
-        .sum()
-    )
-
-    if existing_assignments is not None and len(existing_assignments) > 0 and "Outlet" in existing_assignments.columns:
-        assignment_map = (
-            existing_assignments[["Author", "Outlet"]]
-            .copy()
-            .fillna("")
-            .drop_duplicates(subset=["Author"], keep="last")
-        )
-        rebuilt = rebuilt.merge(assignment_map, on="Author", how="left")
-        rebuilt["Outlet"] = rebuilt["Outlet"].fillna("")
-    else:
-        rebuilt.insert(loc=1, column="Outlet", value="")
-
-    if top_auths_by == "Mentions":
-        rebuilt = rebuilt.sort_values(["Mentions", "Impressions"], ascending=False).reset_index(drop=True)
-    else:
-        rebuilt = rebuilt.sort_values(["Impressions", "Mentions"], ascending=False).reset_index(drop=True)
-
-    # Put Outlet back in position 1 if merge reordered columns
-    desired_order = ["Author", "Outlet", "Mentions", "Impressions"]
-    existing_order = [c for c in desired_order if c in rebuilt.columns]
-    rebuilt = rebuilt[existing_order].copy()
-
-    return rebuilt
 
 
 def apply_author_name_fix(old_name: str, new_name: str):
