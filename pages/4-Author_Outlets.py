@@ -250,23 +250,31 @@ if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
     original_author_name = auth_outlet_todo.iloc[st.session_state.auth_outlet_skipped]["Author"]
 
     # Editable author field for matching
+    def apply_author_fix_callback():
+        new_name = st.session_state.author_fix_input.strip()
+        old_name = original_author_name
+
+        if not new_name:
+            return
+
+        if new_name != old_name:
+            apply_author_name_fix(old_name, new_name)
+
+
     with st.expander("Author name fix tools", expanded=False):
-        edit_col1, edit_col2 = st.columns([3, 2], gap="medium")
 
-        with edit_col1:
-            edited_author_name = st.text_input(
-                "Edit author name for matching",
-                value=original_author_name,
-                help="Use this to clean up the author name before matching. Example: remove outlet text, extra names, or trailing descriptors."
-            ).strip()
-
-        with edit_col2:
-            st.write(" ")
-            st.write(" ")
-            apply_fix = st.button("Apply corrected author name to data")
+        st.text_input(
+            "Correct author name",
+            value=original_author_name,
+            key="author_fix_input",
+            on_change=apply_author_fix_callback,
+            help="Edit the name and press Enter to apply the correction to all matching rows."
+        )
 
         st.caption(
-            "Edits here affect media database lookup immediately. The underlying author data is only changed if you click Apply corrected author name to data.")
+            "This updates every instance of this author in the cleaned dataset and refreshes the author-outlet workflow."
+        )
+
 
     # Current author heading
     header_col, skip_col, reset_col = st.columns([2, 1, 1])
@@ -295,18 +303,7 @@ if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
             st.session_state.auth_outlet_skipped = 0
             st.rerun()
 
-
-    match_author_name = edited_author_name if edited_author_name else original_author_name
-
-    if apply_fix:
-        if not edited_author_name:
-            st.warning("Please enter a corrected author name first.")
-        elif edited_author_name == original_author_name:
-            st.info("The edited author name matches the current author name, so no change was applied.")
-        else:
-            apply_author_name_fix(original_author_name, edited_author_name)
-            st.success(f'Updated author name from "{original_author_name}" to "{edited_author_name}".')
-            st.rerun()
+    match_author_name = original_author_name
 
     # Fetch database results using the edited / cleaned name
     search_results = fetch_outlet(unidecode(match_author_name))

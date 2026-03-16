@@ -5,6 +5,7 @@ import warnings
 import urllib.parse
 import numpy as np
 
+
 warnings.filterwarnings('ignore')
 
 st.set_page_config(
@@ -103,10 +104,15 @@ default_excluded_flags = [
     ] if f in available_flags
 ]
 
+HIDDEN_FLAGS = {"Good Outlet", "Aggregator"}
+
+visible_flags = [f for f in available_flags if f not in HIDDEN_FLAGS]
+visible_defaults = [f for f in default_excluded_flags if f not in HIDDEN_FLAGS]
+
 excluded_flags = st.multiselect(
     "Exclude coverage flags",
-    options=available_flags,
-    default=default_excluded_flags,
+    options=visible_flags,
+    default=visible_defaults,
     help="Exclude selected flagged coverage from the missing-author workflow on this page."
 )
 

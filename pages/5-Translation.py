@@ -111,11 +111,11 @@ else:
 
                 translate_col(st.session_state.df_social, 'Headline')
                 st.session_state.translated_headline = True
-                st.success(f'Done translating headlines!')
+                st.success('Done translating headlines!')
 
             if snippet_to_english:
                 translate_col(st.session_state.df_traditional, 'Snippet')
                 translate_col(st.session_state.df_social, 'Snippet')
                 st.session_state.translated_snippet = True
-                st.success(f'Done translating snippets!')
+                st.success('Done translating snippets!')
             st.rerun()
