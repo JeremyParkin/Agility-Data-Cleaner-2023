@@ -59,6 +59,7 @@ def headline_authors(df, headline_text):
     return headline_authors
 
 
+
 def format_number(num):
     if num >= 1_000_000_000:
         return f"{num / 1_000_000_000:.1f} B"
