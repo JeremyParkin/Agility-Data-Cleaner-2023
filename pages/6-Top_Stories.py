@@ -523,13 +523,27 @@ with st.form(key="top_stories_filter_form"):
         )
 
     with filter_col3:
+        default_excluded_flags = [
+            f for f in [
+                "Newswire?",
+                "Market Report Spam?",
+                "Stocks / Financials?",
+                "Advertorial?",
+            ] if f in available_flags
+        ]
+
+        HIDDEN_FLAGS = {"Good Outlet", "Aggregator"}
+
+        visible_flags = [f for f in available_flags if f not in HIDDEN_FLAGS]
+        visible_defaults = [f for f in default_excluded_flags if f not in HIDDEN_FLAGS]
+
         exclude_coverage_flags = st.multiselect(
             "Exclude coverage flags",
-            options=available_flags,
-            default=[f for f in available_flags if f in [
-                "Newswire?", "Market Report Spam?", "Stocks / Financials?", "Advertorial?",
-            ]]
+            options=visible_flags,
+            default=visible_defaults,
+            help="Exclude selected flagged coverage from the missing-author workflow on this page."
         )
+
 
     with st.expander("Advanced filters", expanded=False):
         adv1_col1, adv1_col2 = st.columns([2, 5], gap="small")
