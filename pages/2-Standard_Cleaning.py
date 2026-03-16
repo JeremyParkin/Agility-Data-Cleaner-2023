@@ -36,7 +36,7 @@ elif st.session_state.standard_step:
                 st.subheader("Media Type")
                 st.write(st.session_state.df_traditional['Type'].value_counts())
             st.subheader("Data")
-            st.markdown('(Up to the first 1000 rows)')
+            st.caption('(Up to the first 1000 rows)')
             st.dataframe(st.session_state.df_traditional.head(1000).style.format(format_dict, na_rep=' '))
 
     if len(st.session_state.df_social) > 0:
@@ -66,7 +66,24 @@ elif st.session_state.standard_step:
                 st.subheader("Media Type")
                 st.write(st.session_state.df_dupes['Type'].value_counts())
 
-            st.dataframe(st.session_state.df_dupes.style.format(format_dict, na_rep=' '))
+            # st.dataframe(st.session_state.df_dupes.style.format(format_dict, na_rep=' '))
+            dupes_df = st.session_state.df_dupes.copy()
+
+            st.caption(f"Showing first {min(len(dupes_df), 1000):,} rows of {len(dupes_df):,} deleted duplicates.")
+
+            preview_df = dupes_df.head(1000).copy()
+            cell_count = preview_df.shape[0] * preview_df.shape[1]
+
+            if cell_count <= 262144:
+                st.dataframe(
+                    preview_df.style.format(format_dict, na_rep=" "),
+                    use_container_width=True
+                )
+            else:
+                st.dataframe(
+                    preview_df.fillna(""),
+                    use_container_width=True
+                )
 else:
     with st.form("my_form_basic_cleaning"):
 
@@ -147,29 +164,6 @@ else:
                         .str.strip()
                         .str.replace("& amp;", "&", regex=False)
                     )
-
-                # # Strip extra white space
-                # strip_columns = ['Headline', 'Outlet', 'Author', 'Snippet']
-                # for column in strip_columns:
-                #
-                #     st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.replace('    ', ' ')
-                #     st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.replace('   ', ' ')
-                #     st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.replace('  ', ' ')
-                #
-                #
-                #     if st.session_state.df_traditional[column].notna().all():
-                #         # Strip leading and trailing spaces
-                #         st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.strip()
-                #
-                #         # Replace multiple spaces with a single space
-                #         st.session_state.df_traditional[column] = st.session_state.df_traditional[column].apply(
-                #             lambda x: " ".join(x.split()))
-                #
-                #         # Strip leading and trailing spaces
-                #         st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.strip()
-                #
-                #         st.session_state.df_traditional[column] = st.session_state.df_traditional[column].str.replace('& amp;', '&')
-
 
 
                 # Remove '(Online)' from outlet names

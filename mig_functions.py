@@ -68,3 +68,15 @@ def format_number(num):
         return f"{num / 1_000:.1f} K"
     else:
         return str(num)
+
+
+def require_standard_pipeline():
+    import streamlit as st
+
+    if not st.session_state.get("upload_step", False):
+        st.error("Please upload a CSV before trying this step.")
+        st.stop()
+
+    if not st.session_state.get("standard_step", False):
+        st.error("Please run the Standard Cleaning before trying this step.")
+        st.stop()

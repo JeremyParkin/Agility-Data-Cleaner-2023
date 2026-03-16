@@ -3,14 +3,23 @@ import re
 import warnings
 from typing import Dict, Any, List, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 import pandas as pd
 import streamlit as st
 import mig_functions as mig
 from openai import OpenAI
 from streamlit_tags import st_tags
-
 warnings.filterwarnings("ignore")
+
+st.set_page_config(
+    layout="wide",
+    page_title="MIG Data Processing App",
+    page_icon="https://www.agilitypr.com/wp-content/uploads/2025/01/favicon.png",
+)
+
+mig.standard_sidebar()
+st.title("Top Stories Summaries")
+mig.require_standard_pipeline()
+
 
 type_dict = {
     "RADIO": "broadcast transcript",
@@ -35,14 +44,7 @@ SHORT_SNIPPET_THRESHOLD = 150
 DEFAULT_MAX_WORKERS = 4
 MAX_RETRIES = 2
 
-st.set_page_config(
-    layout="wide",
-    page_title="MIG Data Processing App",
-    page_icon="https://www.agilitypr.com/wp-content/uploads/2025/01/favicon.png",
-)
 
-mig.standard_sidebar()
-st.title("Top Stories Summaries")
 
 
 def normalize_summary_df(df: pd.DataFrame) -> pd.DataFrame:
@@ -437,11 +439,7 @@ for key, default in {
         st.session_state[key] = default
 
 
-if not st.session_state.upload_step:
-    st.error("Please upload a CSV before trying this step.")
-elif not st.session_state.standard_step:
-    st.error("Please run the Standard Cleaning before trying this step.")
-elif len(st.session_state["added_df"]) == 0:
+if len(st.session_state["added_df"]) == 0:
     st.error("Please select your TOP STORIES before trying this step.")
 else:
     df = normalize_summary_df(st.session_state.added_df.copy())
@@ -476,18 +474,6 @@ else:
         primary_name = entity_names[0].strip() if entity_names else ""
         alternate_names = [name.strip() for name in entity_names[1:] if name.strip()]
 
-    # with summary_col1:
-    #     entity_names = st_tags(
-    #         label="Entity names and aliases",
-    #         text="Primary then aliases",
-    #         maxtags=20,
-    #         value=st.session_state.top_story_entity_names,
-    #         key="top_story_entity_names_tags",
-    #     )
-    #     st.session_state.top_story_entity_names = entity_names
-    #
-    #     primary_name = entity_names[0].strip() if entity_names else ""
-    #     alternate_names = [name.strip() for name in entity_names[1:] if name.strip()]
 
     with summary_col2:
         spokespeople = st_tags(

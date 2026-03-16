@@ -12,9 +12,8 @@ st.set_page_config(layout="wide", page_title="MIG Data Processing App",
 
 
 mig.standard_sidebar()
-
-
 st.title('Translation')
+mig.require_standard_pipeline()
 
 
 def display_non_english_records(df, title):
@@ -53,13 +52,7 @@ def translate_col(df, name_of_column):
 trad_non_eng = count_non_english_records(st.session_state.df_traditional)
 soc_non_eng = count_non_english_records(st.session_state.df_social)
 
-if not st.session_state.upload_step:
-    st.error('Please upload a CSV before trying this step.')
-elif not st.session_state.standard_step:
-    st.error('Please run the Standard Cleaning before trying this step.')
-# elif st.session_state.translated_headline == True and st.session_state.translated_snippet == True and
-#   st.session_state.translated_summary == True:
-elif st.session_state.translated_headline and st.session_state.translated_snippet: # and st.session_state.translated_summary:
+if st.session_state.translated_headline and st.session_state.translated_snippet: # and st.session_state.translated_summary:
     st.subheader("✓ Translation complete.")
 
     display_non_english_records(st.session_state.df_traditional, "Traditional")

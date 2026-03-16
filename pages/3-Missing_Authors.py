@@ -16,6 +16,11 @@ st.set_page_config(
 mig.standard_sidebar()
 
 st.title('Authors - Missing')
+mig.require_standard_pipeline()
+if len(st.session_state.get("df_traditional", [])) == 0:
+    st.subheader("No traditional media in data. Skip to next step.")
+    st.stop()
+
 
 
 def fixable_headline_stats(df, primary="Headline", secondary="Author"):
@@ -67,223 +72,213 @@ def fixable_headline_stats(df, primary="Headline", secondary="Author"):
     }
 
 
-if not st.session_state.upload_step:
-    st.error('Please upload a CSV before trying this step.')
+counter = st.session_state.auth_skip_counter
+reviewed = st.session_state.get('auth_reviewed_count', 0)
 
-elif not st.session_state.standard_step:
-    st.error('Please run the Standard Cleaning before trying this step.')
+hide_table_row_index = """
+    <style>
+    tbody th {display:none}
+    .blank {display:none}
+    </style>
+"""
+st.markdown(hide_table_row_index, unsafe_allow_html=True)
 
-elif len(st.session_state.df_traditional) == 0:
-    st.subheader("No traditional media in data. Skip to next step.")
+# Build working dataframe for this page view
+author_working_df = st.session_state.df_traditional.copy()
+author_working_df["Author"] = author_working_df["Author"].replace("", np.nan)
 
-else:
-    counter = st.session_state.auth_skip_counter
-    reviewed = st.session_state.get('auth_reviewed_count', 0)
+available_flags = []
+if "Coverage Flags" in author_working_df.columns:
+    available_flags = sorted([
+        f for f in author_working_df["Coverage Flags"].fillna("").astype(str).unique().tolist()
+        if f.strip()
+    ])
 
-    hide_table_row_index = """
-        <style>
-        tbody th {display:none}
-        .blank {display:none}
-        </style>
-    """
-    st.markdown(hide_table_row_index, unsafe_allow_html=True)
+default_excluded_flags = [
+    f for f in [
+        "Newswire?",
+        "Market Report Spam?",
+        "Stocks / Financials?",
+        "Advertorial?",
+    ] if f in available_flags
+]
 
-    # Build working dataframe for this page view
-    author_working_df = st.session_state.df_traditional.copy()
-    author_working_df["Author"] = author_working_df["Author"].replace("", np.nan)
+excluded_flags = st.multiselect(
+    "Exclude coverage flags",
+    options=available_flags,
+    default=default_excluded_flags,
+    help="Exclude selected flagged coverage from the missing-author workflow on this page."
+)
 
-    available_flags = []
-    if "Coverage Flags" in author_working_df.columns:
-        available_flags = sorted([
-            f for f in author_working_df["Coverage Flags"].fillna("").astype(str).unique().tolist()
-            if f.strip()
-        ])
+if excluded_flags and "Coverage Flags" in author_working_df.columns:
+    author_working_df = author_working_df[
+        ~author_working_df["Coverage Flags"].fillna("").isin(excluded_flags)
+    ].copy()
 
-    default_excluded_flags = [
-        f for f in [
-            "Newswire?",
-            "Market Report Spam?",
-            "Stocks / Financials?",
-            "Advertorial?",
-        ] if f in available_flags
-    ]
+headline_table = author_working_df[["Headline", "Mentions", "Author"]].copy()
+headline_table = headline_table.groupby("Headline").count()
+headline_table["Missing"] = headline_table["Mentions"] - headline_table["Author"]
+headline_table = headline_table[
+    (headline_table["Author"] > 0) & (headline_table["Missing"] > 0)
+].sort_values("Missing", ascending=False).reset_index()
+headline_table.rename(
+    columns={"Author": "Known", "Mentions": "Total"},
+    inplace=True,
+    errors="raise"
+)
 
-    excluded_flags = st.multiselect(
-        "Exclude coverage flags",
-        options=available_flags,
-        default=default_excluded_flags,
-        help="Exclude selected flagged coverage from the missing-author workflow on this page."
-    )
+temp_headline_list = headline_table.copy()
 
-    if excluded_flags and "Coverage Flags" in author_working_df.columns:
-        author_working_df = author_working_df[
-            ~author_working_df["Coverage Flags"].fillna("").isin(excluded_flags)
-        ].copy()
+if len(temp_headline_list) == 0:
+    st.success("No fixable missing-author headlines remain in the current filtered view.")
+elif counter < len(temp_headline_list):
+    headline_text = temp_headline_list.iloc[counter]["Headline"]
+    encoded_headline = urllib.parse.quote(f'"{headline_text}"')
+    google_search_url = f"https://www.google.com/search?q={encoded_headline}"
 
-    headline_table = author_working_df[["Headline", "Mentions", "Author"]].copy()
-    headline_table = headline_table.groupby("Headline").count()
-    headline_table["Missing"] = headline_table["Mentions"] - headline_table["Author"]
-    headline_table = headline_table[
-        (headline_table["Author"] > 0) & (headline_table["Missing"] > 0)
-    ].sort_values("Missing", ascending=False).reset_index()
-    headline_table.rename(
-        columns={"Author": "Known", "Mentions": "Total"},
-        inplace=True,
-        errors="raise"
-    )
+    # headline_authors_df = mig.headline_authors(author_working_df, headline_text)
+    # possibles = headline_authors_df.index.tolist() if len(headline_authors_df) > 0 else [""]
+    headline_authors_df = mig.headline_authors(author_working_df, headline_text).copy()
 
-    temp_headline_list = headline_table.copy()
-
-    if len(temp_headline_list) == 0:
-        st.success("No fixable missing-author headlines remain in the current filtered view.")
-    elif counter < len(temp_headline_list):
-        headline_text = temp_headline_list.iloc[counter]["Headline"]
-        encoded_headline = urllib.parse.quote(f'"{headline_text}"')
-        google_search_url = f"https://www.google.com/search?q={encoded_headline}"
-
-        # headline_authors_df = mig.headline_authors(author_working_df, headline_text)
-        # possibles = headline_authors_df.index.tolist() if len(headline_authors_df) > 0 else [""]
-        headline_authors_df = mig.headline_authors(author_working_df, headline_text).copy()
-
-        if len(headline_authors_df) > 0:
-            if "Author" in headline_authors_df.columns:
-                possibles = headline_authors_df["Author"].dropna().astype(str).tolist()
-            elif "Matches" in headline_authors_df.columns:
-                possibles = headline_authors_df["Matches"].dropna().astype(str).tolist()
-            else:
-                possibles = []
+    if len(headline_authors_df) > 0:
+        if "Author" in headline_authors_df.columns:
+            possibles = headline_authors_df["Author"].dropna().astype(str).tolist()
+        elif "Matches" in headline_authors_df.columns:
+            possibles = headline_authors_df["Matches"].dropna().astype(str).tolist()
         else:
             possibles = []
-
-        if not possibles:
-            possibles = [""]
-
-        but1, col3, but2 = st.columns(3)
-
-        with but1:
-            next_auth = st.button("Skip to Next Headline")
-            if next_auth:
-                counter += 1
-                st.session_state.auth_skip_counter = counter
-                st.rerun()
-
-        if counter > 0:
-            with col3:
-                st.write(f"Skipped: {counter}")
-            with but2:
-                reset_counter = st.button("Reset Skip Counter")
-                if reset_counter:
-                    counter = 0
-                    st.session_state.auth_skip_counter = counter
-                    st.rerun()
-
-        form_block = st.container()
-        info_block = st.container()
-
-        with info_block:
-            col1, col2, col3 = st.columns([12, 1, 9])
-
-            with col1:
-                st.subheader("Headline")
-                st.table(headline_table.iloc[[counter]])
-                st.markdown(
-                    f'&nbsp;&nbsp;» <a href="{google_search_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search Google for this headline</a>',
-                    unsafe_allow_html=True
-                )
-
-            with col2:
-                st.write(" ")
-
-            with col3:
-                st.subheader("Authors in CSV")
-                authors_display = headline_authors_df.copy()
-
-                if "Author" in authors_display.columns:
-                    authors_display = authors_display.rename(columns={"Author": "Possible Author(s)"})
-                elif "Matches" in authors_display.columns:
-                    authors_display = authors_display.rename(columns={"Matches": "Possible Author(s)"})
-
-                st.table(authors_display)
-
-
-        with form_block:
-            with st.form("auth updater", clear_on_submit=True):
-                col1, col2, col3 = st.columns([8, 1, 8])
-
-                with col1:
-                    box_author = st.selectbox(
-                        "Pick from possible Authors",
-                        possibles,
-                        help="Pick from one of the authors already associated with this headline."
-                    )
-
-                with col2:
-                    st.write(" ")
-                    st.subheader("OR")
-
-                with col3:
-                    string_author = st.text_input(
-                        "Write in the author name",
-                        help="Override above selection by writing in a custom name."
-                    )
-
-                submitted = st.form_submit_button("Update Author", type="primary")
-
-                if submitted:
-                    new_author = string_author.strip() if len(string_author.strip()) > 0 else box_author
-                    if not new_author:
-                        st.warning("Please choose or enter an author name.")
-                    else:
-                        mig.fix_author(st.session_state.df_traditional, headline_text, new_author)
-                        reviewed += 1
-                        st.session_state["auth_reviewed_count"] = reviewed
-                        st.rerun()
-
     else:
-        st.info("You've reached the end of the list!")
-        if counter > 0:
-            reset_counter = st.button("Reset Counter")
+        possibles = []
+
+    if not possibles:
+        possibles = [""]
+
+    but1, col3, but2 = st.columns(3)
+
+    with but1:
+        next_auth = st.button("Skip to Next Headline")
+        if next_auth:
+            counter += 1
+            st.session_state.auth_skip_counter = counter
+            st.rerun()
+
+    if counter > 0:
+        with col3:
+            st.write(f"Skipped: {counter}")
+        with but2:
+            reset_counter = st.button("Reset Skip Counter")
             if reset_counter:
                 counter = 0
                 st.session_state.auth_skip_counter = counter
                 st.rerun()
-        else:
-            st.success("✓ Nothing left to update here.")
 
-    st.divider()
+    form_block = st.container()
+    info_block = st.container()
 
-    col1, col2, col3 = st.columns(3)
+    with info_block:
+        col1, col2, col3 = st.columns([12, 1, 9])
 
-    with col1:
-        st.subheader("Original Top Authors")
-        media_type_column = "Type" if "Type" in st.session_state.df_untouched.columns else "Media Type"
-
-        filtered_df = st.session_state.df_untouched[
-            st.session_state.df_untouched[media_type_column].isin(
-                ["PRINT", "ONLINE_NEWS", "ONLINE", "BLOGS", "PRESS_RELEASE"]
+        with col1:
+            st.subheader("Headline")
+            st.table(headline_table.iloc[[counter]])
+            st.markdown(
+                f'&nbsp;&nbsp;» <a href="{google_search_url}" target="_blank" style="text-decoration:underline; color:lightblue;">Search Google for this headline</a>',
+                unsafe_allow_html=True
             )
-        ].copy()
 
-        if "Mentions" not in filtered_df.columns:
-            filtered_df["Mentions"] = 1
+        with col2:
+            st.write(" ")
 
-        original_top_authors = mig.top_x_by_mentions(filtered_df, "Author")
-        st.write(original_top_authors)
+        with col3:
+            st.subheader("Authors in CSV")
+            authors_display = headline_authors_df.copy()
+
+            if "Author" in authors_display.columns:
+                authors_display = authors_display.rename(columns={"Author": "Possible Author(s)"})
+            elif "Matches" in authors_display.columns:
+                authors_display = authors_display.rename(columns={"Matches": "Possible Author(s)"})
+
+            st.table(authors_display)
 
 
-    with col2:
-        st.subheader("New Top Authors")
-        st.dataframe(mig.top_x_by_mentions(author_working_df, "Author"))
+    with form_block:
+        with st.form("auth updater", clear_on_submit=True):
+            col1, col2, col3 = st.columns([8, 1, 8])
 
-    with col3:
-        st.subheader("Fixable Author Stats")
-        remaining = fixable_headline_stats(author_working_df, primary="Headline", secondary="Author")
+            with col1:
+                box_author = st.selectbox(
+                    "Pick from possible Authors",
+                    possibles,
+                    help="Pick from one of the authors already associated with this headline."
+                )
 
-        statscol1, statscol2 = st.columns(2)
+            with col2:
+                st.write(" ")
+                st.subheader("OR")
 
-        with statscol1:
-            st.metric(label="Reviewed", value=len(temp_headline_list) - remaining["remaining"] + reviewed if len(temp_headline_list) > 0 else reviewed)
-            st.metric(label="Updated", value=reviewed)
+            with col3:
+                string_author = st.text_input(
+                    "Write in the author name",
+                    help="Override above selection by writing in a custom name."
+                )
 
-        with statscol2:
-            st.metric(label="Remaining in this view", value=remaining["remaining"])
+            submitted = st.form_submit_button("Update Author", type="primary")
+
+            if submitted:
+                new_author = string_author.strip() if len(string_author.strip()) > 0 else box_author
+                if not new_author:
+                    st.warning("Please choose or enter an author name.")
+                else:
+                    mig.fix_author(st.session_state.df_traditional, headline_text, new_author)
+                    reviewed += 1
+                    st.session_state["auth_reviewed_count"] = reviewed
+                    st.rerun()
+
+else:
+    st.info("You've reached the end of the list!")
+    if counter > 0:
+        reset_counter = st.button("Reset Counter")
+        if reset_counter:
+            counter = 0
+            st.session_state.auth_skip_counter = counter
+            st.rerun()
+    else:
+        st.success("✓ Nothing left to update here.")
+
+st.divider()
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.subheader("Original Top Authors")
+    media_type_column = "Type" if "Type" in st.session_state.df_untouched.columns else "Media Type"
+
+    filtered_df = st.session_state.df_untouched[
+        st.session_state.df_untouched[media_type_column].isin(
+            ["PRINT", "ONLINE_NEWS", "ONLINE", "BLOGS", "PRESS_RELEASE"]
+        )
+    ].copy()
+
+    if "Mentions" not in filtered_df.columns:
+        filtered_df["Mentions"] = 1
+
+    original_top_authors = mig.top_x_by_mentions(filtered_df, "Author")
+    st.write(original_top_authors)
+
+
+with col2:
+    st.subheader("New Top Authors")
+    st.dataframe(mig.top_x_by_mentions(author_working_df, "Author"))
+
+with col3:
+    st.subheader("Fixable Author Stats")
+    remaining = fixable_headline_stats(author_working_df, primary="Headline", secondary="Author")
+
+    statscol1, statscol2 = st.columns(2)
+
+    with statscol1:
+        st.metric(label="Reviewed", value=len(temp_headline_list) - remaining["remaining"] + reviewed if len(temp_headline_list) > 0 else reviewed)
+        st.metric(label="Updated", value=reviewed)
+
+    with statscol2:
+        st.metric(label="Remaining in this view", value=remaining["remaining"])
