@@ -335,7 +335,7 @@ if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
         st.write(" ")
         undo_available = st.session_state.get("last_outlet_assignment") is not None
         undo_clicked = st.button(
-            "Undo Last Assignment",
+            "Undo Last Outlet",
             disabled=not undo_available,
             help="Removes the most recently assigned outlet and returns that author to the queue."
         )
