@@ -22,7 +22,37 @@ st.title('Standard Cleaning')
 if not st.session_state.upload_step:
     st.error('Please upload a CSV before trying this step.')
 elif st.session_state.standard_step:
-    st.success("Standard cleaning done!")
+    def reset_standard_cleaning():
+        if "df_traditional_pre_standard" in st.session_state and isinstance(
+                st.session_state.df_traditional_pre_standard, pd.DataFrame):
+            st.session_state.df_traditional = st.session_state.df_traditional_pre_standard.copy()
+
+        st.session_state.df_social = pd.DataFrame()
+        st.session_state.df_dupes = pd.DataFrame()
+        st.session_state.blank_set = pd.DataFrame()
+        st.session_state.auth_outlet_table = pd.DataFrame()
+        st.session_state.filtered_df = pd.DataFrame()
+        st.session_state.df_grouped = pd.DataFrame()
+        st.session_state.selected_df = pd.DataFrame()
+        st.session_state.selected_rows = pd.DataFrame()
+        st.session_state.top_stories = pd.DataFrame()
+        st.session_state.added_df = pd.DataFrame()
+
+        st.session_state.standard_step = False
+        st.session_state.auth_skip_counter = 0
+        st.session_state.auth_outlet_skipped = 0
+        st.session_state.top_stories_generated = False
+    # st.success("Standard cleaning done!")
+    top_col1, top_col2 = st.columns([3, 1])
+    with top_col1:
+        st.success("Standard cleaning done!")
+    with top_col2:
+        if st.button("Reset Standard Cleaning", type="secondary"):
+            reset_standard_cleaning()
+            st.rerun()
+
+
+
 
     if len(st.session_state.df_traditional) > 0:
         with st.expander("Traditional"):
@@ -655,11 +685,29 @@ else:
                     )
 
                     # Expand NEWSWIRE detection with outlet and URL criteria
+                    newswire_author_pattern = r"newswire|press\s*release|distribution|newsfile"
+
                     newswire_mask = (
-                        newswire_mask |
-                        st.session_state.df_traditional["Outlet"].str.contains("EurekAlert", case=False, na=False) |
-                        st.session_state.df_traditional["URL"].str.contains(r"/pr\.|news-release|press-release|newswise\.com", case=False, na=False, regex=True)
+                            newswire_mask |
+                            st.session_state.df_traditional["Outlet"].str.contains("EurekAlert", case=False, na=False) |
+                            st.session_state.df_traditional["URL"].str.contains(
+                                r"/pr\.|news-release|press-release|newswise\.com",
+                                case=False,
+                                na=False,
+                                regex=True
+                            ) |
+                            st.session_state.df_traditional["Author"].str.contains(
+                                newswire_author_pattern,
+                                case=False,
+                                na=False,
+                                regex=True
+                            )
                     )
+                    # newswire_mask = (
+                    #     newswire_mask |
+                    #     st.session_state.df_traditional["Outlet"].str.contains("EurekAlert", case=False, na=False) |
+                    #     st.session_state.df_traditional["URL"].str.contains(r"/pr\.|news-release|press-release|newswise\.com", case=False, na=False, regex=True)
+                    # )
 
                     # ADVERTORIAL MASK - based on snippet text and author
                     advertorial_mask = (

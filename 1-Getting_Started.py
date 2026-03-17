@@ -180,6 +180,7 @@ st.session_state.df_names = [
     "selected_rows",
     "top_stories",
     "auth_outlet_todo",
+    "df_traditional_pre_standard",
 ]
 for name in st.session_state.df_names:
     if name not in st.session_state:
@@ -243,6 +244,7 @@ if not st.session_state.upload_step:
             st.session_state.df_traditional = normalize_uploaded_dataframe(
                 st.session_state.df_untouched
             )
+            st.session_state.df_traditional_pre_standard = st.session_state.df_traditional.copy()
 
             # Internal working name for rest of app
             if "AVE" in st.session_state.df_traditional.columns:

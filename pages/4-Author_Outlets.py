@@ -29,6 +29,33 @@ format_dict = {
     'Impressions': '{:,d}'
 }
 
+if "last_outlet_assignment" not in st.session_state:
+    st.session_state.last_outlet_assignment = None
+
+
+def undo_last_outlet_assignment():
+    last_assignment = st.session_state.get("last_outlet_assignment")
+
+    if not last_assignment:
+        return
+
+    author_name = last_assignment.get("author_name")
+    previous_outlet = last_assignment.get("previous_outlet", "")
+    previous_skip = last_assignment.get("previous_skip", st.session_state.auth_outlet_skipped)
+
+    if not author_name:
+        st.session_state.last_outlet_assignment = None
+        return
+
+    st.session_state.auth_outlet_table = st.session_state.auth_outlet_table.copy()
+    st.session_state.auth_outlet_table.loc[
+        st.session_state.auth_outlet_table["Author"] == author_name,
+        "Outlet"
+    ] = previous_outlet
+
+    st.session_state.auth_outlet_skipped = previous_skip
+    st.session_state.last_outlet_assignment = None
+
 
 def reset_skips():
     st.session_state.auth_outlet_skipped = 0
@@ -277,7 +304,8 @@ if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
 
 
     # Current author heading
-    header_col, skip_col, reset_col = st.columns([2, 1, 1])
+    # header_col, skip_col, reset_col = st.columns([2, 1, 1])
+    header_col, skip_col, reset_col, undo_col = st.columns([2, 1, 1, 1])
 
     with header_col:
         st.markdown(
@@ -301,6 +329,18 @@ if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
         reset_counter = st.button("Reset Skips")
         if reset_counter:
             st.session_state.auth_outlet_skipped = 0
+            st.rerun()
+
+    with undo_col:
+        st.write(" ")
+        undo_available = st.session_state.get("last_outlet_assignment") is not None
+        undo_clicked = st.button(
+            "Undo Last Assignment",
+            disabled=not undo_available,
+            help="Removes the most recently assigned outlet and returns that author to the queue."
+        )
+        if undo_clicked:
+            undo_last_outlet_assignment()
             st.rerun()
 
     match_author_name = original_author_name
@@ -440,6 +480,19 @@ if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
     if submitted:
         new_outlet = string_outlet.strip() if len(string_outlet.strip()) > 0 else box_outlet
 
+        previous_outlet_series = st.session_state.auth_outlet_table.loc[
+            st.session_state.auth_outlet_table["Author"] == original_author_name,
+            "Outlet"
+        ]
+
+        previous_outlet = previous_outlet_series.iloc[0] if len(previous_outlet_series) > 0 else ""
+
+        st.session_state.last_outlet_assignment = {
+            "author_name": original_author_name,
+            "previous_outlet": previous_outlet,
+            "previous_skip": st.session_state.auth_outlet_skipped,
+        }
+
         st.session_state.auth_outlet_table = st.session_state.auth_outlet_table.copy()
         st.session_state.auth_outlet_table.loc[
             st.session_state.auth_outlet_table["Author"] == original_author_name,
@@ -447,6 +500,17 @@ if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
         ] = new_outlet
 
         st.rerun()
+
+    # if submitted:
+    #     new_outlet = string_outlet.strip() if len(string_outlet.strip()) > 0 else box_outlet
+    #
+    #     st.session_state.auth_outlet_table = st.session_state.auth_outlet_table.copy()
+    #     st.session_state.auth_outlet_table.loc[
+    #         st.session_state.auth_outlet_table["Author"] == original_author_name,
+    #         "Outlet"
+    #     ] = new_outlet
+    #
+    #     st.rerun()
 
     st.divider()
 
