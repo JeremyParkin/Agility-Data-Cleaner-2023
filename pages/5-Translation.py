@@ -43,7 +43,7 @@ def translate_col(df, name_of_column):
         if '' in unique_non_eng:
             unique_non_eng.remove('')
         with st.spinner('Running translation now...'):
-            with ThreadPoolExecutor(max_workers=50) as ex:
+            with ThreadPoolExecutor(max_workers=10) as ex:
                 results = ex.map(translate, [text for text in unique_non_eng])
         df[name_of_column].replace(dictionary, inplace=True)
 

@@ -4,6 +4,7 @@ import warnings
 import mig_functions as mig
 import re
 import altair as alt
+import numpy as np
 
 
 warnings.filterwarnings("ignore")
@@ -136,37 +137,162 @@ def pick_best_story_details(group: pd.DataFrame):
         best_row.get("Snippet", None),
     )
 
-
 @st.cache_data
 def group_and_process_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Group stories by headline/date and attach best example row details."""
-    df = normalize_top_stories_df(df)
+    """Group stories by headline/date and attach best example row details, using vectorized ranking."""
+    df = df.copy()
 
-    rows = []
-    for (headline, date_value), group in df.groupby(["Headline", "Date"], dropna=False):
-        mentions = pd.to_numeric(group["Mentions"], errors="coerce").fillna(0).sum()
-        impressions = pd.to_numeric(group["Impressions"], errors="coerce").fillna(0).sum()
-
-        best_outlet, best_url, best_type, best_snippet = pick_best_story_details(group)
-
-        rows.append({
-            "Headline": headline,
-            "Date": date_value,
-            "Mentions": int(mentions),
-            "Impressions": impressions,
-            "Example Outlet": best_outlet,
-            "Example URL": best_url,
-            "Example Type": best_type,
-            "Example Snippet": best_snippet,
-        })
-
-    if not rows:
+    if df.empty:
         return pd.DataFrame(columns=[
             "Headline", "Date", "Mentions", "Impressions",
             "Example Outlet", "Example URL", "Example Type", "Example Snippet"
         ])
 
-    return pd.DataFrame(rows)
+    # Assume df is already mostly normalized, but keep this light safety layer
+    if "Headline" not in df.columns:
+        df["Headline"] = ""
+    if "Date" not in df.columns:
+        df["Date"] = pd.NaT
+    if "Mentions" not in df.columns:
+        df["Mentions"] = 1
+    if "Impressions" not in df.columns:
+        df["Impressions"] = 0
+    if "Outlet" not in df.columns:
+        df["Outlet"] = ""
+    if "URL" not in df.columns:
+        df["URL"] = ""
+    if "Type" not in df.columns:
+        df["Type"] = ""
+    if "Snippet" not in df.columns:
+        df["Snippet"] = ""
+
+    df["Headline"] = df["Headline"].fillna("").astype(str)
+    df["Outlet"] = df["Outlet"].fillna("").astype(str)
+    df["URL"] = df["URL"].fillna("").astype(str)
+    df["Type"] = df["Type"].fillna("").astype(str)
+    df["Snippet"] = df["Snippet"].fillna("").astype(str)
+    df["Mentions"] = pd.to_numeric(df["Mentions"], errors="coerce").fillna(0).astype(int)
+    df["Impressions"] = pd.to_numeric(df["Impressions"], errors="coerce").fillna(0)
+    df["Date"] = pd.to_datetime(df["Date"], errors="coerce").dt.date
+
+    group_cols = ["Headline", "Date"]
+
+    # Aggregate mentions and impressions once
+    grouped_totals = (
+        df.groupby(group_cols, dropna=False, as_index=False)
+        .agg({
+            "Mentions": "sum",
+            "Impressions": "sum",
+        })
+    )
+
+    # Ranking logic for exemplar row selection
+    preferred_wire_pattern = r"Reuters|Associated Press|Canadian Press"
+    middle_tier_keywords = [
+        "MarketWatch", "Seeking Alpha", "News Break", "Dispatchist",
+        "MarketScreener", "StreetInsider", "Head Topics"
+    ]
+    bottom_tier_keywords = [
+        "Yahoo", "MSN", "Newswire", "Saltwire", "Market Wire",
+        "Business Wire", "TD Ameritrade", "PR Wire", "Chinese Wire",
+        "News Wire", "Presswire"
+    ]
+
+    middle_pattern = "|".join(re.escape(x) for x in middle_tier_keywords)
+    bottom_pattern = "|".join(re.escape(x) for x in bottom_tier_keywords)
+    combined_pattern = "|".join(re.escape(x) for x in (middle_tier_keywords + bottom_tier_keywords))
+
+    working = df.copy()
+
+    working["is_preferred_wire"] = working["Outlet"].str.contains(
+        preferred_wire_pattern, case=False, na=False, regex=True
+    )
+
+    working["is_broadcast"] = working["Type"].isin(["TV", "RADIO", "PODCAST"])
+
+    # Tier rank for non-broadcast stories:
+    # 0 = preferred wire
+    # 1 = top tier
+    # 2 = middle tier
+    # 3 = bottom tier
+    working["tier_rank"] = 3
+
+    working.loc[
+        ~working["Outlet"].str.contains(combined_pattern, case=False, na=False, regex=True),
+        "tier_rank"
+    ] = 1
+
+    working.loc[
+        working["Outlet"].str.contains(middle_pattern, case=False, na=False, regex=True)
+        & ~working["Outlet"].str.contains(bottom_pattern, case=False, na=False, regex=True),
+        "tier_rank"
+    ] = 2
+
+    working.loc[working["is_preferred_wire"], "tier_rank"] = 0
+
+    # For broadcast groups, outlet tier does not matter; highest impressions wins
+    # We'll use a broadcast_priority that makes all broadcast rows equivalent on tier
+    working["broadcast_priority"] = np.where(working["is_broadcast"], 0, working["tier_rank"])
+
+    exemplar_rows = (
+        working.sort_values(
+            by=[
+                "Headline",
+                "Date",
+                "is_preferred_wire",     # preferred wire first
+                "broadcast_priority",    # best tier first for non-broadcast
+                "Impressions",           # highest impressions wins
+            ],
+            ascending=[True, True, False, True, False],
+            na_position="last"
+        )
+        .drop_duplicates(subset=group_cols, keep="first")
+        [group_cols + ["Outlet", "URL", "Type", "Snippet"]]
+        .rename(columns={
+            "Outlet": "Example Outlet",
+            "URL": "Example URL",
+            "Type": "Example Type",
+            "Snippet": "Example Snippet",
+        })
+    )
+
+    result = grouped_totals.merge(exemplar_rows, on=group_cols, how="left")
+
+    return result[[
+        "Headline", "Date", "Mentions", "Impressions",
+        "Example Outlet", "Example URL", "Example Type", "Example Snippet"
+    ]]
+
+# @st.cache_data
+# def group_and_process_data(df: pd.DataFrame) -> pd.DataFrame:
+#     """Group stories by headline/date and attach best example row details."""
+#     df = normalize_top_stories_df(df)
+#
+#     rows = []
+#     for (headline, date_value), group in df.groupby(["Headline", "Date"], dropna=False):
+#         mentions = pd.to_numeric(group["Mentions"], errors="coerce").fillna(0).sum()
+#         impressions = pd.to_numeric(group["Impressions"], errors="coerce").fillna(0).sum()
+#
+#         best_outlet, best_url, best_type, best_snippet = pick_best_story_details(group)
+#
+#         rows.append({
+#             "Headline": headline,
+#             "Date": date_value,
+#             "Mentions": int(mentions),
+#             "Impressions": impressions,
+#             "Example Outlet": best_outlet,
+#             "Example URL": best_url,
+#             "Example Type": best_type,
+#             "Example Snippet": best_snippet,
+#         })
+#
+#     if not rows:
+#         return pd.DataFrame(columns=[
+#             "Headline", "Date", "Mentions", "Impressions",
+#             "Example Outlet", "Example URL", "Example Type", "Example Snippet"
+#         ])
+#
+#     return pd.DataFrame(rows)
 
 
 def tokenize_boolean_query(query: str):

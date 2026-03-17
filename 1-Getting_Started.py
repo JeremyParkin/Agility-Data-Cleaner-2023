@@ -238,7 +238,7 @@ if not st.session_state.upload_step:
         with st.spinner("Converting file format."):
             # Preserve original uploaded AVE name for later export restoration
             st.session_state.original_ave_col = detect_original_ave_col(
-                st.session_state.df_untouched.copy()
+                st.session_state.df_untouched
             )
 
             st.session_state.df_traditional = normalize_uploaded_dataframe(
@@ -280,7 +280,14 @@ if st.session_state.upload_step:
     st.header("Initial Stats")
 
     # Use normalized copy for display logic too, so stats work consistently across file types
-    df_display = normalize_uploaded_dataframe(st.session_state.df_untouched.copy())
+    # df_display = normalize_uploaded_dataframe(st.session_state.df_untouched.copy())
+
+    # Reuse the already-normalized pre-standard dataframe instead of reprocessing on every rerun
+    if not st.session_state.df_traditional_pre_standard.empty:
+        df_display = st.session_state.df_traditional_pre_standard.copy()
+    else:
+        # fallback safeguard
+        df_display = st.session_state.df_traditional.copy()
 
     col1, col2, col3 = st.columns(3)
 

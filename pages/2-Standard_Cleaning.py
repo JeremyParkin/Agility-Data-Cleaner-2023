@@ -18,6 +18,10 @@ format_dict = {'AVE': '${0:,.0f}', 'Audience Reach': '{:,d}', 'Impressions': '{:
 
 st.title('Standard Cleaning')
 
+def lengths_are_similar_enough(len_a: int, len_b: int, min_length_ratio: float = 0.70) -> bool:
+    if len_a <= 0 or len_b <= 0:
+        return False
+    return min(len_a, len_b) / max(len_a, len_b) >= min_length_ratio
 
 if not st.session_state.upload_step:
     st.error('Please upload a CSV before trying this step.')
@@ -236,8 +240,8 @@ else:
                     st.session_state.df_traditional['URL_Helper'] = st.session_state.df_traditional['URL_Helper'].str.replace('http:', 'https:')
 
                     # Sort duplicate URLS
-                    st.session_state.df_traditional = st.session_state.df_traditional.sort_values(["URL_Helper", "Author", "Impressions", "AVE", "Date"], axis=0,
-                                                                                                  ascending=[True, True, False, False, True])
+                    st.session_state.df_traditional = st.session_state.df_traditional.sort_values(["URL_Helper", "Author", "Impressions", "Date"], axis=0,
+                                                                                                  ascending=[True, True, False, True])
                     # Save duplicate URLS
                     dupe_urls = st.session_state.df_traditional[st.session_state.df_traditional['URL_Helper'].duplicated(keep='first')].copy()
 
@@ -267,8 +271,8 @@ else:
 
                     st.session_state.df_traditional["dupe_helper"] = st.session_state.df_traditional['Type'].astype('string') + st.session_state.df_traditional['Outlet'].astype('string') + st.session_state.df_traditional[
                         'Headline'] # + st.session_state.df_traditional['Date_Helper'].astype('string')
-                    st.session_state.df_traditional = st.session_state.df_traditional.sort_values(["dupe_helper", "Author", "Impressions", "AVE", "Date"], axis=0,
-                                                                                                  ascending=[True, True, False, False, True])
+                    st.session_state.df_traditional = st.session_state.df_traditional.sort_values(["dupe_helper", "Author", "Impressions", "Date"], axis=0,
+                                                                                                  ascending=[True, True, False, True])
                     dupe_cols = st.session_state.df_traditional[st.session_state.df_traditional['dupe_helper'].duplicated(keep='first')].copy()
                     st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['dupe_helper'].duplicated(keep='first')].copy()
 
@@ -328,8 +332,14 @@ else:
 
                                     snippet_j = row_j["_snippet_norm"]
                                     snippets_match = snippet_i == snippet_j
-                                    if not snippets_match:
+                                    if not snippets_match and lengths_are_similar_enough(row_i["_snippet_len"],
+                                                                                         row_j["_snippet_len"]):
                                         snippets_match = SequenceMatcher(None, snippet_i, snippet_j).ratio() >= 0.90
+
+                                    # snippet_j = row_j["_snippet_norm"]
+                                    # snippets_match = snippet_i == snippet_j
+                                    # if not snippets_match:
+                                    #     snippets_match = SequenceMatcher(None, snippet_i, snippet_j).ratio() >= 0.90
 
                                     if snippets_match:
                                         adjacency[idx_i].add(idx_j)

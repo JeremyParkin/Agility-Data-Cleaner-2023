@@ -41,10 +41,8 @@ for key, default in {
 
 DEFAULT_MODEL = "gpt-5-mini"
 SHORT_SNIPPET_THRESHOLD = 150
-DEFAULT_MAX_WORKERS = 4
+DEFAULT_MAX_WORKERS = 8
 MAX_RETRIES = 2
-
-
 
 
 def normalize_summary_df(df: pd.DataFrame) -> pd.DataFrame:
@@ -347,9 +345,9 @@ def generate_outputs_for_row(
     prompt = build_master_prompt(row, entity_context)
 
     last_error = ""
+    client = OpenAI(api_key=api_key)
     for attempt in range(MAX_RETRIES + 1):
         try:
-            client = OpenAI(api_key=api_key)
             parsed = generate_structured_story_outputs(
                 client=client,
                 prompt=prompt,
