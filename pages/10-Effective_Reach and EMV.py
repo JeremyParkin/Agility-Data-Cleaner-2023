@@ -117,7 +117,7 @@ DEFAULT_PLATFORM_PARAMS = {
     "bluesky": {
         "MID_FOLLOWERS": 15_000,
         "HIGH_FOLLOWERS": 500_000,
-        "BENCHMARK_VIS": 0.018,
+        "BENCHMARK_VIS": 0.04,
         "EXPECTED_ENG_RATE": 0.0012,
         "PERF_EXPONENT": 0.50,
         "PERF_FLOOR": 0.60,
