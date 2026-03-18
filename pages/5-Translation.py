@@ -78,44 +78,106 @@ else:
     display_non_english_records(st.session_state.df_traditional, "Traditional")
     display_non_english_records(st.session_state.df_social, "Social")
 
-    with st.form('translation_form'):
-        st.subheader("Pick columns for translations")
-        st.warning("WARNING: Snippet translation will overwrite the original text and will cut off the ends of articles longer than ~ 700 words.")
+    st.subheader("Pick columns for translations")
 
-        if st.session_state.translated_headline or 'Original Headline' in st.session_state.df_traditional.columns or 'Original Headline' in st.session_state.df_social.columns:
-            headline_done = True
-        else:
-            headline_done = False
+    if (
+            st.session_state.translated_headline
+            or 'Original Headline' in st.session_state.df_traditional.columns
+            or 'Original Headline' in st.session_state.df_social.columns
+    ):
+        headline_done = True
+    else:
+        headline_done = False
 
-        headline_to_english = st.checkbox('Headline', value=True, disabled=headline_done)
-        snippet_to_english = st.checkbox('Snippet (full text)', value=False, disabled=st.session_state.translated_snippet)
+    headline_to_english = st.checkbox(
+        'Headline',
+        value=True,
+        disabled=headline_done
+    )
 
+    snippet_to_english = st.checkbox(
+        'Snippet (full text)',
+        value=False,
+        disabled=st.session_state.translated_snippet
+    )
 
-        if st.form_submit_button("Go!", type="primary"):
-            st.warning("Stay on this page until translation is complete")
+    if snippet_to_english:
+        st.warning(
+            "WARNING: Snippet translation will overwrite the original text and will cut off the ends of articles longer than ~700 words.")
 
-            if headline_to_english:
-                st.session_state.df_traditional['Original Headline'] = st.session_state.df_traditional.Headline
-                translate_col(st.session_state.df_traditional, 'Headline')
+    go_clicked = st.button("Go!", type="primary")
 
-                # AP Cap
-                broadcast_array = ['RADIO', 'TV']
-                broadcast = st.session_state.df_traditional.loc[st.session_state.df_traditional['Type'].isin(broadcast_array)]
-                st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['Type'].isin(broadcast_array)]
-                st.session_state.df_traditional[['Headline']] = st.session_state.df_traditional[['Headline']].fillna('')
-                st.session_state.df_traditional['Headline'] = st.session_state.df_traditional['Headline'].map(lambda Headline: titlecase(Headline))
-                frames = [st.session_state.df_traditional, broadcast]
-                st.session_state.df_traditional = pd.concat(frames)
+    if go_clicked:
+        st.warning("Stay on this page until translation is complete")
 
-                st.session_state.df_social['Original Headline'] = st.session_state.df_social.Headline
+        if headline_to_english and not headline_done:
+             st.session_state.df_traditional['Original Headline'] = st.session_state.df_traditional['Headline']
+            translate_col(st.session_state.df_traditional, 'Headline')
 
-                translate_col(st.session_state.df_social, 'Headline')
-                st.session_state.translated_headline = True
-                st.success('Done translating headlines!')
+            # AP Cap
+            broadcast_array = ['RADIO', 'TV']
+            broadcast = st.session_state.df_traditional.loc[
+                st.session_state.df_traditional['Type'].isin(broadcast_array)
+            ]
+            st.session_state.df_traditional = st.session_state.df_traditional[
+                ~st.session_state.df_traditional['Type'].isin(broadcast_array)
+            ]
+            st.session_state.df_traditional[['Headline']] = st.session_state.df_traditional[['Headline']].fillna('')
+            st.session_state.df_traditional['Headline'] = st.session_state.df_traditional['Headline'].map(
+                lambda Headline: titlecase(Headline))
+            st.session_state.df_traditional = pd.concat([st.session_state.df_traditional, broadcast])
 
-            if snippet_to_english:
-                translate_col(st.session_state.df_traditional, 'Snippet')
-                translate_col(st.session_state.df_social, 'Snippet')
-                st.session_state.translated_snippet = True
-                st.success('Done translating snippets!')
-            st.rerun()
+            st.session_state.df_social['Original Headline'] = st.session_state.df_social['Headline']
+            translate_col(st.session_state.df_social, 'Headline')
+
+            st.session_state.translated_headline = True
+            st.success('Done translating headlines!')
+
+        if snippet_to_english:
+            translate_col(st.session_state.df_traditional, 'Snippet')
+            translate_col(st.session_state.df_social, 'Snippet')
+            st.session_state.translated_snippet = True
+            st.success('Done translating snippets!')
+
+        st.rerun()
+    # with st.form('translation_form'):
+    #     st.subheader("Pick columns for translations")
+    #     st.warning("WARNING: Snippet translation will overwrite the original text and will cut off the ends of articles longer than ~ 700 words.")
+    #
+    #     if st.session_state.translated_headline or 'Original Headline' in st.session_state.df_traditional.columns or 'Original Headline' in st.session_state.df_social.columns:
+    #         headline_done = True
+    #     else:
+    #         headline_done = False
+    #
+    #     headline_to_english = st.checkbox('Headline', value=True, disabled=headline_done)
+    #     snippet_to_english = st.checkbox('Snippet (full text)', value=False, disabled=st.session_state.translated_snippet)
+    #
+    #
+    #     if st.form_submit_button("Go!", type="primary"):
+    #         st.warning("Stay on this page until translation is complete")
+    #
+    #         if headline_to_english:
+    #             st.session_state.df_traditional['Original Headline'] = st.session_state.df_traditional.Headline
+    #             translate_col(st.session_state.df_traditional, 'Headline')
+    #
+    #             # AP Cap
+    #             broadcast_array = ['RADIO', 'TV']
+    #             broadcast = st.session_state.df_traditional.loc[st.session_state.df_traditional['Type'].isin(broadcast_array)]
+    #             st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['Type'].isin(broadcast_array)]
+    #             st.session_state.df_traditional[['Headline']] = st.session_state.df_traditional[['Headline']].fillna('')
+    #             st.session_state.df_traditional['Headline'] = st.session_state.df_traditional['Headline'].map(lambda Headline: titlecase(Headline))
+    #             frames = [st.session_state.df_traditional, broadcast]
+    #             st.session_state.df_traditional = pd.concat(frames)
+    #
+    #             st.session_state.df_social['Original Headline'] = st.session_state.df_social.Headline
+    #
+    #             translate_col(st.session_state.df_social, 'Headline')
+    #             st.session_state.translated_headline = True
+    #             st.success('Done translating headlines!')
+    #
+    #         if snippet_to_english:
+    #             translate_col(st.session_state.df_traditional, 'Snippet')
+    #             translate_col(st.session_state.df_social, 'Snippet')
+    #             st.session_state.translated_snippet = True
+    #             st.success('Done translating snippets!')
+    #         st.rerun()
