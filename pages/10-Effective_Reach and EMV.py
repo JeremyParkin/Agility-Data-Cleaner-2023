@@ -114,6 +114,18 @@ DEFAULT_PLATFORM_PARAMS = {
         "MAX_VISIBILITY": 0.20,
         "CPM": 6,
     },
+    "bluesky": {
+        "MID_FOLLOWERS": 50_000,
+        "HIGH_FOLLOWERS": 2_000_000,
+        "BENCHMARK_VIS": 0.018,
+        "EXPECTED_ENG_RATE": 0.0012,
+        "PERF_EXPONENT": 0.50,
+        "PERF_FLOOR": 0.60,
+        "PERF_CAP": 1.80,
+        "GATE_FOLLOWERS_ANCHOR": 200_000,
+        "MAX_VISIBILITY": 0.20,
+        "CPM": 6,
+    },
     "instagram": {
         "MID_FOLLOWERS": 497_900,
         "HIGH_FOLLOWERS": 10_000_000,
@@ -733,19 +745,7 @@ with st.expander("Parameters", expanded=False):
                         help=help_text,
                         key=f"trad_{media_key}_{param_key}"
                     )
-            # for i, (param_key, param_value) in enumerate(params.items()):
-            #     settings = get_param_input_settings(param_key, param_value)
-            #     help_text = PARAM_HELP.get(param_key, "")
-            #
-            #     with cols[i % 3]:
-            #         st.session_state.er_trad_params[media_key][param_key] = st.number_input(
-            #             param_key,
-            #             value=float(param_value),
-            #             step=float(settings["step"]),
-            #             format=settings["format"],
-            #             help=help_text,
-            #             key=f"trad_{media_key}_{param_key}"
-            #         )
+
 
     st.markdown("### Social")
     for platform_key, params in st.session_state.er_platform_params.items():
