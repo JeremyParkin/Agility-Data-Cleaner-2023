@@ -24,6 +24,23 @@ mig.require_standard_pipeline()
 HIDDEN_UI_PARAMS = {
     "ONLINE_DENOMINATOR_COEFF",
     "ONLINE_DENOMINATOR_EXPONENT",
+    "MID_IMPRESSIONS",
+    "HIGH_IMPRESSIONS",
+    "A_SIZE",
+    "A_MIN",
+    "A_MAX",
+    "LOW_IMPRESSIONS",
+    "GATE_ANCHOR",
+    "MIN_VISIBILITY",
+    "MAX_VISIBILITY",
+    "MID_FOLLOWERS",
+    "HIGH_FOLLOWERS",
+    "PERF_EXPONENT",
+    "PERF_FLOOR",
+    "PERF_CAP",
+    "GATE_FOLLOWERS_ANCHOR",
+    "MAX_VISIBILITY",
+
 }
 
 DEFAULT_TRAD_MEDIA_PARAMS = {
@@ -227,29 +244,17 @@ PARAM_HELP = {
 
 SECTION_EXPLAINER = """
 **Traditional / print / broadcast**
-- **MID_IMPRESSIONS**: benchmark audience size where the baseline visibility assumption is centered  
-- **HIGH_IMPRESSIONS**: upper reference point for size scaling  
 - **BENCHMARK_VIS**: baseline visibility rate before additional adjustments  
-- **A_SIZE**: controls how strongly visibility changes as audience size changes  
-- **A_MIN / A_MAX**: lower and upper bounds on that size-response factor  
-- **GATE_ANCHOR**: point where large-audience dampening begins  
-- **MIN_VISIBILITY / MAX_VISIBILITY**: floor and ceiling for final visibility  
 - **CPM**: cost per thousand used for EMV  
 
 **Online**
 - **DAILY_VISITOR_RATE**: share of monthly unique visitors who visit daily  
 - **PAGES_PER_VISIT**: average number of pages viewed per visit  
-- **ONLINE_DENOMINATOR_COEFF / EXPONENT**: calibration parameters in the online effective reach formula  
 - **CPM**: cost per thousand used for EMV  
 
 **Social**
-- **MID_FOLLOWERS / HIGH_FOLLOWERS**: benchmark audience sizes used for scaling  
 - **BENCHMARK_VIS**: baseline visibility before engagement/performance adjustments  
 - **EXPECTED_ENG_RATE**: expected engagement rate used as the comparison baseline  
-- **PERF_EXPONENT**: controls how strongly over/under-performance affects visibility  
-- **PERF_FLOOR / PERF_CAP**: lower and upper bounds on that performance multiplier  
-- **GATE_FOLLOWERS_ANCHOR**: point where large-account dampening begins  
-- **MAX_VISIBILITY**: ceiling on final visibility  
 - **CPM**: cost per thousand used for EMV  
 """
 
@@ -751,9 +756,16 @@ with st.expander("Parameters", expanded=False):
     for platform_key, params in st.session_state.er_platform_params.items():
         with st.expander(platform_key.replace("_", " ").title(), expanded=False):
             cols = st.columns(3)
-            for i, (param_key, param_value) in enumerate(params.items()):
+            visible_items = [
+                (param_key, param_value)
+                for param_key, param_value in params.items()
+                if param_key not in HIDDEN_UI_PARAMS
+            ]
+
+            for i, (param_key, param_value) in enumerate(visible_items):
                 settings = get_param_input_settings(param_key, param_value)
                 help_text = PARAM_HELP.get(param_key, "")
+
 
                 with cols[i % 3]:
                     st.session_state.er_platform_params[platform_key][param_key] = st.number_input(
