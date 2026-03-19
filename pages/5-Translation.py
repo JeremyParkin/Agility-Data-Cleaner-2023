@@ -111,7 +111,7 @@ else:
         st.warning("Stay on this page until translation is complete")
 
         if headline_to_english and not headline_done:
-             st.session_state.df_traditional['Original Headline'] = st.session_state.df_traditional['Headline']
+            st.session_state.df_traditional['Original Headline'] = st.session_state.df_traditional['Headline']
             translate_col(st.session_state.df_traditional, 'Headline')
 
             # AP Cap
