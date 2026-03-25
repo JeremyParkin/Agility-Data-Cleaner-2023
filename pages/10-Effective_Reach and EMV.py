@@ -644,10 +644,15 @@ def render_metric_expander(df: pd.DataFrame, title: str, preview_rows: int = 50)
         return
 
     with st.expander(title):
-        col1, col1b, col2 = st.columns([1,1,2])
-
-        with col1:
+        col1h, col2h = st.columns(2)
+        with col1h:
             st.subheader("Basic Metrics")
+        with col2h:
+            st.subheader("Media Type")
+
+
+        col1, col1b, col2 = st.columns([1,1,2])
+        with col1:
             st.metric(label="Mentions", value="{:,}".format(len(df)))
 
             if "Effective Reach" in df.columns:
@@ -661,7 +666,6 @@ def render_metric_expander(df: pd.DataFrame, title: str, preview_rows: int = 50)
 
 
         with col1b:
-            st.subheader(" ")
             if "Impressions" in df.columns:
                 impressions_total = pd.to_numeric(df["Impressions"], errors="coerce").fillna(0).sum()
                 st.metric(
@@ -676,12 +680,11 @@ def render_metric_expander(df: pd.DataFrame, title: str, preview_rows: int = 50)
                 emv_total = pd.to_numeric(df["EMV"], errors="coerce").fillna(0).sum()
                 st.metric(
                     label="EMV",
-                    value=f"{mig.format_number(emv_total)}",
-                    help=f"{emv_total:,.2f}"
+                    value=f"${mig.format_number(emv_total)}",
+                    help=f"${emv_total:,.2f}"
                 )
 
         with col2:
-            st.subheader("Media Type")
             breakdown = build_type_breakdown(df)
 
             if not breakdown.empty:
