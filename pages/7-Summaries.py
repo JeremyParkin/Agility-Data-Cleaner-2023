@@ -39,7 +39,7 @@ for key, default in {
     if key not in st.session_state:
         st.session_state[key] = default
 
-DEFAULT_MODEL = "gpt-5-mini"
+DEFAULT_MODEL = "gpt-5.4-mini"
 SHORT_SNIPPET_THRESHOLD = 150
 DEFAULT_MAX_WORKERS = 8
 MAX_RETRIES = 2
@@ -403,12 +403,13 @@ def build_markdown_output(
         if show_callout and "Chart Callout" in df.columns:
             value = row.get("Chart Callout", "")
             if pd.notna(value) and str(value).strip():
-                markdown_content += f"**Chart Callout:** {value}  \n\n"
+                markdown_content += f":material/chat_bubble: **Trend Chart Callout:** <br>{value}  \n\n"
 
         if show_sentiment and "Entity Sentiment" in df.columns:
             value = row.get("Entity Sentiment", "")
             if pd.notna(value) and str(value).strip():
-                markdown_content += f"_{value}_  \n\n"
+                markdown_content += f":material/pie_chart: **Sentiment Opinion:** <br>_{value}_  \n\n"
+                # markdown_content += f"_{value}_  \n\n"
 
         if show_mentions:
             mentions = row.get("Mentions", 0)

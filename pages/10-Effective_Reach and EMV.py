@@ -647,6 +647,7 @@ def render_metric_expander(df: pd.DataFrame, title: str, preview_rows: int = 50)
         col1, col1b, col2 = st.columns([1,1,2])
 
         with col1:
+            st.subheader("Basic Metrics")
             st.metric(label="Mentions", value="{:,}".format(len(df)))
 
             if "Effective Reach" in df.columns:
@@ -660,6 +661,7 @@ def render_metric_expander(df: pd.DataFrame, title: str, preview_rows: int = 50)
 
 
         with col1b:
+            st.subheader(" ")
             if "Impressions" in df.columns:
                 impressions_total = pd.to_numeric(df["Impressions"], errors="coerce").fillna(0).sum()
                 st.metric(
