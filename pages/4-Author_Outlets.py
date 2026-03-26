@@ -276,6 +276,10 @@ auth_outlet_todo = st.session_state.auth_outlet_table.loc[
 if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
     original_author_name = auth_outlet_todo.iloc[st.session_state.auth_outlet_skipped]["Author"]
 
+    if st.session_state.get("last_author_for_fix") != original_author_name:
+        st.session_state.author_fix_input = original_author_name
+        st.session_state.last_author_for_fix = original_author_name
+
     # Editable author field for matching
     def apply_author_fix_callback():
         new_name = st.session_state.author_fix_input.strip()
@@ -292,11 +296,18 @@ if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
 
         st.text_input(
             "Correct author name",
-            value=original_author_name,
             key="author_fix_input",
             on_change=apply_author_fix_callback,
             help="Edit the name and press Enter to apply the correction to all matching rows."
         )
+
+        # st.text_input(
+        #     "Correct author name",
+        #     value=original_author_name,
+        #     key="author_fix_input",
+        #     on_change=apply_author_fix_callback,
+        #     help="Edit the name and press Enter to apply the correction to all matching rows."
+        # )
 
         st.caption(
             "This updates every instance of this author in the cleaned dataset and refreshes the author-outlet workflow."
