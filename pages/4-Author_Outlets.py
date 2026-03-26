@@ -65,8 +65,8 @@ def fetch_outlet(author_name: str):
     contact_url = "https://mediadatabase.agilitypr.com/api/v4/contacts/search"
 
     headers = CaseInsensitiveDict()
-    headers["Content-Type"] = "text/json"
-    headers["Accept"] = "text/json"
+    headers["Content-Type"] = "application/json"
+    headers["Accept"] = "application/json"
     headers["Authorization"] = st.secrets["authorization"]
     headers["client_id"] = st.secrets["client_id"]
     headers["userclient_id"] = st.secrets["userclient_id"]
@@ -79,8 +79,40 @@ def fetch_outlet(author_name: str):
     }}
     """
 
-    contact_resp = requests.post(contact_url, headers=headers, data=data)
-    return contact_resp.json()
+    debug_info = {
+        "request_author": author_name,
+        "url": contact_url,
+        "status_code": None,
+        "ok": False,
+        "error": "",
+        "response_text_preview": "",
+        "json_keys": [],
+    }
+
+    try:
+        contact_resp = requests.post(contact_url, headers=headers, data=data, timeout=30)
+        debug_info["status_code"] = contact_resp.status_code
+        debug_info["ok"] = contact_resp.ok
+        debug_info["response_text_preview"] = contact_resp.text[:1000]
+
+        if not contact_resp.ok:
+            debug_info["error"] = f"HTTP {contact_resp.status_code}"
+            return None, debug_info
+
+        try:
+            parsed = contact_resp.json()
+            if isinstance(parsed, dict):
+                debug_info["json_keys"] = list(parsed.keys())
+            return parsed, debug_info
+        except Exception as e:
+            debug_info["error"] = f"JSON decode failed: {e}"
+            return None, debug_info
+
+    except Exception as e:
+        debug_info["error"] = f"Request failed: {e}"
+        return None, debug_info
+
+
 
 def build_auth_outlet_table(df: pd.DataFrame, top_auths_by: str,
                             existing_assignments: pd.DataFrame | None = None) -> pd.DataFrame:
@@ -185,37 +217,6 @@ def apply_author_name_fix(old_name: str, new_name: str):
     # Keep the text input synced to the new current name
     st.session_state.author_fix_input = new_name
     st.session_state.last_author_for_fix = new_name
-
-# def apply_author_name_fix(old_name: str, new_name: str):
-#     """
-#     Apply a corrected author name to df_traditional and rebuild auth_outlet_table.
-#     """
-#     old_name = str(old_name).strip()
-#     new_name = str(new_name).strip()
-#
-#     if not old_name or not new_name or old_name == new_name:
-#         return
-#
-#     # Update source coverage data
-#     st.session_state.df_traditional = st.session_state.df_traditional.copy()
-#     st.session_state.df_traditional.loc[
-#         st.session_state.df_traditional["Author"] == old_name,
-#         "Author"
-#     ] = new_name
-#
-#     # Rebuild grouped author table while preserving existing outlet assignments
-#     existing_assignments = st.session_state.auth_outlet_table.copy() if len(st.session_state.auth_outlet_table) > 0 else None
-#     st.session_state.auth_outlet_table = build_auth_outlet_table(
-#         st.session_state.df_traditional.copy(),
-#         st.session_state.top_auths_by,
-#         existing_assignments=existing_assignments
-#     )
-#
-#     # Keep skip counter in a safe range
-#     st.session_state.auth_outlet_skipped = max(0, min(
-#         st.session_state.auth_outlet_skipped,
-#         len(st.session_state.auth_outlet_table) - 1
-#     ))
 
 
 def get_matched_authors_df(search_results, outlets_in_coverage_list, author_name_for_styling):
@@ -351,13 +352,6 @@ if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
             help="Edit the name and press Enter to apply the correction to all matching rows."
         )
 
-        # st.text_input(
-        #     "Correct author name",
-        #     value=original_author_name,
-        #     key="author_fix_input",
-        #     on_change=apply_author_fix_callback,
-        #     help="Edit the name and press Enter to apply the correction to all matching rows."
-        # )
 
         st.caption(
             "This updates every instance of this author in the cleaned dataset and refreshes the author-outlet workflow."
@@ -365,7 +359,6 @@ if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
 
 
     # Current author heading
-    # header_col, skip_col, reset_col = st.columns([2, 1, 1])
     header_col, skip_col, reset_col, undo_col = st.columns([2, 1, 1, 1])
 
     with header_col:
@@ -407,7 +400,8 @@ if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
     match_author_name = original_author_name
 
     # Fetch database results using the edited / cleaned name
-    search_results = fetch_outlet(unidecode(match_author_name))
+    # search_results = fetch_outlet(unidecode(match_author_name))
+    search_results, api_debug = fetch_outlet(unidecode(match_author_name))
 
     # Styling helper for matched names table
     def name_match(series):
@@ -466,8 +460,20 @@ if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
         with col3:
             st.subheader("Media Database Results")
 
+            show_debug = not api_debug.get("ok") or api_debug.get("error")
+
             if len(matched_authors) == 0:
                 st.warning("NO MATCH FOUND")
+
+                if show_debug:
+
+                    with st.expander("API debug details", expanded=False):
+                        st.write("Status code:", api_debug.get("status_code"))
+                        st.write("Request ok:", api_debug.get("ok"))
+                        st.write("Error:", api_debug.get("error"))
+                        st.write("JSON keys:", api_debug.get("json_keys"))
+                        st.write("Response preview:")
+                        st.code(api_debug.get("response_text_preview", ""), language="json")
             else:
                 if len(matched_authors) > 7:
                     st.dataframe(
@@ -562,16 +568,6 @@ if st.session_state.auth_outlet_skipped < len(auth_outlet_todo):
 
         st.rerun()
 
-    # if submitted:
-    #     new_outlet = string_outlet.strip() if len(string_outlet.strip()) > 0 else box_outlet
-    #
-    #     st.session_state.auth_outlet_table = st.session_state.auth_outlet_table.copy()
-    #     st.session_state.auth_outlet_table.loc[
-    #         st.session_state.auth_outlet_table["Author"] == original_author_name,
-    #         "Outlet"
-    #     ] = new_outlet
-    #
-    #     st.rerun()
 
     st.divider()
 

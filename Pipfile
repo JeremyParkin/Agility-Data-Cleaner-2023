@@ -21,4 +21,3 @@ streamlit-tags = "~=1.2.8"
 
 [requires]
 python_version = "3.13"
-python_full_version = "3.13.5"
