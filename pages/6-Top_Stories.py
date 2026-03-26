@@ -97,7 +97,7 @@ def pick_best_story_details(group: pd.DataFrame):
         "MarketScreener", "StreetInsider", "Head Topics"
     ]
     bottom_tier_keywords = [
-        "Yahoo", "MSN", "Newswire", "Saltwire", "Market Wire",
+        "Yahoo", "MSN", "AOL", "Newswire", "Saltwire", "Market Wire",
         "Business Wire", "TD Ameritrade", "PR Wire", "Chinese Wire",
         "News Wire", "Presswire"
     ]

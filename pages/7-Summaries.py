@@ -165,6 +165,7 @@ GLOBAL RULES
 - Avoid vague shorthand like "faces challenges" or "under scrutiny" unless you specify what that means in this story.
 - Use present tense where natural.
 - No markdown, bullets, or labels inside field values.
+- Return all outputs in English
 
 FIELD-SPECIFIC RULES
 
@@ -462,7 +463,7 @@ else:
             st.session_state.top_story_entity_names_seeded = True
 
         entity_names = st_tags(
-            label="Entity names and aliases",
+            label="Entity name and aliases",
             text="Primary then aliases",
             maxtags=20,
             value=st.session_state.top_story_entity_names,
