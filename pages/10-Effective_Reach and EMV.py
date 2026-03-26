@@ -690,7 +690,7 @@ def render_metric_expander(df: pd.DataFrame, title: str, preview_rows: int = 50)
             if not breakdown.empty:
                 st.dataframe(
                     breakdown.style.format(DISPLAY_FORMAT_DICT, na_rep=""),
-                    use_container_width=True,
+                    width="stretch",
                     hide_index=True
                 )
             else:
@@ -705,12 +705,12 @@ def render_metric_expander(df: pd.DataFrame, title: str, preview_rows: int = 50)
         if cell_count <= 262144:
             st.dataframe(
                 preview_df.style.format(DISPLAY_FORMAT_DICT, na_rep=""),
-                use_container_width=True
+                width="stretch",
             )
         else:
             st.dataframe(
                 preview_df.fillna(""),
-                use_container_width=True
+                width="stretch",
             )
 
 

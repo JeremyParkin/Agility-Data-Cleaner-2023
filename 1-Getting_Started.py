@@ -346,9 +346,8 @@ if st.session_state.upload_step:
                 data=summary_stats,
                 x="Date",
                 y="Mentions",
-                width=0,
                 height=250,
-                use_container_width=True,
+                width="stretch",
             )
 
         with col2:
@@ -358,9 +357,8 @@ if st.session_state.upload_step:
                     data=summary_stats,
                     x="Date",
                     y="Impressions",
-                    width=0,
                     height=250,
-                    use_container_width=True,
+                    width="stretch",
                 )
     else:
         st.info("No date information available to display mention and impressions trends.")

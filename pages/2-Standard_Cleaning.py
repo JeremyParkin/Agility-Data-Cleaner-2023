@@ -111,12 +111,12 @@ elif st.session_state.standard_step:
             if cell_count <= 262144:
                 st.dataframe(
                     preview_df.style.format(format_dict, na_rep=" "),
-                    use_container_width=True
+                    width="stretch"
                 )
             else:
                 st.dataframe(
                     preview_df.fillna(""),
-                    use_container_width=True
+                    width="stretch"
                 )
 else:
     with st.form("my_form_basic_cleaning"):
