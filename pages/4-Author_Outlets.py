@@ -139,6 +139,7 @@ def build_auth_outlet_table(df: pd.DataFrame, top_auths_by: str,
 def apply_author_name_fix(old_name: str, new_name: str):
     """
     Apply a corrected author name to df_traditional and rebuild auth_outlet_table.
+    Keep the user on the renamed author so outlet assignment can happen next.
     """
     old_name = str(old_name).strip()
     new_name = str(new_name).strip()
@@ -154,18 +155,67 @@ def apply_author_name_fix(old_name: str, new_name: str):
     ] = new_name
 
     # Rebuild grouped author table while preserving existing outlet assignments
-    existing_assignments = st.session_state.auth_outlet_table.copy() if len(st.session_state.auth_outlet_table) > 0 else None
+    existing_assignments = (
+        st.session_state.auth_outlet_table.copy()
+        if len(st.session_state.auth_outlet_table) > 0
+        else None
+    )
+
     st.session_state.auth_outlet_table = build_auth_outlet_table(
         st.session_state.df_traditional.copy(),
         st.session_state.top_auths_by,
         existing_assignments=existing_assignments
     )
 
-    # Keep skip counter in a safe range
-    st.session_state.auth_outlet_skipped = max(0, min(
-        st.session_state.auth_outlet_skipped,
-        len(st.session_state.auth_outlet_table) - 1
-    ))
+    # Keep user on the renamed author if it still needs an outlet
+    auth_outlet_todo = st.session_state.auth_outlet_table.loc[
+        st.session_state.auth_outlet_table["Outlet"] == ""
+    ].reset_index(drop=True)
+
+    matching_rows = auth_outlet_todo.index[auth_outlet_todo["Author"] == new_name].tolist()
+
+    if matching_rows:
+        st.session_state.auth_outlet_skipped = matching_rows[0]
+    else:
+        st.session_state.auth_outlet_skipped = max(
+            0,
+            min(st.session_state.auth_outlet_skipped, len(auth_outlet_todo) - 1)
+        )
+
+    # Keep the text input synced to the new current name
+    st.session_state.author_fix_input = new_name
+    st.session_state.last_author_for_fix = new_name
+
+# def apply_author_name_fix(old_name: str, new_name: str):
+#     """
+#     Apply a corrected author name to df_traditional and rebuild auth_outlet_table.
+#     """
+#     old_name = str(old_name).strip()
+#     new_name = str(new_name).strip()
+#
+#     if not old_name or not new_name or old_name == new_name:
+#         return
+#
+#     # Update source coverage data
+#     st.session_state.df_traditional = st.session_state.df_traditional.copy()
+#     st.session_state.df_traditional.loc[
+#         st.session_state.df_traditional["Author"] == old_name,
+#         "Author"
+#     ] = new_name
+#
+#     # Rebuild grouped author table while preserving existing outlet assignments
+#     existing_assignments = st.session_state.auth_outlet_table.copy() if len(st.session_state.auth_outlet_table) > 0 else None
+#     st.session_state.auth_outlet_table = build_auth_outlet_table(
+#         st.session_state.df_traditional.copy(),
+#         st.session_state.top_auths_by,
+#         existing_assignments=existing_assignments
+#     )
+#
+#     # Keep skip counter in a safe range
+#     st.session_state.auth_outlet_skipped = max(0, min(
+#         st.session_state.auth_outlet_skipped,
+#         len(st.session_state.auth_outlet_table) - 1
+#     ))
 
 
 def get_matched_authors_df(search_results, outlets_in_coverage_list, author_name_for_styling):
