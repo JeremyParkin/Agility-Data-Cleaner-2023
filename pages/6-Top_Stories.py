@@ -583,7 +583,7 @@ with chart_col:
                 )
 
                 chart = (line + points).properties(height=130)
-                st.altair_chart(chart, width="stretch")
+                st.altair_chart(chart, use_container_width=True)
 
 # Keep columns needed for this page plus tag/prominence fields if present
 all_columns = list(source_df.columns)
@@ -782,7 +782,8 @@ if st.session_state.top_stories_generated:
         updated_data_custom = st.data_editor(
             df_to_display,
             key="df_by_custom",
-            width="stretch",
+            use_container_width=True,
+            # width="stretch",
             column_config={
                 "Headline": st.column_config.Column("Headline", width="large"),
                 "Date": st.column_config.Column("Date", width="small"),
