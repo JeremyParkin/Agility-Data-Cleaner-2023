@@ -729,9 +729,9 @@ with st.expander("Parameters", expanded=False):
     with top_b:
         st.caption("These parameters reset to their defaults at the start of each new session.")
 
-    st.info(SECTION_EXPLAINER)
 
-    trad_tab, social_tab = st.tabs(["Traditional / online", "Social"])
+
+    trad_tab, social_tab, explainer = st.tabs(["Traditional", "Social", "Explainer"])
 
     with trad_tab:
         for media_key, params in st.session_state.er_trad_params.items():
@@ -782,7 +782,8 @@ with st.expander("Parameters", expanded=False):
                         help=help_text,
                         key=f"social_{platform_key}_{param_key}"
                     )
-
+    with explainer:
+        st.info(SECTION_EXPLAINER)
 run_metrics = st.button("Calculate Effective Reach + EMV", type="primary")
 
 if run_metrics:
