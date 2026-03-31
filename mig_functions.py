@@ -41,7 +41,21 @@ def standard_sidebar():
         st.text(f"Python: {sys.version.split()[0]}")
         st.text(f"Platform: {platform.platform()}")
 
-        package_names = ["streamlit", "pandas", "numpy", "openpyxl", "xlsxwriter"]
+        package_names = ["streamlit", "pandas", "numpy", "openpyxl", "xlsxwriter", "openai", "titlecase", "requests",
+                         "unidecode", "deep-translator", "dill", "jinja2", "streamlit-tags"]
+        # streamlit = "~=1.55.0"
+        # pandas = "~=2.3.3"
+        # openai = "~=2.6.1"
+        # titlecase = "~=2.4.1"
+        # requests = "~=2.32.5"
+        # unidecode = "~=1.4.0"
+        # xlsxwriter = "~=3.2.9"
+        # deep - translator = "~=1.11.4"
+        # dill = "~=0.4.0"
+        # openpyxl = "~=3.1.5"
+        # jinja2 = "~=3.1.6"
+        # streamlit - tags = "~=1.2.8"
+
         for pkg in package_names:
             try:
                 st.text(f"{pkg}: {metadata.version(pkg)}")
