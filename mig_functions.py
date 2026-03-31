@@ -3,9 +3,12 @@ def standard_sidebar():
     import platform
     import streamlit as st
     import importlib.metadata as metadata
-    st.sidebar.image('https://jeremyparkin.com/wp-content/uploads/2025/05/AG_main-light-grey.png', width=180)
-
-    st.sidebar.subheader('MIG Data Processing App')
+    # st.sidebar.image('https://jeremyparkin.com/wp-content/uploads/2025/05/AG_main-light-grey.png', width=180)
+    st.sidebar.image(
+        "https://www.agilitypr.com/wp-content/uploads/2024/12/agility-logo-white.png",
+        width=230,
+    )
+    st.sidebar.markdown('MIG Data Processing App')
     st.sidebar.caption("Version: March 2026")
 
     # CSS to adjust sidebar
