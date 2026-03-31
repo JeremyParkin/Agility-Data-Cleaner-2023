@@ -9,29 +9,29 @@ def standard_sidebar():
     st.sidebar.caption("Version: March 2026")
 
     # CSS to adjust sidebar
-    adjust_nav = """
-                            <style>
-                            
-                            .eczjsme9, .st-emotion-cache-1wqrzgl {
-                                overflow: visible !important;
-                                max-width: 250px !important;
-                                }
-                                
-                            .eczjsme16 {
-                                min-height: 375px !important;
-                                }
-                            
-                            .st-emotion-cache-a8w3f8 {
-                                overflow: visible !important;
-                                }
-                            .st-emotion-cache-1cypcdb {
-                                max-width: 250px !important;
-                                }
-                           
-                            </style>
-                            """
+    # adjust_nav = """
+    #                         <style>
+    #
+    #                         .eczjsme9, .st-emotion-cache-1wqrzgl {
+    #                             overflow: visible !important;
+    #                             max-width: 250px !important;
+    #                             }
+    #
+    #                         .eczjsme16 {
+    #                             min-height: 375px !important;
+    #                             }
+    #
+    #                         .st-emotion-cache-a8w3f8 {
+    #                             overflow: visible !important;
+    #                             }
+    #                         .st-emotion-cache-1cypcdb {
+    #                             max-width: 250px !important;
+    #                             }
+    #
+    #                         </style>
+    #                         """
     # Inject CSS with Markdown
-    st.markdown(adjust_nav, unsafe_allow_html=True)
+    # st.markdown(adjust_nav, unsafe_allow_html=True)
 
     # Add link to submit bug reports and feature requests
     st.sidebar.markdown(
@@ -43,18 +43,7 @@ def standard_sidebar():
 
         package_names = ["streamlit", "pandas", "numpy", "openpyxl", "xlsxwriter", "openai", "titlecase", "requests",
                          "unidecode", "deep-translator", "dill", "jinja2", "streamlit-tags"]
-        # streamlit = "~=1.55.0"
-        # pandas = "~=2.3.3"
-        # openai = "~=2.6.1"
-        # titlecase = "~=2.4.1"
-        # requests = "~=2.32.5"
-        # unidecode = "~=1.4.0"
-        # xlsxwriter = "~=3.2.9"
-        # deep - translator = "~=1.11.4"
-        # dill = "~=0.4.0"
-        # openpyxl = "~=3.1.5"
-        # jinja2 = "~=3.1.6"
-        # streamlit - tags = "~=1.2.8"
+
 
         for pkg in package_names:
             try:
