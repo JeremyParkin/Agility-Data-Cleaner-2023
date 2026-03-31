@@ -1,5 +1,8 @@
 def standard_sidebar():
+    import sys
+    import platform
     import streamlit as st
+    import importlib.metadata as metadata
     st.sidebar.image('https://jeremyparkin.com/wp-content/uploads/2025/05/AG_main-light-grey.png', width=180)
 
     st.sidebar.subheader('MIG Data Processing App')
@@ -34,6 +37,16 @@ def standard_sidebar():
     st.sidebar.markdown(
         "[App Feedback](https://forms.office.com/Pages/ResponsePage.aspx?id=GvcJkLbBVUumZQrrWC6V07d2jCu79C5FsfEZJPZEfZxUNVlIVDRNNVBQVEgxQVFXNEM5VldUMkpXNS4u)")
 
+    with st.sidebar.expander("Environment info"):
+        st.text(f"Python: {sys.version.split()[0]}")
+        st.text(f"Platform: {platform.platform()}")
+
+        package_names = ["streamlit", "pandas", "numpy", "openpyxl", "xlsxwriter"]
+        for pkg in package_names:
+            try:
+                st.text(f"{pkg}: {metadata.version(pkg)}")
+            except metadata.PackageNotFoundError:
+                st.text(f"{pkg}: not installed")
 
 def top_x_by_mentions(df, column_name):
     """Returns top 10 items by mention count"""
