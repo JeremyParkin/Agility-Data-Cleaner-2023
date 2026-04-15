@@ -128,7 +128,7 @@ else:
         # User options
         st.subheader("Cleaning options")
         merge_online = st.checkbox("Merge 'blogs' and 'press releases' into 'Online'", value=True, help='Combine all three listed media types in the ONLINE category.')
-        drop_dupes = st.checkbox("Drop duplicates", value=True, help='Remove likely duplicates within the same normalized media type. Non-broadcast items are deduped by matching URL, then by matching Type + Outlet + Headline. Broadcast items (TV/Radio) are deduped separately using outlet, date, time proximity, and similar snippet text.')
+        drop_dupes = st.checkbox("Drop duplicates", value=True, help='Remove likely duplicates within the same normalized media type. Non-broadcast items are deduped by matching URL, then by matching Type + Outlet + Headline. Broadcast items (TV/Radio) are deduped separately using outlet, date, time proximity, and similar snippet text. Social items are deduped separately using network, URL, post text, and time proximity.')
         # coverage_flags = st.checkbox("Add possible coverage flags", value=True, help='Add a column to flag stories as possible newswire coverage, possible stock moves coverage, possible market report spam, or known good outlets.')
         coverage_flags = True
         # Cleaning process
@@ -211,7 +211,7 @@ else:
                 st.session_state.df_traditional['Headline'] = st.session_state.df_traditional['Headline'].str.replace('\u2018', '\'')
                 st.session_state.df_traditional['Headline'] = st.session_state.df_traditional['Headline'].str.replace('\u2019', '\'')
 
-                # SOCIALS To sep df
+                # Split social rows so they can use their own duplicate logic
                 soc_array = ['FACEBOOK', 'TWITTER', 'X', 'INSTAGRAM', 'REDDIT', 'YOUTUBE', 'TIKTOK', 'LINKEDIN', 'BLUESKY']
                 st.session_state.df_social = st.session_state.df_traditional.loc[st.session_state.df_traditional['Type'].isin(soc_array)].copy()
                 st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['Type'].isin(soc_array)].copy()
@@ -231,6 +231,90 @@ else:
 
                 # Remove duplicates after media type normalization
                 if drop_dupes:
+                    # For social rows, remove exact repost duplicates within the same network
+                    social_dupes = pd.DataFrame()
+                    if len(st.session_state.df_social) > 0:
+                        social_working = st.session_state.df_social.reset_index(drop=True).copy()
+                        social_working["_original_order"] = np.arange(len(social_working))
+                        social_working["_date_time"] = pd.to_datetime(social_working["Date"], errors='coerce')
+
+                        social_text_source = None
+                        for candidate_col in ["Snippet", "Headline", "Content", "Title"]:
+                            if candidate_col in social_working.columns:
+                                social_text_source = candidate_col
+                                break
+
+                        if social_text_source is None:
+                            social_working["_social_text"] = ""
+                        else:
+                            social_working["_social_text"] = social_working[social_text_source].fillna("").astype(str)
+
+                        social_working["_social_text_norm"] = (
+                            social_working["_social_text"]
+                            .str.lower().str.replace(r"\s+", " ", regex=True).str.strip()
+                        )
+                        social_working["_social_url_norm"] = (
+                            social_working["URL"]
+                            .fillna("")
+                            .astype(str)
+                            .str.strip()
+                            .str.lower()
+                            .str.replace('http:', 'https:')
+                        )
+
+                        invalid_social_mask = (
+                            social_working["Type"].fillna("").astype(str).str.strip().eq("") |
+                            social_working["_date_time"].isna() |
+                            social_working["_social_text_norm"].eq("") |
+                            social_working["_social_url_norm"].eq("")
+                        )
+                        social_skipped = social_working[invalid_social_mask].copy()
+                        social_working_valid = social_working[~invalid_social_mask].copy()
+
+                        if len(social_working_valid) > 0:
+                            social_working_valid["social_dupe_key"] = (
+                                social_working_valid["Type"].astype("string") +
+                                social_working_valid["_social_url_norm"].astype("string") +
+                                social_working_valid["_social_text_norm"].astype("string")
+                            )
+                            social_working_valid = social_working_valid.sort_values(
+                                ["social_dupe_key", "_date_time", "Impressions", "_original_order"],
+                                ascending=[True, True, False, True]
+                            )
+
+                            duplicate_indexes = set()
+                            for _, group in social_working_valid.groupby("social_dupe_key", dropna=False):
+                                if len(group) < 2:
+                                    continue
+
+                                group = group.sort_values(["_date_time", "_original_order"])
+                                group_indices = group.index.tolist()
+                                keep_index = group_indices[0]
+
+                                for idx in group_indices[1:]:
+                                    seconds_diff = abs((group.loc[idx, "_date_time"] - group.loc[keep_index, "_date_time"]).total_seconds())
+                                    if seconds_diff <= 60:
+                                        duplicate_indexes.add(idx)
+                                    else:
+                                        keep_index = idx
+
+                            if duplicate_indexes:
+                                social_dupes = social_working_valid.loc[list(duplicate_indexes)].copy()
+                                st.session_state.df_social = social_working_valid.drop(index=list(duplicate_indexes)).copy()
+                            else:
+                                st.session_state.df_social = social_working_valid.copy()
+
+                            st.session_state.df_social.drop(columns=["social_dupe_key"], inplace=True, errors='ignore')
+                            social_dupes.drop(columns=["social_dupe_key"], inplace=True, errors='ignore')
+                        else:
+                            st.session_state.df_social = social_working_valid.copy()
+
+                        if len(social_skipped) > 0:
+                            st.session_state.df_social = pd.concat([st.session_state.df_social, social_skipped], ignore_index=True)
+
+                        helper_cols = ["_original_order", "_date_time", "_social_text", "_social_text_norm", "_social_url_norm"]
+                        st.session_state.df_social.drop(columns=helper_cols, inplace=True, errors='ignore')
+                        social_dupes.drop(columns=helper_cols, inplace=True, errors='ignore')
 
                     # For non-broadcast rows, first remove duplicate URLs within the same media type
 
@@ -400,7 +484,7 @@ else:
                         broadcast_set.drop(columns=helper_cols, inplace=True, errors='ignore')
                         broadcast_dupes.drop(columns=helper_cols, inplace=True, errors='ignore')
 
-                    st.session_state.df_dupes = pd.concat([dupe_urls, dupe_cols, broadcast_dupes], ignore_index=True)
+                    st.session_state.df_dupes = pd.concat([dupe_urls, dupe_cols, broadcast_dupes, social_dupes], ignore_index=True)
 
                 # Rejoin broadcast ###########################
                 frames = [st.session_state.df_traditional, broadcast_set]
