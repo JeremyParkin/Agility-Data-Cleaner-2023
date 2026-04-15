@@ -41,8 +41,9 @@ def explode_tags(df: pd.DataFrame) -> pd.DataFrame:
     tags = df["Tags"].fillna("").astype(str).str.strip()
     tags = tags.str.replace(r"\s*,\s*", ",", regex=True)
     dummies = tags.str.get_dummies(sep=",")
-    dummies = dummies.loc[:, dummies.columns.str.strip().ne("")]
-    dummies.columns = dummies.columns.str.strip()
+    cleaned_columns = pd.Index([str(col).strip() for col in dummies.columns])
+    dummies.columns = cleaned_columns
+    dummies = dummies.loc[:, cleaned_columns != ""]
     dummies = dummies.astype("category")
     return df.join(dummies, how="left", rsuffix=" (tag)")
 
