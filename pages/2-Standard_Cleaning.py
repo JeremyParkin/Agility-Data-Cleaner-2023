@@ -1,3 +1,5 @@
+# 2-Standard_Cleaning.py
+
 import sys
 import time
 import streamlit as st
@@ -126,7 +128,7 @@ else:
         # User options
         st.subheader("Cleaning options")
         merge_online = st.checkbox("Merge 'blogs' and 'press releases' into 'Online'", value=True, help='Combine all three listed media types in the ONLINE category.')
-        drop_dupes = st.checkbox("Drop duplicates", value=True, help='Remove duplicates based on identical URLS or, for non-broadcast, based on 4 identical fields: Outlet, Date, Headline, Type.')
+        drop_dupes = st.checkbox("Drop duplicates", value=True, help='Remove likely duplicates within the same normalized media type. Non-broadcast items are deduped by matching URL, then by matching Type + Outlet + Headline. Broadcast items (TV/Radio) are deduped separately using outlet, date, time proximity, and similar snippet text.')
         # coverage_flags = st.checkbox("Add possible coverage flags", value=True, help='Add a column to flag stories as possible newswire coverage, possible stock moves coverage, possible market report spam, or known good outlets.')
         coverage_flags = True
         # Cleaning process
@@ -218,7 +220,7 @@ else:
                 original_trad_auths = (mig.top_x_by_mentions(st.session_state.df_traditional, "Author"))
                 st.session_state.original_trad_auths = original_trad_auths
 
-                # SPLIT OUT BROADCAST
+                # Split broadcast rows so TV/radio can use a more conservative duplicate check
                 broadcast_array = ['RADIO', 'TV']
                 broadcast_set = st.session_state.df_traditional.loc[st.session_state.df_traditional['Type'].isin(broadcast_array)]
                 st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['Type'].isin(broadcast_array)]
@@ -227,39 +229,43 @@ else:
                 st.session_state.df_traditional[['Headline']] = st.session_state.df_traditional[['Headline']].fillna('')
                 st.session_state.df_traditional['Headline'] = st.session_state.df_traditional['Headline'].map(lambda Headline: titlecase(Headline))
 
-                # Duplicate removal
+                # Remove duplicates after media type normalization
                 if drop_dupes:
 
-                    # DROP DUPLICATES BY URL MATCHES #########################################
+                    # For non-broadcast rows, first remove duplicate URLs within the same media type
 
                     # Set aside blank URLs for later
                     blank_urls = st.session_state.df_traditional[st.session_state.df_traditional.URL.isna()]
                     # Remove blank URLs from main df
                     st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.URL.isna()].copy()
 
-                    # Add temporary dupe URL helper column and normalize URL formats
+                    # Normalize URLs and combine them with Type so duplicates stay within one media type
                     st.session_state.df_traditional['URL_Helper'] = st.session_state.df_traditional['URL'].str.lower()
                     st.session_state.df_traditional['URL_Helper'] = st.session_state.df_traditional['URL_Helper'].str.replace('http:', 'https:')
+                    st.session_state.df_traditional['URL_Type_Helper'] = (
+                        st.session_state.df_traditional['Type'].astype('string') +
+                        st.session_state.df_traditional['URL_Helper']
+                    )
 
                     # Sort duplicate URLS
-                    st.session_state.df_traditional = st.session_state.df_traditional.sort_values(["URL_Helper", "Author", "Impressions", "Date"], axis=0,
+                    st.session_state.df_traditional = st.session_state.df_traditional.sort_values(["URL_Type_Helper", "Author", "Impressions", "Date"], axis=0,
                                                                                                   ascending=[True, True, False, True])
                     # Save duplicate URLS
-                    dupe_urls = st.session_state.df_traditional[st.session_state.df_traditional['URL_Helper'].duplicated(keep='first')].copy()
+                    dupe_urls = st.session_state.df_traditional[st.session_state.df_traditional['URL_Type_Helper'].duplicated(keep='first')].copy()
 
                     # Remove duplicate URLS
-                    st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['URL_Helper'].duplicated(keep='first')].copy()
+                    st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional['URL_Type_Helper'].duplicated(keep='first')].copy()
 
                     # Drop URL Helper column from both dfs
-                    st.session_state.df_traditional.drop(["URL_Helper"], axis=1, inplace=True, errors='ignore')
-                    dupe_urls.drop(["URL_Helper"], axis=1, inplace=True, errors='ignore')
+                    st.session_state.df_traditional.drop(["URL_Helper", "URL_Type_Helper"], axis=1, inplace=True, errors='ignore')
+                    dupe_urls.drop(["URL_Helper", "URL_Type_Helper"], axis=1, inplace=True, errors='ignore')
 
                     frames = [st.session_state.df_traditional, blank_urls]
                     st.session_state.df_traditional = pd.concat(frames, ignore_index=True)
 
-                    # DROP DUPLICATES BY COLUMN MATCHES ###########################################
+                    # Then remove remaining non-broadcast duplicates by Type + Outlet + Headline
 
-                    # Split off records with blank headline/outlet/type
+                    # Skip rows missing key fields so they are not dropped by the headline/outlet duplicate pass
 
                     blank_mask = (
                             st.session_state.df_traditional["Headline"].fillna("").str.strip().eq("") |
@@ -287,7 +293,7 @@ else:
                     st.session_state.df_traditional = pd.concat(frames, ignore_index=True)
 
 
-                    # DROP DUPLICATES IN BROADCAST SET ###########################################
+                    # For broadcast rows, look for likely reruns/repeats within the same outlet, media type, and day
                     broadcast_dupes = pd.DataFrame()
                     if len(broadcast_set) > 0:
                         broadcast_working = broadcast_set.reset_index(drop=True).copy()
@@ -308,7 +314,7 @@ else:
 
 
                         duplicate_indexes = set()
-                        # Group by outlet, media type (Type), and date to limit comparison set
+                        # Only compare rows from the same outlet, media type, and calendar date
                         for _, group in broadcast_working.groupby(["Outlet", "Type", "_date_only"], dropna=False):
                             valid_group = group[group["_date_time"].notna()].sort_values(
                                 ["_date_time", "_original_order"])
@@ -329,7 +335,7 @@ else:
                                     seconds_diff = abs((time_j - time_i).total_seconds())
 
                                     if seconds_diff > 60:
-                                        # Sorted by time, so all later rows will also be > 60 seconds
+                                        # Times are sorted, so once we are more than 60 seconds apart we can stop checking
                                         break
 
                                     snippet_j = row_j["_snippet_norm"]
@@ -338,16 +344,11 @@ else:
                                                                                          row_j["_snippet_len"]):
                                         snippets_match = SequenceMatcher(None, snippet_i, snippet_j).ratio() >= 0.90
 
-                                    # snippet_j = row_j["_snippet_norm"]
-                                    # snippets_match = snippet_i == snippet_j
-                                    # if not snippets_match:
-                                    #     snippets_match = SequenceMatcher(None, snippet_i, snippet_j).ratio() >= 0.90
-
                                     if snippets_match:
                                         adjacency[idx_i].add(idx_j)
                                         adjacency[idx_j].add(idx_i)
 
-                            # Resolve connected duplicate groups and keep one row by tie-break rules
+                            # Treat connected matches as one duplicate group and keep the best candidate
                             visited = set()
                             for idx in group_indices:
                                 if idx in visited:

@@ -3,42 +3,13 @@ def standard_sidebar():
     import platform
     import streamlit as st
     import importlib.metadata as metadata
-    # st.sidebar.image('https://jeremyparkin.com/wp-content/uploads/2025/05/AG_main-light-grey.png', width=180)
     st.sidebar.image(
         "https://www.agilitypr.com/wp-content/uploads/2024/12/agility-logo-white.png",
         width=230,
     )
     st.sidebar.markdown('MIG Data Processing App')
-    st.sidebar.caption("Version: March 2026")
+    st.sidebar.caption("Version: March 2026 - [Feedback](https://forms.office.com/Pages/ResponsePage.aspx?id=GvcJkLbBVUumZQrrWC6V07d2jCu79C5FsfEZJPZEfZxUNVlIVDRNNVBQVEgxQVFXNEM5VldUMkpXNS4u)")
 
-    # CSS to adjust sidebar
-    # adjust_nav = """
-    #                         <style>
-    #
-    #                         .eczjsme9, .st-emotion-cache-1wqrzgl {
-    #                             overflow: visible !important;
-    #                             max-width: 250px !important;
-    #                             }
-    #
-    #                         .eczjsme16 {
-    #                             min-height: 375px !important;
-    #                             }
-    #
-    #                         .st-emotion-cache-a8w3f8 {
-    #                             overflow: visible !important;
-    #                             }
-    #                         .st-emotion-cache-1cypcdb {
-    #                             max-width: 250px !important;
-    #                             }
-    #
-    #                         </style>
-    #                         """
-    # Inject CSS with Markdown
-    # st.markdown(adjust_nav, unsafe_allow_html=True)
-
-    # Add link to submit bug reports and feature requests
-    st.sidebar.markdown(
-        "[App Feedback](https://forms.office.com/Pages/ResponsePage.aspx?id=GvcJkLbBVUumZQrrWC6V07d2jCu79C5FsfEZJPZEfZxUNVlIVDRNNVBQVEgxQVFXNEM5VldUMkpXNS4u)")
 
     with st.sidebar.expander("Environment info"):
         st.text(f"Python: {sys.version.split()[0]}")

@@ -85,31 +85,6 @@ def load_session_state(uploaded_file):
 
     st.title("Save & Load")
 
-        # # Restore non-DF scalars first (including df_names if present)
-        # for key, value in session_data.items():
-        #     if not isinstance(value, (pd.DataFrame, str)):
-        #         st.session_state[key] = value
-        #
-        # # Restore any DataFrame or legacy CSV-string, regardless of df_names
-        # restored_df_names = []
-        # for key, value in session_data.items():
-        #     if isinstance(value, pd.DataFrame):
-        #         st.session_state[key] = value
-        #         restored_df_names.append(key)
-        #     elif isinstance(value, str) and "\n" in value:
-        #         df = pd.read_csv(io.StringIO(value))
-        #         if 'Date' in df.columns:
-        #             df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-        #         st.session_state[key] = df
-        #         restored_df_names.append(key)
-        #
-        # # Ensure df_names reflects what we actually restored
-        # st.session_state.df_names = restored_df_names
-        #
-        # st.session_state.pickle_load = True
-        # st.success("Session state loaded successfully!")
-
-
 
 st.title("Save & Load")
 st.divider()
