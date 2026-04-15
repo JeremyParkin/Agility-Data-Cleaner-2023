@@ -8,7 +8,7 @@ def standard_sidebar():
         width=230,
     )
     st.sidebar.markdown('MIG Data Processing App')
-    st.sidebar.caption("Version: March 2026 - [Feedback](https://forms.office.com/Pages/ResponsePage.aspx?id=GvcJkLbBVUumZQrrWC6V07d2jCu79C5FsfEZJPZEfZxUNVlIVDRNNVBQVEgxQVFXNEM5VldUMkpXNS4u)")
+    st.sidebar.caption("Version: April 2026 - [Feedback](https://forms.office.com/Pages/ResponsePage.aspx?id=GvcJkLbBVUumZQrrWC6V07d2jCu79C5FsfEZJPZEfZxUNVlIVDRNNVBQVEgxQVFXNEM5VldUMkpXNS4u)")
 
 
     with st.sidebar.expander("Environment info"):
