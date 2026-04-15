@@ -234,10 +234,14 @@ else:
 
                     # For non-broadcast rows, first remove duplicate URLs within the same media type
 
-                    # Set aside blank URLs for later
-                    blank_urls = st.session_state.df_traditional[st.session_state.df_traditional.URL.isna()]
-                    # Remove blank URLs from main df
-                    st.session_state.df_traditional = st.session_state.df_traditional[~st.session_state.df_traditional.URL.isna()].copy()
+                    # Set aside missing/blank URLs so they are skipped by URL-based deduping
+                    blank_url_mask = (
+                        st.session_state.df_traditional["URL"].isna() |
+                        st.session_state.df_traditional["URL"].astype(str).str.strip().eq("")
+                    )
+                    blank_urls = st.session_state.df_traditional[blank_url_mask].copy()
+                    # Remove missing/blank URLs from the URL dedupe pass
+                    st.session_state.df_traditional = st.session_state.df_traditional[~blank_url_mask].copy()
 
                     # Normalize URLs and combine them with Type so duplicates stay within one media type
                     st.session_state.df_traditional['URL_Helper'] = st.session_state.df_traditional['URL'].str.lower()
@@ -269,8 +273,8 @@ else:
 
                     blank_mask = (
                             st.session_state.df_traditional["Headline"].fillna("").str.strip().eq("") |
-                            st.session_state.df_traditional["Outlet"].isna() |
-                            st.session_state.df_traditional["Type"].isna()
+                            st.session_state.df_traditional["Outlet"].fillna("").astype(str).str.strip().eq("") |
+                            st.session_state.df_traditional["Type"].fillna("").astype(str).str.strip().eq("")
                     )
 
                     blank_set = st.session_state.df_traditional[blank_mask].copy()
@@ -313,24 +317,32 @@ else:
                         broadcast_working["_snippet_len"] = broadcast_working["_snippet_text"].str.len()
 
 
+                        invalid_broadcast_mask = (
+                            broadcast_working["Outlet"].fillna("").astype(str).str.strip().eq("") |
+                            broadcast_working["Type"].fillna("").astype(str).str.strip().eq("") |
+                            broadcast_working["_date_time"].isna() |
+                            broadcast_working["_snippet_norm"].eq("")
+                        )
+                        broadcast_skipped = broadcast_working[invalid_broadcast_mask].copy()
+                        broadcast_working_valid = broadcast_working[~invalid_broadcast_mask].copy()
+
                         duplicate_indexes = set()
                         # Only compare rows from the same outlet, media type, and calendar date
-                        for _, group in broadcast_working.groupby(["Outlet", "Type", "_date_only"], dropna=False):
-                            valid_group = group[group["_date_time"].notna()].sort_values(
-                                ["_date_time", "_original_order"])
-                            if len(valid_group) < 2:
+                        for _, group in broadcast_working_valid.groupby(["Outlet", "Type", "_date_only"], dropna=False):
+                            group = group.sort_values(["_date_time", "_original_order"])
+                            if len(group) < 2:
                                 continue
 
-                            group_indices = valid_group.index.tolist()
+                            group_indices = group.index.tolist()
                             adjacency = {idx: set() for idx in group_indices}
 
                             for i, idx_i in enumerate(group_indices):
-                                row_i = valid_group.loc[idx_i]
+                                row_i = group.loc[idx_i]
                                 snippet_i = row_i["_snippet_norm"]
                                 time_i = row_i["_date_time"]
 
                                 for idx_j in group_indices[i + 1:]:
-                                    row_j = valid_group.loc[idx_j]
+                                    row_j = group.loc[idx_j]
                                     time_j = row_j["_date_time"]
                                     seconds_diff = abs((time_j - time_i).total_seconds())
 
@@ -375,10 +387,13 @@ else:
                                 duplicate_indexes.update(set(component) - {keep_index})
 
                         if duplicate_indexes:
-                            broadcast_dupes = broadcast_working.loc[list(duplicate_indexes)].copy()
-                            broadcast_set = broadcast_working.drop(index=list(duplicate_indexes)).copy()
+                            broadcast_dupes = broadcast_working_valid.loc[list(duplicate_indexes)].copy()
+                            broadcast_set = broadcast_working_valid.drop(index=list(duplicate_indexes)).copy()
                         else:
-                            broadcast_set = broadcast_working.copy()
+                            broadcast_set = broadcast_working_valid.copy()
+
+                        if len(broadcast_skipped) > 0:
+                            broadcast_set = pd.concat([broadcast_set, broadcast_skipped], ignore_index=True)
 
                         helper_cols = ["_original_order", "_date_time", "_date_only", "_snippet_text", "_snippet_norm",
                                        "_snippet_len"]

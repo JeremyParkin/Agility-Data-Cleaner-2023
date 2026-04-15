@@ -38,8 +38,12 @@ def explode_tags(df: pd.DataFrame) -> pd.DataFrame:
     if "Tags" not in df.columns:
         return df
     df = df.copy()
-    df["Tags"] = df["Tags"].astype(str)
-    dummies = df["Tags"].str.get_dummies(sep=",").astype("category")
+    tags = df["Tags"].fillna("").astype(str).str.strip()
+    tags = tags.str.replace(r"\s*,\s*", ",", regex=True)
+    dummies = tags.str.get_dummies(sep=",")
+    dummies = dummies.loc[:, dummies.columns.str.strip().ne("")]
+    dummies.columns = dummies.columns.str.strip()
+    dummies = dummies.astype("category")
     return df.join(dummies, how="left", rsuffix=" (tag)")
 
 
