@@ -337,9 +337,31 @@ with col1:
     st.subheader("Original Top Authors")
     media_type_column = "Type" if "Type" in st.session_state.df_untouched.columns else "Media Type"
 
+    raw_media_types = (
+        st.session_state.df_untouched[media_type_column]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
+
     filtered_df = st.session_state.df_untouched[
-        st.session_state.df_untouched[media_type_column].isin(
-            ["PRINT", "ONLINE_NEWS", "ONLINE", "BLOGS", "PRESS_RELEASE"]
+        raw_media_types.isin(
+            [
+                "print",
+                "print_magazine",
+                "magazine",
+                "print (magazine)",
+                "print_daily",
+                "newspaper",
+                "print (daily)",
+                "online_news",
+                "online news",
+                "online",
+                "blogs",
+                "press_release",
+                "press release",
+            ]
         )
     ].copy()
 

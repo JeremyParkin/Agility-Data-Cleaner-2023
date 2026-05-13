@@ -27,6 +27,8 @@ type_dict = {
     "PODCAST": "broadcast transcript",
     "ONLINE": "online article",
     "PRINT": "print article",
+    "MAGAZINE": "print article",
+    "NEWSPAPER": "print article",
 }
 
 for key, default in {

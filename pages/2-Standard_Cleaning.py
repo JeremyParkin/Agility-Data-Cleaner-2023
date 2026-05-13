@@ -25,6 +25,26 @@ def lengths_are_similar_enough(len_a: int, len_b: int, min_length_ratio: float =
         return False
     return min(len_a, len_b) / max(len_a, len_b) >= min_length_ratio
 
+
+def normalize_media_type_label(media_type: str) -> str:
+    raw_value = "" if pd.isna(media_type) else str(media_type).strip()
+    normalized = re.sub(r"\s+", " ", raw_value).lower()
+
+    mapping = {
+        "online_news": "ONLINE NEWS",
+        "online news": "ONLINE NEWS",
+        "press_release": "PRESS RELEASE",
+        "press release": "PRESS RELEASE",
+        "print_magazine": "MAGAZINE",
+        "magazine": "MAGAZINE",
+        "print (magazine)": "MAGAZINE",
+        "print_daily": "NEWSPAPER",
+        "newspaper": "NEWSPAPER",
+        "print (daily)": "NEWSPAPER",
+    }
+
+    return mapping.get(normalized, raw_value)
+
 if not st.session_state.upload_step:
     st.error('Please upload a CSV before trying this step.')
 elif st.session_state.standard_step:
@@ -146,7 +166,9 @@ else:
                 st.session_state.df_traditional['Author'].replace('', np.nan, inplace=True)
 
                 # Standardize media types
-                st.session_state.df_traditional["Type"].replace({"ONLINE_NEWS": "ONLINE NEWS", "PRESS_RELEASE": "PRESS RELEASE"}, inplace=True)
+                st.session_state.df_traditional["Type"] = (
+                    st.session_state.df_traditional["Type"].map(normalize_media_type_label)
+                )
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("www.facebook.com", na=False), 'Type'] = "FACEBOOK"
                 st.session_state.df_traditional.loc[st.session_state.df_traditional['URL'].str.contains("twitter.com", na=False), 'Type'] = "X"
                 st.session_state.df_traditional.loc[

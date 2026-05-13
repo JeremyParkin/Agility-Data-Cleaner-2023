@@ -380,6 +380,12 @@ def normalize_trad_media_type(media_type: str) -> str | None:
     mapping = {
         "online": "online",
         "print": "print_generic",
+        "magazine": "print_magazine",
+        "print_magazine": "print_magazine",
+        "print (magazine)": "print_magazine",
+        "newspaper": "print_daily",
+        "print_daily": "print_daily",
+        "print (daily)": "print_daily",
         "tv": "tv",
         "radio": "radio",
     }
